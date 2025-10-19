@@ -1,0 +1,389 @@
+/* 
+   Localizable.strings (English)
+   HouseholdBudgetApp
+*/
+
+// MARK: - Tab Bar
+"tab.transactions" = "Transactions";
+"tab.charts" = "Charts";
+"tab.fundSources" = "Fund Sources";
+"tab.settings" = "Settings";
+
+// MARK: - Navigation Titles
+"nav.transactionHistory" = "Transaction History";
+"nav.newTransaction" = "New Transaction";
+"nav.editTransaction" = "Edit Transaction";
+"nav.categoryManagement" = "Category Management";
+"nav.fundSources" = "Fund Sources";
+"nav.expenseChart" = "Expense Chart";
+"nav.settings" = "Settings";
+"nav.filter" = "Filter";
+
+// MARK: - Common Actions
+"action.add" = "Add";
+"action.create" = "Create";
+"action.update" = "Update";
+"action.delete" = "Delete";
+"action.cancel" = "Cancel";
+"action.save" = "Save";
+"action.edit" = "Edit";
+"action.done" = "Done";
+"action.ok" = "OK";
+"action.apply" = "Apply";
+"action.reset" = "Reset";
+"action.clear" = "Clear";
+"action.adjust" = "Adjust";
+
+// MARK: - Transaction Form
+"transaction.info" = "Transaction Information";
+"transaction.amount" = "Amount";
+"transaction.date" = "Date";
+"transaction.note" = "Note (Optional)";
+"transaction.category" = "Category";
+"transaction.subcategory" = "Subcategory";
+"transaction.fundSource" = "Fund Source";
+"transaction.selectPlaceholder" = "Please select";
+"transaction.balance" = "Balance: $%@";
+
+// MARK: - Transaction List
+"transaction.filterActive" = "Filter Active";
+"transaction.noTransactions" = "No transactions";
+"transaction.noFilteredTransactions" = "No transactions match the filter criteria";
+"transaction.addTransactionHint" = "You can add new transactions using the + button in the top right";
+
+// MARK: - Filter
+"filter.period" = "Period";
+"filter.startDate" = "Start Date";
+"filter.endDate" = "End Date";
+"filter.category" = "Category";
+"filter.fundSource" = "Fund Source";
+"filter.all" = "All";
+
+// MARK: - Categories
+"category.predefined" = "Predefined Categories";
+"category.custom" = "Custom Categories";
+"category.noCategories" = "No categories";
+"category.addCategoryHint" = "Please add a new category";
+"category.subcategoriesCount" = "%d subcategories";
+"category.name" = "Category Name";
+"category.icon" = "Icon";
+"category.color" = "Color";
+
+// MARK: - Predefined Categories
+"category.food" = "Food";
+"category.transportation" = "Transportation";
+"category.utilities" = "Utilities";
+"category.entertainment" = "Entertainment";
+"category.medical" = "Medical";
+
+// MARK: - Predefined Subcategories
+"subcategory.food.groceries" = "Groceries";
+"subcategory.food.beverages" = "Beverages";
+
+// MARK: - Fund Sources
+"fundSource.noFundSources" = "No fund sources";
+"fundSource.addFundSourceHint" = "Add a new fund source to start managing your budget";
+"fundSource.totalBalance" = "Total Balance";
+"fundSource.list" = "Fund Source List";
+"fundSource.currentBalance" = "Current Balance:";
+"fundSource.shared" = "Shared";
+"fundSource.created" = "Created: %@";
+"fundSource.name" = "Fund Source Name";
+"fundSource.initialBalance" = "Initial Balance";
+"fundSource.newBalance" = "New Balance";
+
+// MARK: - Charts
+"chart.displayPeriod" = "Display Period";
+"chart.yearly" = "Yearly";
+"chart.monthly" = "Monthly";
+"chart.year" = "Year:";
+"chart.month" = "Month:";
+"chart.selectMonth" = "Select Month";
+"chart.backToCategories" = "← Back to Categories";
+"chart.totalExpense" = "Total Expense: $%@";
+"chart.noData" = "No data available";
+"chart.yearSuffix" = "%d";
+
+// MARK: - Settings
+"settings.account" = "Account";
+"settings.user" = "User";
+"settings.accountSettings" = "Account Settings";
+"settings.sharing" = "Sharing Settings";
+"settings.budgetSharing" = "Budget Sharing";
+"settings.appInfo" = "App Information";
+"settings.version" = "Version";
+"settings.buildNumber" = "Build Number";
+"settings.appName" = "App Name";
+"settings.help" = "Help";
+
+// MARK: - Loading States
+"loading" = "Loading...";
+
+// MARK: - Error Messages
+"error.title" = "Error";
+"error.invalidAmount" = "Please enter a valid amount";
+"error.missingCategory" = "Please select a category";
+"error.missingFundSource" = "Please select a fund source";
+"error.insufficientBalance" = "Insufficient balance";
+"error.invalidAmountValue" = "Invalid amount";
+"error.formValidation" = "Please check your input";
+
+// MARK: - Transaction Errors
+"error.transaction.createFailed" = "Failed to create transaction: %@";
+"error.transaction.updateFailed" = "Failed to update transaction: %@";
+"error.transaction.deleteFailed" = "Failed to delete transaction: %@";
+"error.transaction.fetchFailed" = "Failed to fetch transactions: %@";
+
+// MARK: - Category Errors
+"error.category.createFailed" = "Failed to create category: %@";
+"error.category.updateFailed" = "Failed to update category: %@";
+"error.category.deleteFailed" = "Failed to delete category: %@";
+"error.category.fetchFailed" = "Failed to fetch categories: %@";
+"error.category.predefinedCheckFailed" = "Failed to check predefined categories: %@";
+"error.category.predefinedInitFailed" = "Failed to initialize predefined categories: %@";
+
+// MARK: - Subcategory Errors
+"error.subcategory.createFailed" = "Failed to create subcategory: %@";
+"error.subcategory.deleteFailed" = "Failed to delete subcategory: %@";
+
+// MARK: - Fund Source Errors
+"error.fundSource.createFailed" = "Failed to create fund source: %@";
+"error.fundSource.updateFailed" = "Failed to update fund source: %@";
+"error.fundSource.deleteFailed" = "Failed to delete fund source: %@";
+"error.fundSource.fetchFailed" = "Failed to fetch fund sources: %@";
+"error.fundSource.balanceUpdateFailed" = "Failed to update balance: %@";
+"error.fundSource.balanceAdjustFailed" = "Failed to adjust balance: %@";
+
+// MARK: - Chart Errors
+"error.chart.dataFetchFailed" = "Failed to fetch chart data: %@";
+"error.chart.calculationFailed" = "Failed to calculate chart data: %@";
+
+// MARK: - Data Persistence Errors
+"error.dataCorruption" = "Data corruption detected";
+"error.syncFailure" = "Failed to sync data";
+"error.migrationFailed" = "Data migration failed: %@";
+"error.dataIntegrityCheckFailed" = "Data integrity check failed: %@";
+
+// MARK: - Error Reasons
+"error.reason.invalidAmount" = "The amount is invalid";
+"error.reason.missingCategory" = "No category is selected";
+"error.reason.missingFundSource" = "No fund source is selected";
+"error.reason.insufficientBalance" = "Insufficient balance";
+"error.reason.formValidation" = "There are issues with the input";
+"error.reason.dataCorruption" = "Data files may be corrupted";
+"error.reason.syncFailure" = "Network connection issues";
+
+// MARK: - Error Recovery Suggestions
+"error.recovery.invalidAmount" = "Please enter a positive number";
+"error.recovery.missingCategory" = "Please select a category";
+"error.recovery.missingFundSource" = "Please select a fund source";
+"error.recovery.insufficientBalance" = "Please check your balance or select a different fund source";
+"error.recovery.formValidation" = "Please fill in all required fields correctly";
+"error.recovery.dataCorruption" = "Please restart the app. If the problem persists, contact support";
+"error.recovery.syncFailure" = "Please check your internet connection and try again";
+"error.recovery.general" = "Please wait a moment and try again";
+
+// MARK: - Accessibility Labels
+"accessibility.addTransaction" = "Add new transaction";
+"accessibility.editTransaction" = "Edit transaction";
+"accessibility.deleteTransaction" = "Delete transaction";
+"accessibility.filterTransactions" = "Filter transactions";
+"accessibility.clearFilters" = "Clear filters";
+"accessibility.addCategory" = "Add new category";
+"accessibility.editCategory" = "Edit category";
+"accessibility.deleteCategory" = "Delete category";
+"accessibility.addFundSource" = "Add new fund source";
+"accessibility.adjustBalance" = "Adjust balance";
+"accessibility.deleteFundSource" = "Delete fund source";
+"accessibility.selectCategory" = "Select category";
+"accessibility.selectSubcategory" = "Select subcategory";
+"accessibility.selectFundSource" = "Select fund source";
+"accessibility.selectDate" = "Select date";
+"accessibility.enterAmount" = "Enter amount";
+"accessibility.enterNote" = "Enter note";
+"accessibility.chartPeriodSelector" = "Select chart display period";
+"accessibility.yearSelector" = "Select year";
+"accessibility.monthSelector" = "Select month";
+"accessibility.categoryChart" = "Category expense chart";
+"accessibility.monthlyChart" = "Monthly expense chart";
+"accessibility.tabTransactions" = "Transactions tab";
+"accessibility.tabCharts" = "Charts tab";
+"accessibility.tabFundSources" = "Fund sources tab";
+"accessibility.tabSettings" = "Settings tab";
+"accessibility.addAccount" = "Add new account";
+
+// MARK: - Accessibility Hints
+"accessibility.hint.addTransaction" = "Tap to record a new transaction";
+"accessibility.hint.editTransaction" = "Tap to edit transaction details";
+"accessibility.hint.deleteTransaction" = "Swipe to delete transaction";
+"accessibility.hint.filterTransactions" = "Tap to open transaction filter settings";
+"accessibility.hint.addCategory" = "Tap to create a new category";
+"accessibility.hint.categoryDetails" = "Tap to view subcategories";
+"accessibility.hint.adjustBalance" = "Tap to manually adjust balance";
+"accessibility.hint.chartDrillDown" = "Tap to view subcategory details";
+"accessibility.hint.periodSelector" = "Swipe to change display period";
+"accessibility.hint.formField" = "Double tap to edit";
+"accessibility.hint.helpSection" = "Tap to view help information";
+
+// MARK: - Accessibility Values
+"accessibility.value.amount" = "Amount: %@";
+"accessibility.value.balance" = "Balance: %@";
+"accessibility.value.date" = "Date: %@";
+"accessibility.value.category" = "Category: %@";
+"accessibility.value.subcategory" = "Subcategory: %@";
+"accessibility.value.fundSource" = "Fund source: %@";
+"accessibility.value.totalExpense" = "Total expense: %@";
+"accessibility.value.transactionCount" = "%d transactions";
+"accessibility.value.subcategoryCount" = "%d subcategories";
+"accessibility.value.selected" = "Selected";
+"accessibility.value.notSelected" = "Not selected";// M
+ARK: - Data Migration and Integrity
+"migration.inProgress" = "Data migration in progress...";
+"migration.completed" = "Data migration completed";
+"migration.failed" = "Data migration failed";
+"integrity.checking" = "Checking data integrity...";
+"integrity.checkCompleted" = "Data integrity check completed";
+"integrity.issuesFound" = "%d issues found";
+"integrity.recovery" = "Recovering data...";
+"integrity.recoveryCompleted" = "Data recovery completed";
+"backup.creating" = "Creating backup...";
+"backup.created" = "Backup created successfully";
+"backup.failed" = "Failed to create backup";
+
+// MARK: - Error Messages - Migration
+"error.migrationFailed" = "Data migration failed: %@";
+"error.dataIntegrityCheckFailed" = "Data integrity check failed: %@";
+"error.dataCorruption" = "Data corruption detected";
+"error.syncFailure" = "Data synchronization failed";
+
+// MARK: - Error Reasons - Migration
+"error.reason.dataCorruption" = "Data files may be corrupted";
+"error.reason.syncFailure" = "Network connection or server issues";
+
+// MARK: - Error Recovery - Migration
+"error.recovery.dataCorruption" = "Please restart the app or run data recovery";
+"error.recovery.syncFailure" = "Check your network connection and try again";
+"error.recovery.general" = "If the problem persists, please restart the app";// MAR
+K: - Settings - Data Management
+"settings.dataManagement" = "Data Management";
+"settings.integrityCheck" = "Data Integrity Check";
+"settings.lastCheck" = "Last check: %@";
+"settings.createBackup" = "Create Backup";
+"settings.dataRecovery" = "Data Recovery";
+"settings.account" = "Account";
+"settings.user" = "User";
+"settings.accountSettings" = "Account Settings";
+"settings.sharing" = "Sharing";
+"settings.budgetSharing" = "Budget Sharing";
+"settings.appInfo" = "App Information";
+"settings.version" = "Version";
+"settings.help" = "Help";
+// 
+MARK: - Fund Source Errors (Additional)
+"error.fundSource.shareFailed" = "Failed to share fund source: %@";
+"error.fundSource.unshareFailed" = "Failed to unshare fund source: %@";
+
+// MARK: - User Account Errors
+"error.userAccount.createFailed" = "Failed to create account: %@";
+"error.userAccount.updateFailed" = "Failed to update account: %@";
+"error.userAccount.deleteFailed" = "Failed to delete account: %@";
+"error.userAccount.fetchFailed" = "Failed to fetch accounts: %@";
+"error.invalidInput" = "Input error: %@";
+
+// MARK: - User Account
+"account.username" = "Username";
+"account.email" = "Email Address";
+"account.createAccount" = "Create Account";
+"account.editAccount" = "Edit Account";
+"account.currentAccount" = "Current Account";
+"account.switchAccount" = "Switch Account";
+"account.noAccount" = "No account configured";
+"account.createFirst" = "Please create your first account";
+
+// MARK: - Sharing
+"sharing.title" = "Sharing Settings";
+"sharing.sharedFundSources" = "Shared Fund Sources";
+"sharing.shareWith" = "Share With";
+"sharing.inviteUser" = "Invite User";
+"sharing.stopSharing" = "Stop Sharing";
+"sharing.sharedWith" = "Shared with %@";
+"sharing.notShared" = "Not shared";
+"sharing.inviteCode" = "Invite Code";
+"sharing.generateInvite" = "Generate Invite Code";
+"sharing.acceptInvite" = "Accept Invite";
+"sharing.inviteExpired" = "Invite code has expired";
+"sharing.inviteInvalid" = "Invalid invite code";// MARK: 
+- iPad Interface
+"transaction.selectTransaction" = "Select Transaction";
+"transaction.selectTransactionHint" = "Select a transaction from the list to view details";
+"transaction.details" = "Transaction Details";
+"transaction.metadata" = "Metadata";
+"transaction.createdAt" = "Created At";
+"transaction.updatedAt" = "Updated At";
+"transaction.deleteConfirmation" = "Delete Transaction";
+"transaction.deleteMessage" = "Are you sure you want to delete this transaction? This action cannot be undone.";
+
+"fundSource.selectFundSource" = "Select Fund Source";
+"fundSource.selectFundSourceHint" = "Select a fund source from the list to view details";
+"fundSource.balanceInfo" = "Balance Information";
+"fundSource.balanceChange" = "Balance Change";
+"fundSource.sharingStatus" = "Sharing Status";
+"fundSource.private" = "Private";
+"fundSource.recentTransactions" = "Recent Transactions";
+"fundSource.noRecentTransactions" = "No recent transactions";
+"fundSource.deleteConfirmation" = "Delete Fund Source";
+"fundSource.deleteMessage" = "Are you sure you want to delete this fund source? All related transactions will also be deleted.";
+
+"chart.summary" = "Summary";
+"chart.breakdown" = "Breakdown";
+
+// MARK: - Settings Sections
+"settings.account" = "Account";
+"settings.categories" = "Categories";
+"settings.sharing" = "Sharing";
+"settings.appearance" = "Appearance";
+"settings.accessibility" = "Accessibility";
+"settings.about" = "About";
+
+"settings.accountDescription" = "Manage account information and authentication settings";
+"settings.categoriesDescription" = "Manage expense categories and subcategories";
+"settings.sharingDescription" = "Configure data sharing with family and partners";
+"settings.appearanceDescription" = "Customize app appearance and theme settings";
+"settings.accessibilityDescription" = "Configure accessibility features";
+"settings.aboutDescription" = "App information and support";
+
+"settings.currentAccount" = "Current Account";
+"settings.username" = "Username";
+"settings.email" = "Email";
+"settings.memberSince" = "Member Since";
+"settings.noAccount" = "No Account";
+"settings.createAccountHint" = "Create an account to share data with others";
+"settings.createAccount" = "Create Account";
+"settings.accountActions" = "Account Actions";
+"settings.manageAccounts" = "Manage Accounts";
+"settings.signOut" = "Sign Out";
+
+"settings.manageCategories" = "Manage Categories";
+"settings.categoryStats" = "Category Statistics";
+"settings.totalCategories" = "Total Categories";
+"settings.customCategories" = "Custom Categories";
+
+"settings.manageSharingSettings" = "Manage Sharing Settings";
+
+"settings.colorScheme" = "Color Scheme";
+"settings.colorSchemeNote" = "Automatically switches based on system settings";
+"settings.language" = "Language";
+"settings.languageNote" = "Automatically switches based on system settings";
+
+"settings.dynamicType" = "Dynamic Type";
+"settings.dynamicTypeNote" = "Supports system text size settings";
+"settings.voiceOver" = "VoiceOver";
+"settings.voiceOverNote" = "All features are VoiceOver compatible";
+
+"settings.appInfo" = "App Information";
+"settings.version" = "Version";
+"settings.build" = "Build";
+"settings.support" = "Support";
+"settings.supportDescription" = "If you have any questions or need assistance, please don't hesitate to contact us.";
+"settings.legal" = "Legal Information";
+"settings.legalDescription" = "Please review our terms of service and privacy policy.";

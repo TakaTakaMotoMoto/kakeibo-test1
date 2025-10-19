@@ -1,0 +1,543 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1A000001 /* HouseholdBudgetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000000 /* HouseholdBudgetApp.swift */; };
+		1A000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000002 /* ContentView.swift */; };
+		1A000010 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00000F /* Transaction.swift */; };
+		1A000012 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000011 /* Category.swift */; };
+		1A000014 /* Subcategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000013 /* Subcategory.swift */; };
+		1A000016 /* FundSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000015 /* FundSource.swift */; };
+		1A000018 /* UserAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000017 /* UserAccount.swift */; };
+		1A000020 /* CategoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00001F /* CategoryViewModel.swift */; };
+		1A000022 /* FundSourceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000021 /* FundSourceViewModel.swift */; };
+		1A000024 /* CategoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000023 /* CategoryListView.swift */; };
+		1A000026 /* CategoryFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000025 /* CategoryFormView.swift */; };
+		1A000028 /* SubcategoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000027 /* SubcategoryListView.swift */; };
+		1A00002A /* SubcategoryFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000029 /* SubcategoryFormView.swift */; };
+		1A00002C /* FundSourceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00002B /* FundSourceListView.swift */; };
+		1A00002E /* FundSourceFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00002D /* FundSourceFormView.swift */; };
+		1A000030 /* BalanceAdjustmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00002F /* BalanceAdjustmentView.swift */; };
+		1A000032 /* TransactionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000031 /* TransactionViewModel.swift */; };
+		1A000034 /* TransactionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000033 /* TransactionListView.swift */; };
+		1A000036 /* TransactionFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000035 /* TransactionFormView.swift */; };
+		1A000038 /* TransactionRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000037 /* TransactionRowView.swift */; };
+		1A00003A /* ChartViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000039 /* ChartViewModel.swift */; };
+		1A00003C /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00003B /* ChartView.swift */; };
+		1A00003E /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A00003D /* Charts.framework */; };
+		1A000044 /* MonthlyChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000043 /* MonthlyChartView.swift */; };
+		1A000046 /* CategoryChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000045 /* CategoryChartView.swift */; };
+		1A000047 /* ColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000047 /* ColorManager.swift */; };
+		1A000049 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000048 /* Assets.xcassets */; };
+		1A00004B /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00004A /* ViewModifiers.swift */; };
+		1A00004C /* AccessibilityHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00004B /* AccessibilityHelper.swift */; };
+		1A00004D /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00004C /* MainTabView.swift */; };
+		1A00004E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00004D /* SettingsView.swift */; };
+		1A00004F /* BudgetAppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A00004E /* BudgetAppError.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A000000 /* HouseholdBudgetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdBudgetApp.swift; sourceTree = "<group>"; };
+		1A000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1A00000F /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
+		1A000011 /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		1A000013 /* Subcategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subcategory.swift; sourceTree = "<group>"; };
+		1A000015 /* FundSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundSource.swift; sourceTree = "<group>"; };
+		1A000017 /* UserAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAccount.swift; sourceTree = "<group>"; };
+		1A00001F /* CategoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryViewModel.swift; sourceTree = "<group>"; };
+		1A000021 /* FundSourceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundSourceViewModel.swift; sourceTree = "<group>"; };
+		1A000023 /* CategoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryListView.swift; sourceTree = "<group>"; };
+		1A000025 /* CategoryFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryFormView.swift; sourceTree = "<group>"; };
+		1A000027 /* SubcategoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubcategoryListView.swift; sourceTree = "<group>"; };
+		1A000029 /* SubcategoryFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubcategoryFormView.swift; sourceTree = "<group>"; };
+		1A00002B /* FundSourceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundSourceListView.swift; sourceTree = "<group>"; };
+		1A00002D /* FundSourceFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FundSourceFormView.swift; sourceTree = "<group>"; };
+		1A00002F /* BalanceAdjustmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BalanceAdjustmentView.swift; sourceTree = "<group>"; };
+		1A000031 /* TransactionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionViewModel.swift; sourceTree = "<group>"; };
+		1A000033 /* TransactionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionListView.swift; sourceTree = "<group>"; };
+		1A000035 /* TransactionFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionFormView.swift; sourceTree = "<group>"; };
+		1A000037 /* TransactionRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionRowView.swift; sourceTree = "<group>"; };
+		1A000039 /* ChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartViewModel.swift; sourceTree = "<group>"; };
+		1A00003B /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
+		1A00003D /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
+		1A000043 /* MonthlyChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyChartView.swift; sourceTree = "<group>"; };
+		1A000045 /* CategoryChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryChartView.swift; sourceTree = "<group>"; };
+		1A000047 /* ColorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorManager.swift; sourceTree = "<group>"; };
+		1A000048 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1A00004A /* ViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
+		1A00004B /* AccessibilityHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelper.swift; sourceTree = "<group>"; };
+		1A00004C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		1A00004D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1A00004E /* BudgetAppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetAppError.swift; sourceTree = "<group>"; };
+		1AFFFFFF /* HouseholdBudgetApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HouseholdBudgetApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1AFFFFFC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A00003E /* Charts.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1AFFFFF6 = {
+			isa = PBXGroup;
+			children = (
+				1AFFFFF9 /* HouseholdBudgetApp */,
+				1A000047 /* Frameworks */,
+				1AFFFFFF /* HouseholdBudgetApp.app */,
+			);
+			sourceTree = "<group>";
+		};
+		1A000047 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1A00003D /* Charts.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1AFFFFF9 /* HouseholdBudgetApp */ = {
+			isa = PBXGroup;
+			children = (
+				1A000000 /* HouseholdBudgetApp.swift */,
+				1A000002 /* ContentView.swift */,
+				1A00000E /* Models */,
+				1A000019 /* ViewModels */,
+				1A00001A /* Views */,
+				1A00001B /* Utilities */,
+				1A00001C /* Resources */,
+			);
+			path = HouseholdBudgetApp;
+			sourceTree = "<group>";
+		};
+		1A00000E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				1A00000F /* Transaction.swift */,
+				1A000011 /* Category.swift */,
+				1A000013 /* Subcategory.swift */,
+				1A000015 /* FundSource.swift */,
+				1A000017 /* UserAccount.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		1A000019 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				1A00001F /* CategoryViewModel.swift */,
+				1A000021 /* FundSourceViewModel.swift */,
+				1A000031 /* TransactionViewModel.swift */,
+				1A000039 /* ChartViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		1A00001A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1A00004C /* MainTabView.swift */,
+				1A00003F /* Category */,
+				1A000040 /* FundSource */,
+				1A000041 /* Transaction */,
+				1A000042 /* Chart */,
+				1A000050 /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		1A00003F /* Category */ = {
+			isa = PBXGroup;
+			children = (
+				1A000023 /* CategoryListView.swift */,
+				1A000025 /* CategoryFormView.swift */,
+				1A000027 /* SubcategoryListView.swift */,
+				1A000029 /* SubcategoryFormView.swift */,
+			);
+			path = Category;
+			sourceTree = "<group>";
+		};
+		1A000040 /* FundSource */ = {
+			isa = PBXGroup;
+			children = (
+				1A00002B /* FundSourceListView.swift */,
+				1A00002D /* FundSourceFormView.swift */,
+				1A00002F /* BalanceAdjustmentView.swift */,
+			);
+			path = FundSource;
+			sourceTree = "<group>";
+		};
+		1A000041 /* Transaction */ = {
+			isa = PBXGroup;
+			children = (
+				1A000033 /* TransactionListView.swift */,
+				1A000035 /* TransactionFormView.swift */,
+				1A000037 /* TransactionRowView.swift */,
+			);
+			path = Transaction;
+			sourceTree = "<group>";
+		};
+		1A000042 /* Chart */ = {
+			isa = PBXGroup;
+			children = (
+				1A00003B /* ChartView.swift */,
+				1A000043 /* MonthlyChartView.swift */,
+				1A000045 /* CategoryChartView.swift */,
+			);
+			path = Chart;
+			sourceTree = "<group>";
+		};
+		1A00001B /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				1A000047 /* ColorManager.swift */,
+				1A00004A /* ViewModifiers.swift */,
+				1A00004B /* AccessibilityHelper.swift */,
+				1A000051 /* Errors */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		1A000051 /* Errors */ = {
+			isa = PBXGroup;
+			children = (
+				1A00004E /* BudgetAppError.swift */,
+			);
+			path = Errors;
+			sourceTree = "<group>";
+		};
+		1A000050 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				1A00004D /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		1A00001C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1A000048 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1AFFFFFE /* HouseholdBudgetApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1A000007 /* Build configuration list for PBXNativeTarget "HouseholdBudgetApp" */;
+			buildPhases = (
+				1AFFFFFB /* Sources */,
+				1AFFFFFC /* Frameworks */,
+				1AFFFFFD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HouseholdBudgetApp;
+			productName = HouseholdBudgetApp;
+			productReference = 1AFFFFFF /* HouseholdBudgetApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1AFFFFF7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					1AFFFFFE = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 1AFFFFFA /* Build configuration list for PBXProject "HouseholdBudgetApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ja;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ja,
+			);
+			mainGroup = 1AFFFFF6;
+			productRefGroup = 1AFFFFF6;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1AFFFFFE /* HouseholdBudgetApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1AFFFFFD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A000049 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1AFFFFFB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A000003 /* ContentView.swift in Sources */,
+				1A000010 /* Transaction.swift in Sources */,
+				1A000012 /* Category.swift in Sources */,
+				1A000014 /* Subcategory.swift in Sources */,
+				1A000016 /* FundSource.swift in Sources */,
+				1A000018 /* UserAccount.swift in Sources */,
+				1A000020 /* CategoryViewModel.swift in Sources */,
+				1A000022 /* FundSourceViewModel.swift in Sources */,
+				1A000024 /* CategoryListView.swift in Sources */,
+				1A000026 /* CategoryFormView.swift in Sources */,
+				1A000028 /* SubcategoryListView.swift in Sources */,
+				1A00002A /* SubcategoryFormView.swift in Sources */,
+				1A00002C /* FundSourceListView.swift in Sources */,
+				1A00002E /* FundSourceFormView.swift in Sources */,
+				1A000030 /* BalanceAdjustmentView.swift in Sources */,
+				1A000032 /* TransactionViewModel.swift in Sources */,
+				1A000034 /* TransactionListView.swift in Sources */,
+				1A000036 /* TransactionFormView.swift in Sources */,
+				1A000038 /* TransactionRowView.swift in Sources */,
+				1A00003A /* ChartViewModel.swift in Sources */,
+				1A00003C /* ChartView.swift in Sources */,
+				1A000044 /* MonthlyChartView.swift in Sources */,
+				1A000046 /* CategoryChartView.swift in Sources */,
+				1A000047 /* ColorManager.swift in Sources */,
+				1A00004B /* ViewModifiers.swift in Sources */,
+				1A00004C /* AccessibilityHelper.swift in Sources */,
+				1A00004D /* MainTabView.swift in Sources */,
+				1A00004E /* SettingsView.swift in Sources */,
+				1A00004F /* BudgetAppError.swift in Sources */,
+				1A000001 /* HouseholdBudgetApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1A000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1A000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		1A00000B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HouseholdBudgetApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.HouseholdBudgetApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1A00000C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HouseholdBudgetApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.HouseholdBudgetApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1AFFFFFA /* Build configuration list for PBXProject "HouseholdBudgetApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1A000008 /* Debug */,
+				1A000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1A000007 /* Build configuration list for PBXNativeTarget "HouseholdBudgetApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1A00000B /* Debug */,
+				1A00000C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1AFFFFF7 /* Project object */;
+}

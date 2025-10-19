@@ -1,0 +1,387 @@
+/* 
+   Localizable.strings (Japanese)
+   HouseholdBudgetApp
+*/
+
+// MARK: - Tab Bar
+"tab.transactions" = "取引";
+"tab.charts" = "グラフ";
+"tab.fundSources" = "資金元";
+"tab.settings" = "設定";
+
+// MARK: - Navigation Titles
+"nav.transactionHistory" = "取引履歴";
+"nav.newTransaction" = "新規取引";
+"nav.editTransaction" = "取引編集";
+"nav.categoryManagement" = "カテゴリ管理";
+"nav.fundSources" = "資金元";
+"nav.expenseChart" = "支出グラフ";
+"nav.settings" = "設定";
+"nav.filter" = "フィルター";
+
+// MARK: - Common Actions
+"action.add" = "追加";
+"action.create" = "作成";
+"action.update" = "更新";
+"action.delete" = "削除";
+"action.cancel" = "キャンセル";
+"action.save" = "保存";
+"action.edit" = "編集";
+"action.done" = "完了";
+"action.ok" = "OK";
+"action.apply" = "適用";
+"action.reset" = "リセット";
+"action.clear" = "クリア";
+"action.adjust" = "調整";
+
+// MARK: - Transaction Form
+"transaction.info" = "取引情報";
+"transaction.amount" = "金額";
+"transaction.date" = "日付";
+"transaction.note" = "メモ（任意）";
+"transaction.category" = "カテゴリ";
+"transaction.subcategory" = "サブカテゴリ";
+"transaction.fundSource" = "資金元";
+"transaction.selectPlaceholder" = "選択してください";
+"transaction.balance" = "残高: ¥%@";
+
+// MARK: - Transaction List
+"transaction.filterActive" = "フィルター適用中";
+"transaction.noTransactions" = "取引がありません";
+"transaction.noFilteredTransactions" = "フィルター条件に一致する取引がありません";
+"transaction.addTransactionHint" = "右上の + ボタンから新しい取引を追加できます";
+
+// MARK: - Filter
+"filter.period" = "期間";
+"filter.startDate" = "開始日";
+"filter.endDate" = "終了日";
+"filter.category" = "カテゴリ";
+"filter.fundSource" = "資金元";
+"filter.all" = "すべて";
+
+// MARK: - Categories
+"category.predefined" = "事前定義カテゴリ";
+"category.custom" = "カスタムカテゴリ";
+"category.noCategories" = "カテゴリがありません";
+"category.addCategoryHint" = "新しいカテゴリを追加してください";
+"category.subcategoriesCount" = "%d個のサブカテゴリ";
+"category.name" = "カテゴリ名";
+"category.icon" = "アイコン";
+"category.color" = "色";
+
+// MARK: - Predefined Categories
+"category.food" = "食費";
+"category.transportation" = "交通費";
+"category.utilities" = "光熱費";
+"category.entertainment" = "娯楽費";
+"category.medical" = "医療費";
+
+// MARK: - Predefined Subcategories
+"subcategory.food.groceries" = "食品";
+"subcategory.food.beverages" = "飲料";
+
+// MARK: - Fund Sources
+"fundSource.noFundSources" = "資金元がありません";
+"fundSource.addFundSourceHint" = "新しい資金元を追加して家計管理を始めましょう";
+"fundSource.totalBalance" = "総残高";
+"fundSource.list" = "資金元一覧";
+"fundSource.currentBalance" = "現在残高:";
+"fundSource.shared" = "共有中";
+"fundSource.created" = "作成: %@";
+"fundSource.name" = "資金元名";
+"fundSource.initialBalance" = "初期残高";
+"fundSource.newBalance" = "新しい残高";
+
+// MARK: - Charts
+"chart.displayPeriod" = "表示期間";
+"chart.yearly" = "年次";
+"chart.monthly" = "月次";
+"chart.year" = "年:";
+"chart.month" = "月:";
+"chart.selectMonth" = "月を選択";
+"chart.backToCategories" = "← カテゴリ一覧に戻る";
+"chart.totalExpense" = "総支出: ¥%@";
+"chart.noData" = "データがありません";
+"chart.yearSuffix" = "%d年";
+
+// MARK: - Settings
+"settings.account" = "アカウント";
+"settings.user" = "ユーザー";
+"settings.accountSettings" = "アカウント設定";
+"settings.sharing" = "共有設定";
+"settings.budgetSharing" = "家計簿の共有";
+"settings.appInfo" = "アプリ情報";
+"settings.version" = "バージョン";
+"settings.buildNumber" = "ビルド番号";
+"settings.appName" = "アプリ名";
+"settings.help" = "ヘルプ";
+
+// MARK: - Loading States
+"loading" = "読み込み中...";
+
+// MARK: - Error Messages
+"error.title" = "エラー";
+"error.invalidAmount" = "有効な金額を入力してください";
+"error.missingCategory" = "カテゴリを選択してください";
+"error.missingFundSource" = "資金元を選択してください";
+"error.insufficientBalance" = "残高が不足しています";
+"error.invalidAmountValue" = "無効な金額です";
+"error.formValidation" = "入力内容を確認してください";
+
+// MARK: - Transaction Errors
+"error.transaction.createFailed" = "取引の作成に失敗しました: %@";
+"error.transaction.updateFailed" = "取引の更新に失敗しました: %@";
+"error.transaction.deleteFailed" = "取引の削除に失敗しました: %@";
+"error.transaction.fetchFailed" = "取引の取得に失敗しました: %@";
+
+// MARK: - Category Errors
+"error.category.createFailed" = "カテゴリの作成に失敗しました: %@";
+"error.category.updateFailed" = "カテゴリの更新に失敗しました: %@";
+"error.category.deleteFailed" = "カテゴリの削除に失敗しました: %@";
+"error.category.fetchFailed" = "カテゴリの取得に失敗しました: %@";
+"error.category.predefinedCheckFailed" = "事前定義カテゴリの確認に失敗しました: %@";
+"error.category.predefinedInitFailed" = "事前定義カテゴリの初期化に失敗しました: %@";
+
+// MARK: - Subcategory Errors
+"error.subcategory.createFailed" = "サブカテゴリの作成に失敗しました: %@";
+"error.subcategory.deleteFailed" = "サブカテゴリの削除に失敗しました: %@";
+
+// MARK: - Fund Source Errors
+"error.fundSource.createFailed" = "資金元の作成に失敗しました: %@";
+"error.fundSource.updateFailed" = "資金元の更新に失敗しました: %@";
+"error.fundSource.deleteFailed" = "資金元の削除に失敗しました: %@";
+"error.fundSource.fetchFailed" = "資金元の取得に失敗しました: %@";
+"error.fundSource.balanceUpdateFailed" = "残高の更新に失敗しました: %@";
+"error.fundSource.balanceAdjustFailed" = "残高の調整に失敗しました: %@";
+"error.fundSource.shareFailed" = "資金元の共有に失敗しました: %@";
+"error.fundSource.unshareFailed" = "資金元の共有解除に失敗しました: %@";
+
+// MARK: - User Account Errors
+"error.userAccount.createFailed" = "アカウントの作成に失敗しました: %@";
+"error.userAccount.updateFailed" = "アカウントの更新に失敗しました: %@";
+"error.userAccount.deleteFailed" = "アカウントの削除に失敗しました: %@";
+"error.userAccount.fetchFailed" = "アカウントの取得に失敗しました: %@";
+"error.invalidInput" = "入力エラー: %@";
+
+// MARK: - Chart Errors
+"error.chart.dataFetchFailed" = "グラフデータの取得に失敗しました: %@";
+"error.chart.calculationFailed" = "グラフデータの計算に失敗しました: %@";
+
+// MARK: - Data Persistence Errors
+"error.dataCorruption" = "データが破損しています";
+"error.syncFailure" = "データの同期に失敗しました";
+"error.migrationFailed" = "データの移行に失敗しました: %@";
+"error.dataIntegrityCheckFailed" = "データ整合性チェックに失敗しました: %@";
+
+// MARK: - Error Reasons
+"error.reason.invalidAmount" = "金額が無効です";
+"error.reason.missingCategory" = "カテゴリが選択されていません";
+"error.reason.missingFundSource" = "資金元が選択されていません";
+"error.reason.insufficientBalance" = "残高が不足しています";
+"error.reason.formValidation" = "入力内容に問題があります";
+"error.reason.dataCorruption" = "データファイルが破損している可能性があります";
+"error.reason.syncFailure" = "ネットワーク接続に問題があります";
+
+// MARK: - Error Recovery Suggestions
+"error.recovery.invalidAmount" = "正の数値を入力してください";
+"error.recovery.missingCategory" = "カテゴリを選択してください";
+"error.recovery.missingFundSource" = "資金元を選択してください";
+"error.recovery.insufficientBalance" = "残高を確認するか、別の資金元を選択してください";
+"error.recovery.formValidation" = "すべての必須項目を正しく入力してください";
+"error.recovery.dataCorruption" = "アプリを再起動してください。問題が続く場合はサポートにお問い合わせください";
+"error.recovery.syncFailure" = "インターネット接続を確認して再試行してください";
+"error.recovery.general" = "しばらく待ってから再試行してください";
+
+// MARK: - Accessibility Labels
+"accessibility.addTransaction" = "新しい取引を追加";
+"accessibility.editTransaction" = "取引を編集";
+"accessibility.deleteTransaction" = "取引を削除";
+"accessibility.filterTransactions" = "取引をフィルター";
+"accessibility.clearFilters" = "フィルターをクリア";
+"accessibility.addCategory" = "新しいカテゴリを追加";
+"accessibility.editCategory" = "カテゴリを編集";
+"accessibility.deleteCategory" = "カテゴリを削除";
+"accessibility.addFundSource" = "新しい資金元を追加";
+"accessibility.adjustBalance" = "残高を調整";
+"accessibility.deleteFundSource" = "資金元を削除";
+"accessibility.selectCategory" = "カテゴリを選択";
+"accessibility.selectSubcategory" = "サブカテゴリを選択";
+"accessibility.selectFundSource" = "資金元を選択";
+"accessibility.selectDate" = "日付を選択";
+"accessibility.enterAmount" = "金額を入力";
+"accessibility.enterNote" = "メモを入力";
+"accessibility.chartPeriodSelector" = "グラフ表示期間を選択";
+"accessibility.yearSelector" = "年を選択";
+"accessibility.monthSelector" = "月を選択";
+"accessibility.categoryChart" = "カテゴリ別支出グラフ";
+"accessibility.monthlyChart" = "月別支出グラフ";
+"accessibility.tabTransactions" = "取引タブ";
+"accessibility.tabCharts" = "グラフタブ";
+"accessibility.tabFundSources" = "資金元タブ";
+"accessibility.tabSettings" = "設定タブ";
+"accessibility.addAccount" = "新しいアカウントを追加";
+
+// MARK: - Accessibility Hints
+"accessibility.hint.addTransaction" = "タップして新しい取引を記録します";
+"accessibility.hint.editTransaction" = "タップして取引の詳細を編集します";
+"accessibility.hint.deleteTransaction" = "スワイプして取引を削除します";
+"accessibility.hint.filterTransactions" = "タップして取引のフィルター設定を開きます";
+"accessibility.hint.addCategory" = "タップして新しいカテゴリを作成します";
+"accessibility.hint.categoryDetails" = "タップしてサブカテゴリを表示します";
+"accessibility.hint.adjustBalance" = "タップして残高を手動で調整します";
+"accessibility.hint.chartDrillDown" = "タップしてサブカテゴリの詳細を表示します";
+"accessibility.hint.periodSelector" = "スワイプして表示期間を変更します";
+"accessibility.hint.formField" = "ダブルタップして編集します";
+"accessibility.hint.helpSection" = "タップしてヘルプ情報を表示します";
+
+// MARK: - Accessibility Values
+"accessibility.value.amount" = "金額: %@";
+"accessibility.value.balance" = "残高: %@";
+"accessibility.value.date" = "日付: %@";
+"accessibility.value.category" = "カテゴリ: %@";
+"accessibility.value.subcategory" = "サブカテゴリ: %@";
+"accessibility.value.fundSource" = "資金元: %@";
+"accessibility.value.totalExpense" = "総支出: %@";
+"accessibility.value.transactionCount" = "%d件の取引";
+"accessibility.value.subcategoryCount" = "%d個のサブカテゴリ";
+"accessibility.value.selected" = "選択済み";
+"accessibility.value.notSelected" = "未選択";// MARK
+: - Data Migration and Integrity
+"migration.inProgress" = "データ移行中...";
+"migration.completed" = "データ移行が完了しました";
+"migration.failed" = "データ移行に失敗しました";
+"integrity.checking" = "データ整合性をチェック中...";
+"integrity.checkCompleted" = "データ整合性チェックが完了しました";
+"integrity.issuesFound" = "%d件の問題が見つかりました";
+"integrity.recovery" = "データ復旧中...";
+"integrity.recoveryCompleted" = "データ復旧が完了しました";
+"backup.creating" = "バックアップを作成中...";
+"backup.created" = "バックアップが作成されました";
+"backup.failed" = "バックアップの作成に失敗しました";
+
+// MARK: - Error Messages - Migration
+"error.migrationFailed" = "データ移行に失敗しました: %@";
+"error.dataIntegrityCheckFailed" = "データ整合性チェックに失敗しました: %@";
+"error.dataCorruption" = "データが破損しています";
+"error.syncFailure" = "データ同期に失敗しました";
+
+// MARK: - Error Reasons - Migration
+"error.reason.dataCorruption" = "データファイルが破損している可能性があります";
+"error.reason.syncFailure" = "ネットワーク接続またはサーバーの問題";
+
+// MARK: - Error Recovery - Migration
+"error.recovery.dataCorruption" = "アプリを再起動するか、データ復旧を実行してください";
+"error.recovery.syncFailure" = "ネットワーク接続を確認して再試行してください";
+"error.recovery.general" = "問題が続く場合は、アプリを再起動してください";// MARK: - 
+Settings - Data Management
+"settings.dataManagement" = "データ管理";
+"settings.integrityCheck" = "データ整合性チェック";
+"settings.lastCheck" = "最終チェック: %@";
+"settings.createBackup" = "バックアップ作成";
+"settings.dataRecovery" = "データ復旧";
+"settings.account" = "アカウント";
+"settings.user" = "ユーザー";
+"settings.accountSettings" = "アカウント設定";
+"settings.sharing" = "共有";
+"settings.budgetSharing" = "家計簿共有";
+"settings.appInfo" = "アプリ情報";
+"settings.version" = "バージョン";
+"settings.help" = "ヘルプ";
+
+// MARK: - User Account
+"account.username" = "ユーザー名";
+"account.email" = "メールアドレス";
+"account.createAccount" = "アカウント作成";
+"account.editAccount" = "アカウント編集";
+"account.currentAccount" = "現在のアカウント";
+"account.switchAccount" = "アカウント切り替え";
+"account.noAccount" = "アカウントが設定されていません";
+"account.createFirst" = "最初のアカウントを作成してください";
+
+// MARK: - Sharing
+"sharing.title" = "共有設定";
+"sharing.sharedFundSources" = "共有中の資金元";
+"sharing.shareWith" = "共有相手";
+"sharing.inviteUser" = "ユーザーを招待";
+"sharing.stopSharing" = "共有を停止";
+"sharing.sharedWith" = "%@と共有中";
+"sharing.notShared" = "共有されていません";
+"sharing.inviteCode" = "招待コード";
+"sharing.generateInvite" = "招待コードを生成";
+"sharing.acceptInvite" = "招待を受け入れる";
+"sharing.inviteExpired" = "招待コードの有効期限が切れています";
+"sharing.inviteInvalid" = "無効な招待コードです";// 
+MARK: - iPad Interface
+"transaction.selectTransaction" = "取引を選択";
+"transaction.selectTransactionHint" = "左側のリストから取引を選択して詳細を表示";
+"transaction.details" = "取引詳細";
+"transaction.metadata" = "メタデータ";
+"transaction.createdAt" = "作成日時";
+"transaction.updatedAt" = "更新日時";
+"transaction.deleteConfirmation" = "取引を削除";
+"transaction.deleteMessage" = "この取引を削除してもよろしいですか？この操作は取り消せません。";
+
+"fundSource.selectFundSource" = "資金元を選択";
+"fundSource.selectFundSourceHint" = "左側のリストから資金元を選択して詳細を表示";
+"fundSource.balanceInfo" = "残高情報";
+"fundSource.balanceChange" = "残高変動";
+"fundSource.sharingStatus" = "共有状態";
+"fundSource.private" = "プライベート";
+"fundSource.recentTransactions" = "最近の取引";
+"fundSource.noRecentTransactions" = "最近の取引はありません";
+"fundSource.deleteConfirmation" = "資金元を削除";
+"fundSource.deleteMessage" = "この資金元を削除してもよろしいですか？関連する取引も削除されます。";
+
+"chart.summary" = "サマリー";
+"chart.breakdown" = "内訳";
+
+// MARK: - Settings Sections
+"settings.account" = "アカウント";
+"settings.categories" = "カテゴリ";
+"settings.sharing" = "共有";
+"settings.appearance" = "外観";
+"settings.accessibility" = "アクセシビリティ";
+"settings.about" = "アプリについて";
+
+"settings.accountDescription" = "アカウント情報と認証設定を管理";
+"settings.categoriesDescription" = "支出カテゴリとサブカテゴリを管理";
+"settings.sharingDescription" = "家族やパートナーとのデータ共有設定";
+"settings.appearanceDescription" = "アプリの外観とテーマ設定";
+"settings.accessibilityDescription" = "アクセシビリティ機能の設定";
+"settings.aboutDescription" = "アプリ情報とサポート";
+
+"settings.currentAccount" = "現在のアカウント";
+"settings.username" = "ユーザー名";
+"settings.email" = "メールアドレス";
+"settings.memberSince" = "登録日";
+"settings.noAccount" = "アカウントなし";
+"settings.createAccountHint" = "アカウントを作成してデータを共有しましょう";
+"settings.createAccount" = "アカウント作成";
+"settings.accountActions" = "アカウント操作";
+"settings.manageAccounts" = "アカウント管理";
+"settings.signOut" = "サインアウト";
+
+"settings.manageCategories" = "カテゴリ管理";
+"settings.categoryStats" = "カテゴリ統計";
+"settings.totalCategories" = "総カテゴリ数";
+"settings.customCategories" = "カスタムカテゴリ数";
+
+"settings.manageSharingSettings" = "共有設定管理";
+
+"settings.colorScheme" = "カラースキーム";
+"settings.colorSchemeNote" = "システム設定に従って自動的に切り替わります";
+"settings.language" = "言語";
+"settings.languageNote" = "システム設定に従って自動的に切り替わります";
+
+"settings.dynamicType" = "ダイナミックタイプ";
+"settings.dynamicTypeNote" = "システム設定のテキストサイズに対応しています";
+"settings.voiceOver" = "VoiceOver";
+"settings.voiceOverNote" = "すべての機能がVoiceOverに対応しています";
+
+"settings.appInfo" = "アプリ情報";
+"settings.version" = "バージョン";
+"settings.build" = "ビルド";
+"settings.support" = "サポート";
+"settings.supportDescription" = "ご質問やお困りのことがございましたら、お気軽にお問い合わせください。";
+"settings.legal" = "法的情報";
+"settings.legalDescription" = "利用規約とプライバシーポリシーをご確認ください。";
