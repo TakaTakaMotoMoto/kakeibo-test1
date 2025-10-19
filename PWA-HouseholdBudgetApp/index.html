@@ -11,17 +11,17 @@
     <title>家計簿アプリ</title>
     
     <!-- PWA Manifest -->
-    <!-- <link rel="manifest" href="manifest.json"> -->
+    <link rel="manifest" href="manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles/main.css">
     
     <!-- Chart.js for charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="app">
@@ -300,17 +300,31 @@
         console.log('Starting to load scripts...');
         
         // Debug: Check if Chart.js loaded
-        window.addEventListener('load', function() {
+        function checkChartJS() {
             if (typeof Chart === 'undefined') {
-                console.error('Chart.js failed to load');
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: orange; color: white; padding: 10px; z-index: 9999;';
-                errorDiv.innerHTML = 'Warning: Chart.js not loaded. Charts will not work.<br><button onclick="this.parentNode.remove()">Close</button>';
-                document.body.appendChild(errorDiv);
+                console.error('Chart.js failed to load, trying alternative CDN...');
+                
+                // Try alternative CDN
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js';
+                script.onload = function() {
+                    console.log('Chart.js loaded from alternative CDN');
+                };
+                script.onerror = function() {
+                    console.error('Chart.js failed to load from alternative CDN');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: orange; color: white; padding: 10px; z-index: 9999;';
+                    errorDiv.innerHTML = 'Warning: Chart.js not loaded. Charts will not work.<br><button onclick="this.parentNode.remove()">Close</button>';
+                    document.body.appendChild(errorDiv);
+                };
+                document.head.appendChild(script);
             } else {
                 console.log('Chart.js loaded successfully');
             }
-        });
+        }
+        
+        // Check Chart.js after a short delay
+        setTimeout(checkChartJS, 1000);
     </script>
     
     <!-- Load scripts with better error handling -->
@@ -360,8 +374,6 @@
     
     <!-- Service Worker Registration -->
     <script>
-        console.log('Service Worker registration temporarily disabled for debugging');
-        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
@@ -373,7 +385,6 @@
                     });
             });
         }
-        */
     </script>
 </body>
 </html>
