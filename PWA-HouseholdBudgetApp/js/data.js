@@ -276,5 +276,15 @@ class DataManager {
     }
 }
 
-// Create global instance
-window.dataManager = new DataManager(window.storage);
+// Create global instance when storage is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait for storage to be initialized
+    if (window.storage) {
+        window.dataManager = new DataManager(window.storage);
+    } else {
+        // Retry after a short delay
+        setTimeout(() => {
+            window.dataManager = new DataManager(window.storage);
+        }, 100);
+    }
+});

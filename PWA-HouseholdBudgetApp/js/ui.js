@@ -540,7 +540,15 @@ class UIManager {
     }
 }
 
-// Initialize UI Manager when DOM is loaded
+// Initialize UI Manager when DOM is loaded and dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.uiManager = new UIManager();
+    // Wait for dependencies to be ready
+    const initUI = () => {
+        if (window.storage && window.dataManager) {
+            window.uiManager = new UIManager();
+        } else {
+            setTimeout(initUI, 100);
+        }
+    };
+    initUI();
 });

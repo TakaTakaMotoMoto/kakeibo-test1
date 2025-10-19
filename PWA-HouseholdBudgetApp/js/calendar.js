@@ -236,7 +236,14 @@ class CalendarManager {
     }
 }
 
-// Initialize Calendar Manager
+// Initialize Calendar Manager when dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.calendarManager = new CalendarManager();
+    const initCalendar = () => {
+        if (window.dataManager && window.storage) {
+            window.calendarManager = new CalendarManager();
+        } else {
+            setTimeout(initCalendar, 100);
+        }
+    };
+    initCalendar();
 });

@@ -212,7 +212,14 @@ class ChartManager {
     }
 }
 
-// Initialize Chart Manager
+// Initialize Chart Manager when dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.chartManager = new ChartManager();
+    const initCharts = () => {
+        if (window.dataManager && typeof Chart !== 'undefined') {
+            window.chartManager = new ChartManager();
+        } else {
+            setTimeout(initCharts, 100);
+        }
+    };
+    initCharts();
 });

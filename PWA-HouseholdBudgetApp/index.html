@@ -189,6 +189,20 @@
                 </div>
                 <form id="transaction-form" class="modal-body">
                     <div class="form-group">
+                        <label>取引タイプ</label>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="type" value="expense" checked>
+                                支出
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="radio" name="type" value="income">
+                                収入
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="amount">金額</label>
                         <input type="number" id="amount" name="amount" required step="0.01" placeholder="0">
                     </div>
@@ -327,50 +341,13 @@
         setTimeout(checkChartJS, 1000);
     </script>
     
-    <!-- Load scripts with better error handling -->
-    <script>
-        function loadScript(src, name) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    console.log(name + ' loaded successfully');
-                    resolve();
-                };
-                script.onerror = () => {
-                    console.error('Failed to load ' + name);
-                    reject(new Error('Failed to load ' + name));
-                };
-                document.head.appendChild(script);
-            });
-        }
-        
-        // Load scripts sequentially
-        async function loadAllScripts() {
-            try {
-                await loadScript('js/storage.js', 'storage.js');
-                await loadScript('js/data.js', 'data.js');
-                await loadScript('js/ui.js', 'ui.js');
-                await loadScript('js/charts.js', 'charts.js');
-                await loadScript('js/calendar.js', 'calendar.js');
-                await loadScript('js/app.js', 'app.js');
-                console.log('All scripts loaded successfully');
-            } catch (error) {
-                console.error('Script loading failed:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: red; color: white; padding: 20px; z-index: 9999; border-radius: 10px;';
-                errorDiv.innerHTML = 'Failed to load application scripts.<br>Error: ' + error.message + '<br><button onclick="location.reload()">Reload</button>';
-                document.body.appendChild(errorDiv);
-            }
-        }
-        
-        // Start loading when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadAllScripts);
-        } else {
-            loadAllScripts();
-        }
-    </script>
+    <!-- Load scripts directly -->
+    <script src="js/storage.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/app.js"></script>
     
     <!-- Service Worker Registration -->
     <script>

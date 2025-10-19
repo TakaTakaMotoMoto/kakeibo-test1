@@ -288,9 +288,16 @@ window.addEventListener('unhandledrejection', (e) => {
     }
 });
 
-// Initialize app when DOM is loaded
+// Initialize app when DOM is loaded and all dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.budgetApp = new BudgetApp();
+    const initApp = () => {
+        if (window.storage && window.dataManager && window.uiManager) {
+            window.budgetApp = new BudgetApp();
+        } else {
+            setTimeout(initApp, 200);
+        }
+    };
+    initApp();
 });
 
 // Add some CSS for notifications
