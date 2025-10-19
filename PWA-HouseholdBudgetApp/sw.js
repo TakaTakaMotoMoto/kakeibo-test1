@@ -11,7 +11,7 @@ const urlsToCache = [
     './js/charts.js',
     './js/calendar.js',
     './js/app.js',
-    './icons/icon.svg',
+    './icons/icon-192x192.png',
     'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
