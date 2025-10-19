@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="家計簿">
+    
+    <title>家計簿アプリ</title>
+    
+    <!-- PWA Manifest -->
+    <!-- <link rel="manifest" href="manifest.json"> -->
+    
+    <!-- Icons -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <div class="app-icon">📊</div>
+                <h1>家計簿アプリ</h1>
+                <div class="loading-spinner"></div>
+                <p>データを読み込み中...</p>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="main-app" class="main-app" style="display: none;">
+            <!-- Navigation Header -->
+            <header class="app-header">
+                <h1 id="page-title">取引</h1>
+                <div class="header-actions">
+                    <button id="filter-btn" class="header-btn">
+                        <span class="icon">🔍</span>
+                    </button>
+                    <button id="add-btn" class="header-btn primary">
+                        <span class="icon">+</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Transactions View -->
+                <div id="transactions-view" class="view active">
+                    <!-- View Mode Selector -->
+                    <div class="view-mode-selector">
+                        <button class="view-mode-btn active" data-mode="list">
+                            <span class="icon">📝</span>
+                            <span>リスト</span>
+                        </button>
+                        <button class="view-mode-btn" data-mode="calendar">
+                            <span class="icon">📅</span>
+                            <span>カレンダー</span>
+                        </button>
+                    </div>
+
+                    <!-- List View -->
+                    <div id="list-view" class="transaction-list">
+                        <!-- Transactions will be populated here -->
+                    </div>
+
+                    <!-- Calendar View -->
+                    <div id="calendar-view" class="calendar-container" style="display: none;">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="calendar-nav">‹</button>
+                            <h3 id="current-month">2024年1月</h3>
+                            <button id="next-month" class="calendar-nav">›</button>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="weekdays">
+                                <div class="weekday">日</div>
+                                <div class="weekday">月</div>
+                                <div class="weekday">火</div>
+                                <div class="weekday">水</div>
+                                <div class="weekday">木</div>
+                                <div class="weekday">金</div>
+                                <div class="weekday">土</div>
+                            </div>
+                            <div id="calendar-days" class="calendar-days">
+                                <!-- Calendar days will be populated here -->
+                            </div>
+                        </div>
+                        <div id="selected-date-transactions" class="selected-date-transactions">
+                            <!-- Selected date transactions will be shown here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts View -->
+                <div id="charts-view" class="view">
+                    <div class="chart-selector">
+                        <button class="chart-btn active" data-chart="category">カテゴリ別</button>
+                        <button class="chart-btn" data-chart="monthly">月次推移</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                    <div id="chart-legend" class="chart-legend">
+                        <!-- Chart legend will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Fund Sources View -->
+                <div id="fundsources-view" class="view">
+                    <div id="fundsources-list" class="fundsources-list">
+                        <!-- Fund sources will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settings-view" class="view">
+                    <div class="settings-sections">
+                        <div class="settings-section">
+                            <h3>データ管理</h3>
+                            <div class="settings-item" id="export-data">
+                                <span class="icon">📤</span>
+                                <span>データエクスポート</span>
+                                <span class="arrow">›</span>
+                            </div>
+                            <div class="settings-item" id="import-data">
+                                <span class="icon">📥</span>
+                                <span>データインポート</span>
+                                <span class="arrow">›</span>
+                            </div>
+                            <div class="settings-item" id="clear-data">
+                                <span class="icon">🗑️</span>
+                                <span>データクリア</span>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>アプリ情報</h3>
+                            <div class="settings-item">
+                                <span class="icon">ℹ️</span>
+                                <span>バージョン</span>
+                                <span class="value">1.0.0</span>
+                            </div>
+                            <div class="settings-item" id="install-app">
+                                <span class="icon">📱</span>
+                                <span>アプリをインストール</span>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-view="transactions">
+                    <span class="icon">📝</span>
+                    <span class="label">取引</span>
+                </button>
+                <button class="nav-item" data-view="charts">
+                    <span class="icon">📊</span>
+                    <span class="label">グラフ</span>
+                </button>
+                <button class="nav-item" data-view="fundsources">
+                    <span class="icon">💳</span>
+                    <span class="label">資金元</span>
+                </button>
+                <button class="nav-item" data-view="settings">
+                    <span class="icon">⚙️</span>
+                    <span class="label">設定</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Modals -->
+        <!-- Transaction Form Modal -->
+        <div id="transaction-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="transaction-modal-title">取引を追加</h2>
+                    <button class="close-btn" data-modal="transaction-modal">×</button>
+                </div>
+                <form id="transaction-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="amount">金額</label>
+                        <input type="number" id="amount" name="amount" required step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">カテゴリ</label>
+                        <select id="category" name="category" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fundSource">資金元</label>
+                        <select id="fundSource" name="fundSource" required>
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">日付</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="note">メモ</label>
+                        <textarea id="note" name="note" placeholder="メモ（任意）"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" data-modal="transaction-modal">キャンセル</button>
+                        <button type="submit" class="btn primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Fund Source Form Modal -->
+        <div id="fundsource-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="fundsource-modal-title">資金元を追加</h2>
+                    <button class="close-btn" data-modal="fundsource-modal">×</button>
+                </div>
+                <form id="fundsource-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="fs-name">名前</label>
+                        <input type="text" id="fs-name" name="name" required placeholder="例: 現金、銀行口座">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fs-balance">初期残高</label>
+                        <input type="number" id="fs-balance" name="balance" required step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" data-modal="fundsource-modal">キャンセル</button>
+                        <button type="submit" class="btn primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filter Modal -->
+        <div id="filter-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>フィルター</h2>
+                    <button class="close-btn" data-modal="filter-modal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="filter-start-date">開始日</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filter-end-date">終了日</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filter-category">カテゴリ</label>
+                        <select id="filter-category">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" id="clear-filters">クリア</button>
+                        <button type="button" class="btn primary" id="apply-filters">適用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Debug: Show loading errors
+        window.addEventListener('error', function(e) {
+            console.error('Script error:', e.filename, e.lineno, e.message);
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: red; color: white; padding: 10px; z-index: 9999; font-size: 12px;';
+            errorDiv.innerHTML = 'Error: ' + e.message + '<br>File: ' + e.filename + ':' + e.lineno + '<br><button onclick="this.parentNode.remove()">Close</button>';
+            document.body.appendChild(errorDiv);
+        });
+        
+        // Debug: Show loading progress
+        console.log('Starting to load scripts...');
+        
+        // Debug: Check if Chart.js loaded
+        window.addEventListener('load', function() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js failed to load');
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; background: orange; color: white; padding: 10px; z-index: 9999;';
+                errorDiv.innerHTML = 'Warning: Chart.js not loaded. Charts will not work.<br><button onclick="this.parentNode.remove()">Close</button>';
+                document.body.appendChild(errorDiv);
+            } else {
+                console.log('Chart.js loaded successfully');
+            }
+        });
+    </script>
+    
+    <!-- Load scripts with better error handling -->
+    <script>
+        function loadScript(src, name) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    console.log(name + ' loaded successfully');
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error('Failed to load ' + name);
+                    reject(new Error('Failed to load ' + name));
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Load scripts sequentially
+        async function loadAllScripts() {
+            try {
+                await loadScript('js/storage.js', 'storage.js');
+                await loadScript('js/data.js', 'data.js');
+                await loadScript('js/ui.js', 'ui.js');
+                await loadScript('js/charts.js', 'charts.js');
+                await loadScript('js/calendar.js', 'calendar.js');
+                await loadScript('js/app.js', 'app.js');
+                console.log('All scripts loaded successfully');
+            } catch (error) {
+                console.error('Script loading failed:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: red; color: white; padding: 20px; z-index: 9999; border-radius: 10px;';
+                errorDiv.innerHTML = 'Failed to load application scripts.<br>Error: ' + error.message + '<br><button onclick="location.reload()">Reload</button>';
+                document.body.appendChild(errorDiv);
+            }
+        }
+        
+        // Start loading when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAllScripts);
+        } else {
+            loadAllScripts();
+        }
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        console.log('Service Worker registration temporarily disabled for debugging');
+        /*
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        */
+    </script>
+</body>
+</html>
