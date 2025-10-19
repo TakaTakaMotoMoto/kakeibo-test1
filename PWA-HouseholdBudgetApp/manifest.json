@@ -21,32 +21,17 @@
       "purpose": "any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/mobile-1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "取引一覧画面"
-    },
-    {
-      "src": "screenshots/mobile-2.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "カレンダー表示"
-    }
-  ],
   "shortcuts": [
     {
       "name": "取引を追加",
       "short_name": "追加",
       "description": "新しい取引を追加",
-      "url": "/?action=add",
+      "url": "./?action=add",
       "icons": [
         {
           "src": "icons/icon-192x192.png",
-          "sizes": "192x192"
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }
