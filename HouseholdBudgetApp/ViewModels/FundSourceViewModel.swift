@@ -9,6 +9,10 @@ final class FundSourceViewModel {
     var fundSources: [FundSource] = []
     var currentError: BudgetAppError?
     
+    // Deletion confirmation
+    var showingDeleteConfirmation = false
+    var fundSourceToDelete: FundSource?
+    
     init(modelContext: ModelContext, dataIntegrityService: DataIntegrityService = DataIntegrityService()) {
         self.modelContext = modelContext
         self.dataIntegrityService = dataIntegrityService
@@ -47,12 +51,40 @@ final class FundSourceViewModel {
     
     func deleteFundSource(_ fundSource: FundSource) {
         do {
+            // Check if fund source is in use
+            if !fundSource.transactions.isEmpty {
+                throw BudgetAppError.fundSourceInUse
+            }
+            
             modelContext.delete(fundSource)
             try modelContext.save()
             fetchFundSources()
+        } catch let budgetError as BudgetAppError {
+            currentError = budgetError
         } catch {
             currentError = BudgetAppError.from(error, context: .fundSourceDelete)
         }
+    }
+    
+    func confirmDeleteFundSource(_ fundSource: FundSource) {
+        fundSourceToDelete = fundSource
+        showingDeleteConfirmation = true
+    }
+    
+    func executeDeleteFundSource() {
+        guard let fundSource = fundSourceToDelete else { return }
+        deleteFundSource(fundSource)
+        fundSourceToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func cancelDeleteFundSource() {
+        fundSourceToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func canDeleteFundSource(_ fundSource: FundSource) -> Bool {
+        return fundSource.transactions.isEmpty
     }
     
     // MARK: - Balance Management

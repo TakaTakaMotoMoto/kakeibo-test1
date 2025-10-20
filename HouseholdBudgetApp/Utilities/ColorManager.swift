@@ -39,9 +39,11 @@ struct ColorManager {
     }
     
     // MARK: - Semantic Colors
+    static let primaryColor = Color.accentColor
     static let primaryText = Color.primary
     static let secondaryText = Color.secondary
     static let tertiaryText = Color(UIColor.tertiaryLabel)
+    static let borderColor = Color(UIColor.separator)
     static let background = Color(UIColor.systemBackground)
     static let secondaryBackground = Color(UIColor.secondarySystemBackground)
     static let groupedBackground = Color(UIColor.systemGroupedBackground)

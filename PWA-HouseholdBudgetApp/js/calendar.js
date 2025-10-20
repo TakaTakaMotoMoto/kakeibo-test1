@@ -100,6 +100,8 @@ class CalendarManager {
         if (dayData && dayData.transactions.length > 0) {
             const categories = window.storage.getCategories();
             const uniqueCategories = [...new Set(dayData.transactions.map(t => t.categoryId))];
+            const hasSharedTransactions = dayData.transactions.some(t => window.dataManager.isTransactionShared(t));
+            const hasMyTransactions = dayData.transactions.some(t => window.dataManager.canEditTransaction(t));
             
             transactionDots = `
                 <div class="transaction-dots">
@@ -108,6 +110,8 @@ class CalendarManager {
                         return `<div class="transaction-dot" style="background-color: ${category?.color || '#007AFF'}"></div>`;
                     }).join('')}
                     ${uniqueCategories.length > 3 ? '<div class="transaction-dot-more">+</div>' : ''}
+                    ${hasSharedTransactions ? '<div class="shared-dot" title="共有取引あり">🔗</div>' : ''}
+                    ${hasMyTransactions && hasSharedTransactions ? '<div class="mixed-dot" title="自分と共有の取引">👥</div>' : ''}
                 </div>
             `;
         }
@@ -149,20 +153,28 @@ class CalendarManager {
         const transactionsList = transactions.map(transaction => {
             const category = categories.find(c => c.id === transaction.categoryId);
             const fundSource = fundSources.find(fs => fs.id === transaction.fundSourceId);
+            const creatorDisplay = window.dataManager.getTransactionCreatorDisplay(transaction);
+            const canEdit = window.dataManager.canEditTransaction(transaction);
+            const isShared = window.dataManager.isTransactionShared(transaction);
             
             return `
-                <div class="transaction-item" data-id="${transaction.id}">
+                <div class="transaction-item ${!canEdit ? 'readonly' : ''}" data-id="${transaction.id}">
                     <div class="transaction-info">
                         <div class="transaction-category">
                             ${category ? category.icon : '📦'} ${category ? category.name : 'カテゴリなし'}
+                            ${isShared ? '<span class="shared-indicator">🔗</span>' : ''}
                         </div>
                         <div class="transaction-date">
                             ${fundSource ? fundSource.name : ''}
                             ${transaction.note ? `・${transaction.note}` : ''}
                         </div>
+                        <div class="transaction-creator">
+                            👤 ${creatorDisplay}
+                        </div>
                     </div>
                     <div class="transaction-amount ${transaction.amount < 0 ? 'expense' : 'income'}">
                         ${window.dataManager.formatCurrency(transaction.amount)}
+                        ${!canEdit ? '<span class="readonly-indicator">🔒</span>' : ''}
                     </div>
                 </div>
             `;
@@ -174,7 +186,13 @@ class CalendarManager {
         container.querySelectorAll('.transaction-item').forEach(item => {
             item.addEventListener('click', () => {
                 const id = item.dataset.id;
-                window.uiManager.editTransaction(id);
+                const transaction = window.storage.getTransactions().find(t => t.id === id);
+                
+                if (transaction && window.dataManager.canEditTransaction(transaction)) {
+                    window.uiManager.editTransaction(id);
+                } else {
+                    window.uiManager.showNotification('この取引は編集できません', 'warning');
+                }
             });
         });
     }

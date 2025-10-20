@@ -5,6 +5,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var dataIntegrityService = DataIntegrityService()
     @StateObject private var orientationManager = OrientationManager()
+    @State private var userAccountViewModel: UserAccountViewModel?
     @State private var isPerformingStartupChecks = true
     @State private var startupError: Error?
     
@@ -18,13 +19,15 @@ struct ContentView: View {
                         await performStartupChecks()
                     }
                 }
-            } else {
+            } else if let userAccountViewModel = userAccountViewModel {
                 if UIDevice.current.userInterfaceIdiom == .pad {
                     iPadMainView()
+                        .environment(userAccountViewModel)
                         .environmentObject(dataIntegrityService)
                         .environmentObject(orientationManager)
                 } else {
-                    MainTabView()
+                    AuthenticationView()
+                        .environment(userAccountViewModel)
                         .environmentObject(dataIntegrityService)
                         .environmentObject(orientationManager)
                 }
@@ -44,6 +47,8 @@ struct ContentView: View {
             await dataIntegrityService.performStartupChecks(container: container)
             
             await MainActor.run {
+                // Initialize UserAccountViewModel after startup checks
+                userAccountViewModel = UserAccountViewModel(modelContext: modelContext)
                 isPerformingStartupChecks = false
                 startupError = nil
             }

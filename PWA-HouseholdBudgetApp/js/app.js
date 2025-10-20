@@ -45,7 +45,22 @@ class BudgetApp {
         // Initialize keyboard shortcuts
         this.initializeKeyboardShortcuts();
         
+        // Initialize authentication UI
+        this.initializeAuth();
+        
         console.log('Budget App initialized successfully');
+    }
+
+    initializeAuth() {
+        // Update auth UI after all components are loaded
+        if (window.authManager) {
+            window.authManager.updateAuthUI();
+        }
+        
+        // Update UI manager auth-dependent components
+        if (window.uiManager) {
+            window.uiManager.updateAuthDependentUI();
+        }
     }
 
     initializePWA() {
@@ -291,7 +306,7 @@ window.addEventListener('unhandledrejection', (e) => {
 // Initialize app when DOM is loaded and all dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
     const initApp = () => {
-        if (window.storage && window.dataManager && window.uiManager) {
+        if (window.storage && window.authManager && window.dataManager && window.uiManager) {
             window.budgetApp = new BudgetApp();
         } else {
             setTimeout(initApp, 200);
@@ -405,6 +420,105 @@ const notificationStyles = `
         font-size: 8px;
         color: var(--text-secondary);
         font-weight: bold;
+    }
+    
+    .shared-indicator {
+        font-size: 0.8em;
+        margin-left: 4px;
+        opacity: 0.7;
+    }
+    
+    .transaction-creator {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    
+    .transaction-item.readonly {
+        opacity: 0.8;
+        background-color: var(--background-secondary);
+    }
+    
+    .readonly-indicator {
+        font-size: 0.8em;
+        margin-left: 4px;
+        opacity: 0.6;
+    }
+    
+    .shared-dot, .mixed-dot {
+        font-size: 8px;
+        margin-left: 2px;
+    }
+    
+    .shared-dot {
+        color: #007AFF;
+    }
+    
+    .mixed-dot {
+        color: #FF9500;
+    }
+    
+    .filter-indicator {
+        position: relative;
+    }
+    
+    .filter-indicator::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 6px;
+        height: 6px;
+        background-color: #FF3B30;
+        border-radius: 50%;
+    }
+    
+    .sharing-list, .shared-users-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+    
+    .sharing-item, .shared-user-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--background-primary);
+    }
+    
+    .sharing-info, .user-info {
+        flex: 1;
+    }
+    
+    .fund-source-name, .user-name {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .sharing-status, .user-email {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .status-indicator {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-indicator.active {
+        background-color: #34C759;
+        color: white;
+    }
+    
+    .user-status {
+        display: flex;
+        align-items: center;
     }
 `;
 

@@ -210,6 +210,55 @@ final class TransactionViewModelTests: XCTestCase {
         XCTAssertEqual(updatedFundSource?.currentBalance, initialBalance + transaction.amount)
     }
     
+    func testConfirmDeleteTransaction() {
+        // Given
+        let transaction = createTestTransaction()
+        
+        // When
+        transactionViewModel.confirmDeleteTransaction(transaction)
+        
+        // Then
+        XCTAssertTrue(transactionViewModel.showingDeleteConfirmation)
+        XCTAssertEqual(transactionViewModel.transactionToDelete?.id, transaction.id)
+    }
+    
+    func testExecuteDeleteTransaction() {
+        // Given
+        let transaction = createTestTransaction()
+        transactionViewModel.transactionToDelete = transaction
+        transactionViewModel.showingDeleteConfirmation = true
+        let initialTransactionCount = transactionViewModel.transactions.count
+        let initialBalance = getTestFundSource()?.currentBalance ?? 0
+        
+        // When
+        transactionViewModel.executeDeleteTransaction()
+        
+        // Then
+        XCTAssertEqual(transactionViewModel.transactions.count, initialTransactionCount - 1)
+        XCTAssertFalse(transactionViewModel.showingDeleteConfirmation)
+        XCTAssertNil(transactionViewModel.transactionToDelete)
+        
+        // Verify balance was restored
+        let updatedFundSource = getTestFundSource()
+        XCTAssertEqual(updatedFundSource?.currentBalance, initialBalance + transaction.amount)
+    }
+    
+    func testCancelDeleteTransaction() {
+        // Given
+        let transaction = createTestTransaction()
+        transactionViewModel.transactionToDelete = transaction
+        transactionViewModel.showingDeleteConfirmation = true
+        let initialTransactionCount = transactionViewModel.transactions.count
+        
+        // When
+        transactionViewModel.cancelDeleteTransaction()
+        
+        // Then
+        XCTAssertEqual(transactionViewModel.transactions.count, initialTransactionCount)
+        XCTAssertFalse(transactionViewModel.showingDeleteConfirmation)
+        XCTAssertNil(transactionViewModel.transactionToDelete)
+    }
+    
     // MARK: - Helper Methods
     
     private func getTestCategory() -> Category? {

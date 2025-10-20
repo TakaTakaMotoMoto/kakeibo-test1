@@ -26,7 +26,9 @@ enum BudgetAppError: LocalizedError {
     
     // MARK: - Subcategory Errors
     case subcategoryCreateFailed(Error)
+    case subcategoryUpdateFailed(Error)
     case subcategoryDeleteFailed(Error)
+    case duplicateSubcategoryName
     
     // MARK: - Fund Source Errors
     case fundSourceCreateFailed(Error)
@@ -45,9 +47,38 @@ enum BudgetAppError: LocalizedError {
     case userAccountFetchFailed(Error)
     case invalidInput(reason: String)
     
+    // MARK: - Authentication Errors
+    case invalidCredentials
+    case weakPassword
+    case emailAlreadyExists
+    case userNotFound
+    case passwordResetTokenInvalid
+    case passwordResetTokenExpired
+    case loginFailed(Error)
+    case registrationFailed(Error)
+    case passwordResetFailed(Error)
+    
     // MARK: - Chart Errors
     case chartDataFetchFailed(Error)
     case chartCalculationFailed(Error)
+    
+    // MARK: - Deletion Errors
+    case deletionNotAllowed(reason: String)
+    case fundSourceInUse
+    case categoryInUse
+    case subcategoryInUse
+    
+    // MARK: - Sharing Errors
+    case shareCreation(Error)
+    case shareUpdate(Error)
+    case shareDeletion(Error)
+    case shareFetch(Error)
+    case shareAcceptance(Error)
+    case invalidInviteToken
+    case inviteTokenExpired
+    case shareAlreadyExists
+    case userSearchFailed(Error)
+    case dataSync(Error)
     
     // MARK: - Data Persistence Errors
     case dataCorruption
@@ -99,8 +130,12 @@ enum BudgetAppError: LocalizedError {
         // Subcategory Errors
         case .subcategoryCreateFailed(let error):
             return "error.subcategory.createFailed".localized(with: error.localizedDescription)
+        case .subcategoryUpdateFailed(let error):
+            return "error.subcategory.updateFailed".localized(with: error.localizedDescription)
         case .subcategoryDeleteFailed(let error):
             return "error.subcategory.deleteFailed".localized(with: error.localizedDescription)
+        case .duplicateSubcategoryName:
+            return "error.duplicateSubcategoryName".localized
             
         // Fund Source Errors
         case .fundSourceCreateFailed(let error):
@@ -132,6 +167,48 @@ enum BudgetAppError: LocalizedError {
         case .invalidInput(let reason):
             return "error.invalidInput".localized(with: reason)
             
+        // Authentication Errors
+        case .invalidCredentials:
+            return "error.auth.invalidCredentials".localized
+        case .weakPassword:
+            return "error.auth.weakPassword".localized
+        case .emailAlreadyExists:
+            return "error.auth.emailAlreadyExists".localized
+        case .userNotFound:
+            return "error.auth.userNotFound".localized
+        case .passwordResetTokenInvalid:
+            return "error.auth.passwordResetTokenInvalid".localized
+        case .passwordResetTokenExpired:
+            return "error.auth.passwordResetTokenExpired".localized
+        case .loginFailed(let error):
+            return "error.auth.loginFailed".localized(with: error.localizedDescription)
+        case .registrationFailed(let error):
+            return "error.auth.registrationFailed".localized(with: error.localizedDescription)
+        case .passwordResetFailed(let error):
+            return "error.auth.passwordResetFailed".localized(with: error.localizedDescription)
+            
+        // Sharing Errors
+        case .shareCreation(let error):
+            return "error.sharing.createFailed".localized(with: error.localizedDescription)
+        case .shareUpdate(let error):
+            return "error.sharing.updateFailed".localized(with: error.localizedDescription)
+        case .shareDeletion(let error):
+            return "error.sharing.deleteFailed".localized(with: error.localizedDescription)
+        case .shareFetch(let error):
+            return "error.sharing.fetchFailed".localized(with: error.localizedDescription)
+        case .shareAcceptance(let error):
+            return "error.sharing.acceptanceFailed".localized(with: error.localizedDescription)
+        case .invalidInviteToken:
+            return "error.sharing.invalidToken".localized
+        case .inviteTokenExpired:
+            return "error.sharing.tokenExpired".localized
+        case .shareAlreadyExists:
+            return "error.sharing.alreadyExists".localized
+        case .userSearchFailed(let error):
+            return "error.sharing.userSearchFailed".localized(with: error.localizedDescription)
+        case .dataSync(let error):
+            return "error.sharing.dataSyncFailed".localized(with: error.localizedDescription)
+            
         // Chart Errors
         case .chartDataFetchFailed(let error):
             return "error.chart.dataFetchFailed".localized(with: error.localizedDescription)
@@ -147,6 +224,16 @@ enum BudgetAppError: LocalizedError {
             return "error.migrationFailed".localized(with: error.localizedDescription)
         case .dataIntegrityCheckFailed(let error):
             return "error.dataIntegrityCheckFailed".localized(with: error.localizedDescription)
+            
+        // Deletion Errors
+        case .deletionNotAllowed(let reason):
+            return "error.deletionNotAllowed".localized(with: reason)
+        case .fundSourceInUse:
+            return "error.fundSourceInUse".localized
+        case .categoryInUse:
+            return "error.categoryInUse".localized
+        case .subcategoryInUse:
+            return "error.subcategoryInUse".localized
         }
     }
     
@@ -166,6 +253,16 @@ enum BudgetAppError: LocalizedError {
             return "error.reason.dataCorruption".localized
         case .syncFailure:
             return "error.reason.syncFailure".localized
+        case .deletionNotAllowed, .fundSourceInUse, .categoryInUse, .subcategoryInUse:
+            return "error.reason.deletionNotAllowed".localized
+        case .invalidCredentials:
+            return "error.reason.invalidCredentials".localized
+        case .weakPassword:
+            return "error.reason.weakPassword".localized
+        case .emailAlreadyExists:
+            return "error.reason.emailAlreadyExists".localized
+        case .invalidInviteToken, .inviteTokenExpired:
+            return "error.reason.invalidInviteToken".localized
         default:
             return nil
         }
@@ -187,6 +284,16 @@ enum BudgetAppError: LocalizedError {
             return "error.recovery.dataCorruption".localized
         case .syncFailure:
             return "error.recovery.syncFailure".localized
+        case .deletionNotAllowed, .fundSourceInUse, .categoryInUse, .subcategoryInUse:
+            return "error.recovery.deletionNotAllowed".localized
+        case .invalidCredentials:
+            return "error.recovery.invalidCredentials".localized
+        case .weakPassword:
+            return "error.recovery.weakPassword".localized
+        case .emailAlreadyExists:
+            return "error.recovery.emailAlreadyExists".localized
+        case .invalidInviteToken, .inviteTokenExpired:
+            return "error.recovery.invalidInviteToken".localized
         default:
             return "error.recovery.general".localized
         }
@@ -216,6 +323,8 @@ extension BudgetAppError {
             return .categoryFetchFailed(error)
         case .subcategoryCreate:
             return .subcategoryCreateFailed(error)
+        case .subcategoryUpdate:
+            return .subcategoryUpdateFailed(error)
         case .subcategoryDelete:
             return .subcategoryDeleteFailed(error)
         case .fundSourceCreate:
@@ -242,6 +351,12 @@ extension BudgetAppError {
             return .userAccountDeleteFailed(error)
         case .userAccountFetch:
             return .userAccountFetchFailed(error)
+        case .login:
+            return .loginFailed(error)
+        case .registration:
+            return .registrationFailed(error)
+        case .passwordReset:
+            return .passwordResetFailed(error)
         case .chartDataFetch:
             return .chartDataFetchFailed(error)
         case .chartCalculation:
@@ -250,6 +365,20 @@ extension BudgetAppError {
             return .migrationFailed(error)
         case .dataIntegrityCheck:
             return .dataIntegrityCheckFailed(error)
+        case .shareCreation:
+            return .shareCreation(error)
+        case .shareUpdate:
+            return .shareUpdate(error)
+        case .shareDeletion:
+            return .shareDeletion(error)
+        case .shareFetch:
+            return .shareFetch(error)
+        case .shareAcceptance:
+            return .shareAcceptance(error)
+        case .userSearch:
+            return .userSearchFailed(error)
+        case .dataSync:
+            return .dataSync(error)
         }
     }
 }
@@ -258,11 +387,13 @@ extension BudgetAppError {
 enum ErrorContext {
     case transactionCreate, transactionUpdate, transactionDelete, transactionFetch
     case categoryCreate, categoryUpdate, categoryDelete, categoryFetch
-    case subcategoryCreate, subcategoryDelete
+    case subcategoryCreate, subcategoryUpdate, subcategoryDelete
     case fundSourceCreate, fundSourceUpdate, fundSourceDelete, fundSourceFetch
     case fundSourceBalanceUpdate, fundSourceBalanceAdjust
     case fundSourceShare, fundSourceUnshare
     case userAccountCreate, userAccountUpdate, userAccountDelete, userAccountFetch
+    case login, registration, passwordReset
     case chartDataFetch, chartCalculation
     case migration, dataIntegrityCheck
+    case shareCreation, shareUpdate, shareDeletion, shareFetch, shareAcceptance, userSearch, dataSync
 }

@@ -24,6 +24,47 @@ struct TransactionFormView: View {
         NavigationView {
             Form {
                 Section("transaction.info".localized) {
+                    // Transaction Type Selection
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("transaction.type".localized)
+                            .font(.body)
+                            .fontWeight(.medium)
+                        
+                        HStack(spacing: 16) {
+                            ForEach(TransactionType.allCases, id: \.self) { type in
+                                Button(action: {
+                                    transactionViewModel.selectedTransactionType = type
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: transactionViewModel.selectedTransactionType == type ? "largecircle.fill.circle" : "circle")
+                                            .foregroundColor(transactionViewModel.selectedTransactionType == type ? ColorManager.primaryColor : ColorManager.secondaryText)
+                                            .font(.title3)
+                                        
+                                        Text(type.localizedName)
+                                            .font(.body)
+                                            .fontWeight(transactionViewModel.selectedTransactionType == type ? .semibold : .regular)
+                                            .foregroundColor(transactionViewModel.selectedTransactionType == type ? ColorManager.primaryColor : ColorManager.primaryText)
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(transactionViewModel.selectedTransactionType == type ? ColorManager.primaryColor.opacity(0.1) : Color.clear)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(transactionViewModel.selectedTransactionType == type ? ColorManager.primaryColor : ColorManager.borderColor, lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .accessibilityLabel("\("transaction.type".localized): \(type.localizedName)")
+                                .accessibilityHint("accessibility.hint.formField".localized)
+                                .accessibilityValue(transactionViewModel.selectedTransactionType == type ? "accessibility.value.selected".localized : "accessibility.value.notSelected".localized)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    
                     // Amount field
                     HStack {
                         Text("transaction.amount".localized)

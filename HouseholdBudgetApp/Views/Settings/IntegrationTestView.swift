@@ -6,11 +6,17 @@ struct IntegrationTestView: View {
     @StateObject private var integrationManager: IntegrationTestManager
     @StateObject private var compatibilityManager = DeviceCompatibilityManager()
     @StateObject private var endToEndRunner: EndToEndTestRunner
+    @StateObject private var securityManager: SecurityTestManager
+    @StateObject private var usabilityManager: UsabilityTestManager
+    @StateObject private var finalValidator: FinalIntegrationValidator
     @State private var selectedTab = 0
     
     init(modelContext: ModelContext) {
         self._integrationManager = StateObject(wrappedValue: IntegrationTestManager(modelContext: modelContext))
         self._endToEndRunner = StateObject(wrappedValue: EndToEndTestRunner(modelContext: modelContext))
+        self._securityManager = StateObject(wrappedValue: SecurityTestManager(modelContext: modelContext))
+        self._usabilityManager = StateObject(wrappedValue: UsabilityTestManager(modelContext: modelContext))
+        self._finalValidator = StateObject(wrappedValue: FinalIntegrationValidator(modelContext: modelContext))
     }
     
     var body: some View {
@@ -19,8 +25,10 @@ struct IntegrationTestView: View {
                 Picker("Test Type", selection: $selectedTab) {
                     Text("Integration").tag(0)
                     Text("End-to-End").tag(1)
-                    Text("Compatibility").tag(2)
-                    Text("Performance").tag(3)
+                    Text("Security").tag(2)
+                    Text("Usability").tag(3)
+                    Text("Final").tag(4)
+                    Text("Performance").tag(5)
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
@@ -32,11 +40,17 @@ struct IntegrationTestView: View {
                     endToEndTestsView
                         .tag(1)
                     
-                    deviceCompatibilityView
+                    securityTestsView
                         .tag(2)
                     
-                    performanceMetricsView
+                    usabilityTestsView
                         .tag(3)
+                    
+                    finalValidationView
+                        .tag(4)
+                    
+                    performanceMetricsView
+                        .tag(5)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             }
@@ -194,6 +208,171 @@ struct IntegrationTestView: View {
                         List(compatibilityManager.compatibilityResults, id: \.testName) { result in
                             CompatibilityResultRow(result: result)
                         }
+                    }
+                }
+            }
+        }
+    }
+    
+    private var securityTestsView: some View {
+        VStack {
+            if securityManager.isRunningTests {
+                VStack(spacing: 20) {
+                    ProgressView("Running Security Tests...")
+                        .scaleEffect(1.2)
+                    
+                    Text("Validating security measures")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack {
+                    Button(action: {
+                        Task {
+                            await securityManager.runSecurityTests()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "shield.checkered")
+                            Text("Run Security Tests")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(10)
+                    }
+                    .padding()
+                    
+                    if !securityManager.securityResults.isEmpty {
+                        List(securityManager.securityResults, id: \.testName) { result in
+                            SecurityResultRow(result: result)
+                        }
+                    } else {
+                        Text("No security tests have been run yet")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var usabilityTestsView: some View {
+        VStack {
+            if usabilityManager.isRunningTests {
+                VStack(spacing: 20) {
+                    ProgressView("Running Usability Tests...")
+                        .scaleEffect(1.2)
+                    
+                    Text(usabilityManager.currentTestStep)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack {
+                    Button(action: {
+                        Task {
+                            await usabilityManager.runUsabilityTests()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "person.crop.circle.badge.checkmark")
+                            Text("Run Usability Tests")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.purple)
+                        .cornerRadius(10)
+                    }
+                    .padding()
+                    
+                    if !usabilityManager.usabilityResults.isEmpty {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Overall Usability Score")
+                                    .font(.headline)
+                                Spacer()
+                                Text("\(usabilityManager.overallUsabilityScore)/100")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(usabilityManager.overallUsabilityRating.color)
+                            }
+                            .padding(.horizontal)
+                            
+                            List(usabilityManager.usabilityResults, id: \.testName) { result in
+                                UsabilityResultRow(result: result)
+                            }
+                        }
+                    } else {
+                        Text("No usability tests have been run yet")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var finalValidationView: some View {
+        VStack {
+            if finalValidator.isValidating {
+                VStack(spacing: 20) {
+                    ProgressView("Running Final Validation...")
+                        .scaleEffect(1.2)
+                    
+                    Text("Comprehensive system validation")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack {
+                    Button(action: {
+                        Task {
+                            await finalValidator.runFinalValidation()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "checkmark.seal.fill")
+                            Text("Run Final Validation")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.indigo)
+                        .cornerRadius(10)
+                    }
+                    .padding()
+                    
+                    if !finalValidator.validationResults.isEmpty {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Overall Status")
+                                    .font(.headline)
+                                Spacer()
+                                HStack {
+                                    Image(systemName: finalValidator.overallStatus.icon)
+                                    Text(finalValidator.overallStatus.description)
+                                }
+                                .foregroundColor(finalValidator.overallStatus.color)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            }
+                            .padding(.horizontal)
+                            
+                            List(finalValidator.validationResults, id: \.component) { result in
+                                FinalValidationResultRow(result: result)
+                            }
+                        }
+                    } else {
+                        Text("No final validation has been run yet")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
             }
@@ -381,6 +560,155 @@ struct EndToEndResultRow: View {
             }
             
             Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct SecurityResultRow: View {
+    let result: SecurityTestResult
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: result.status.icon)
+                    .foregroundColor(result.status.color)
+                
+                Text(result.testName)
+                    .font(.headline)
+                
+                Spacer()
+            }
+            
+            Text(result.message)
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            if !result.vulnerabilities.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Vulnerabilities:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.red)
+                    
+                    ForEach(result.vulnerabilities, id: \.self) { vulnerability in
+                        Text("• \(vulnerability)")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            
+            if !result.recommendations.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Recommendations:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                    
+                    ForEach(result.recommendations, id: \.self) { recommendation in
+                        Text("• \(recommendation)")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct UsabilityResultRow: View {
+    let result: UsabilityTestResult
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: result.status.icon)
+                    .foregroundColor(result.status.color)
+                
+                Text(result.testName)
+                    .font(.headline)
+                
+                Spacer()
+                
+                Text("\(result.score)/100")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(result.status.color)
+            }
+            
+            Text(result.message)
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            if !result.issues.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Issues:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.orange)
+                    
+                    ForEach(result.issues, id: \.self) { issue in
+                        Text("• \(issue)")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
+            
+            if !result.recommendations.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Recommendations:")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.blue)
+                    
+                    ForEach(result.recommendations, id: \.self) { recommendation in
+                        Text("• \(recommendation)")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct FinalValidationResultRow: View {
+    let result: ValidationResult
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: result.status.icon)
+                    .foregroundColor(result.status.color)
+                
+                Text(result.component)
+                    .font(.headline)
+                
+                Spacer()
+                
+                Text(result.status.description)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(result.status.color)
+            }
+            
+            Text(result.message)
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            if !result.details.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(result.details, id: \.self) { detail in
+                        Text(detail)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
         }
         .padding(.vertical, 4)
     }

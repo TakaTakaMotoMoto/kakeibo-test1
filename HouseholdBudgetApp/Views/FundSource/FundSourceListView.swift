@@ -48,13 +48,26 @@ struct FundSourceListView: View {
                         // Fund sources list
                         Section("fundSource.list".localized) {
                             ForEach(viewModel.fundSources, id: \.id) { fundSource in
-                                FundSourceRowView(
-                                    fundSource: fundSource,
-                                    onBalanceAdjust: {
-                                        selectedFundSource = fundSource
-                                        showingBalanceAdjustment = true
+                                NavigationLink(destination: FundSourceDetailView(fundSource: fundSource, viewModel: viewModel)) {
+                                    FundSourceRowView(
+                                        fundSource: fundSource,
+                                        onBalanceAdjust: {
+                                            selectedFundSource = fundSource
+                                            showingBalanceAdjustment = true
+                                        },
+                                        onDelete: {
+                                            viewModel.confirmDeleteFundSource(fundSource)
+                                        },
+                                        canDelete: viewModel.canDeleteFundSource(fundSource)
+                                    )
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button("action.delete".localized, role: .destructive) {
+                                        viewModel.confirmDeleteFundSource(fundSource)
                                     }
-                                )
+                                    .disabled(!viewModel.canDeleteFundSource(fundSource))
+                                    .accessibilityLabel("accessibility.deleteFundSource".localized)
+                                }
                             }
                             .onDelete(perform: deleteFundSources)
                         }
@@ -85,6 +98,18 @@ struct FundSourceListView: View {
                 }
             }
             .errorAlert($viewModel.currentError)
+            .alert("fundSource.deleteConfirmation".localized, isPresented: $viewModel.showingDeleteConfirmation) {
+                Button("fundSource.deleteButton".localized, role: .destructive) {
+                    viewModel.executeDeleteFundSource()
+                }
+                Button("fundSource.cancelDelete".localized, role: .cancel) {
+                    viewModel.cancelDeleteFundSource()
+                }
+            } message: {
+                if let fundSource = viewModel.fundSourceToDelete {
+                    Text(viewModel.canDeleteFundSource(fundSource) ? "fundSource.deleteMessage".localized : "fundSource.deleteInUseMessage".localized)
+                }
+            }
         }
         .onAppear {
             // Initialize viewModel with the correct modelContext
@@ -95,7 +120,7 @@ struct FundSourceListView: View {
     private func deleteFundSources(offsets: IndexSet) {
         for index in offsets {
             let fundSource = viewModel.fundSources[index]
-            viewModel.deleteFundSource(fundSource)
+            viewModel.confirmDeleteFundSource(fundSource)
         }
     }
     
@@ -107,6 +132,8 @@ struct FundSourceListView: View {
 struct FundSourceRowView: View {
     let fundSource: FundSource
     let onBalanceAdjust: () -> Void
+    let onDelete: () -> Void
+    let canDelete: Bool
     
     var body: some View {
         HStack {
@@ -134,14 +161,27 @@ struct FundSourceRowView: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 4) {
-                Button("action.adjust".localized) {
-                    onBalanceAdjust()
+                HStack(spacing: 8) {
+                    Button("action.adjust".localized) {
+                        onBalanceAdjust()
+                    }
+                    .font(.caption)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .accessibilityLabel("accessibility.adjustBalance".localized)
+                    .accessibilityHint("accessibility.hint.adjustBalance".localized)
+                    
+                    Button("action.delete".localized) {
+                        onDelete()
+                    }
+                    .font(.caption)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .foregroundColor(canDelete ? .red : .gray)
+                    .disabled(!canDelete)
+                    .accessibilityLabel("accessibility.deleteFundSource".localized)
+                    .accessibilityHint(canDelete ? "accessibility.hint.deleteFundSource".localized : "error.fundSourceInUse".localized)
                 }
-                .font(.caption)
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .accessibilityLabel("accessibility.adjustBalance".localized)
-                .accessibilityHint("accessibility.hint.adjustBalance".localized)
                 
                 Text("fundSource.created".localized(with: formatDate(fundSource.createdAt)))
                     .font(.caption2)

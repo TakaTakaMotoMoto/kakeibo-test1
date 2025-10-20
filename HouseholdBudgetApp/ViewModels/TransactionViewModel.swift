@@ -6,14 +6,20 @@ final class TransactionViewModel {
     private let modelContext: ModelContext
     private let fundSourceViewModel: FundSourceViewModel
     private let dataIntegrityService: DataIntegrityService
+    private var userAccountViewModel: UserAccountViewModel?
     
     var transactions: [Transaction] = []
     var currentError: BudgetAppError?
+    
+    // Deletion confirmation
+    var showingDeleteConfirmation = false
+    var transactionToDelete: Transaction?
     
     // Form properties
     var amount: String = ""
     var selectedDate: Date = Date()
     var note: String = ""
+    var selectedTransactionType: TransactionType = .expense
     var selectedCategory: Category?
     var selectedSubcategory: Subcategory?
     var selectedFundSource: FundSource?
@@ -31,6 +37,7 @@ final class TransactionViewModel {
         self.modelContext = modelContext
         self.fundSourceViewModel = fundSourceViewModel
         self.dataIntegrityService = dataIntegrityService
+        self.userAccountViewModel = UserAccountViewModel(modelContext: modelContext)
         fetchTransactions()
     }
     
@@ -57,9 +64,11 @@ final class TransactionViewModel {
                 amount: amountDecimal,
                 date: selectedDate,
                 note: note.isEmpty ? nil : note,
+                type: selectedTransactionType,
                 category: selectedCategory,
                 subcategory: selectedSubcategory,
-                fundSource: fundSource
+                fundSource: fundSource,
+                createdByAccountId: userAccountViewModel?.currentAccount?.id
             )
             
             // Validate transaction using data integrity service
@@ -98,6 +107,7 @@ final class TransactionViewModel {
             transaction.amount = amountDecimal
             transaction.date = selectedDate
             transaction.note = note.isEmpty ? nil : note
+            transaction.type = selectedTransactionType
             transaction.category = selectedCategory
             transaction.subcategory = selectedSubcategory
             transaction.fundSource = newFundSource
@@ -131,7 +141,7 @@ final class TransactionViewModel {
     
     func deleteTransaction(_ transaction: Transaction) {
         do {
-            // Restore balance to fund source
+            // Restore balance to fund source (add back the amount since it was deducted)
             if let fundSource = transaction.fundSource {
                 fundSourceViewModel.updateBalance(for: fundSource, amount: -transaction.amount)
             }
@@ -143,6 +153,23 @@ final class TransactionViewModel {
         } catch {
             currentError = BudgetAppError.from(error, context: .transactionDelete)
         }
+    }
+    
+    func confirmDeleteTransaction(_ transaction: Transaction) {
+        transactionToDelete = transaction
+        showingDeleteConfirmation = true
+    }
+    
+    func executeDeleteTransaction() {
+        guard let transaction = transactionToDelete else { return }
+        deleteTransaction(transaction)
+        transactionToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func cancelDeleteTransaction() {
+        transactionToDelete = nil
+        showingDeleteConfirmation = false
     }
     
     // MARK: - Data Fetching
@@ -178,6 +205,7 @@ final class TransactionViewModel {
         amount = transaction.amount.description
         selectedDate = transaction.date
         note = transaction.note ?? ""
+        selectedTransactionType = transaction.type
         selectedCategory = transaction.category
         selectedSubcategory = transaction.subcategory
         selectedFundSource = transaction.fundSource
@@ -187,6 +215,7 @@ final class TransactionViewModel {
         amount = ""
         selectedDate = Date()
         note = ""
+        selectedTransactionType = .expense
         selectedCategory = nil
         selectedSubcategory = nil
         selectedFundSource = nil
@@ -248,6 +277,81 @@ final class TransactionViewModel {
     
     func getTotalAmount() -> Decimal {
         return transactions.reduce(0) { $0 + $1.amount }
+    }
+}
+
+    // MARK: - Sharing and Permission Checking
+    
+    /// Checks if the current user can edit the given transaction
+    func canEditTransaction(_ transaction: Transaction) -> Bool {
+        guard let currentUserId = userAccountViewModel?.currentAccount?.id else {
+            return false
+        }
+        
+        return transaction.canBeEditedBy(userId: currentUserId)
+    }
+    
+    /// Checks if the current user can delete the given transaction
+    func canDeleteTransaction(_ transaction: Transaction) -> Bool {
+        guard let currentUserId = userAccountViewModel?.currentAccount?.id else {
+            return false
+        }
+        
+        return transaction.canBeDeletedBy(userId: currentUserId)
+    }
+    
+    /// Gets the creator of a transaction
+    func getTransactionCreator(_ transaction: Transaction) -> UserAccount? {
+        guard let createdByAccountId = transaction.createdByAccountId else {
+            return nil
+        }
+        
+        return userAccountViewModel?.getAccount(by: createdByAccountId)
+    }
+    
+    /// Gets display name for transaction creator
+    func getTransactionCreatorDisplay(_ transaction: Transaction) -> String {
+        guard let creator = getTransactionCreator(transaction) else {
+            return "transaction.creator.unknown".localized
+        }
+        
+        if creator.id == userAccountViewModel?.currentAccount?.id {
+            return "transaction.creator.you".localized
+        }
+        
+        return creator.username
+    }
+    
+    /// Filters transactions based on sharing criteria
+    func getSharedTransactions() -> [Transaction] {
+        return transactions.filter { $0.isShared }
+    }
+    
+    /// Gets transactions created by the current user
+    func getMyTransactions() -> [Transaction] {
+        guard let currentUserId = userAccountViewModel?.currentAccount?.id else {
+            return []
+        }
+        
+        return transactions.filter { $0.createdByAccountId == currentUserId }
+    }
+    
+    /// Gets transactions created by other users (shared)
+    func getOthersTransactions() -> [Transaction] {
+        guard let currentUserId = userAccountViewModel?.currentAccount?.id else {
+            return []
+        }
+        
+        return transactions.filter { 
+            $0.isShared && $0.createdByAccountId != currentUserId 
+        }
+    }
+    
+    /// Synchronizes transaction data for shared fund sources
+    func synchronizeSharedTransactions() async {
+        // This would trigger synchronization of shared transaction data
+        // For now, we'll just refresh the local data
+        fetchTransactions()
     }
 }
 

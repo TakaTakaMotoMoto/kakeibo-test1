@@ -27,6 +27,20 @@ class DataManager {
         // Update fund source balance
         if (transaction.fundSourceId) {
             this.storage.updateFundSourceBalance(transaction.fundSourceId, transaction.amount);
+            
+            // Mark transaction as shared if fund source is shared
+            const fundSources = this.storage.getFundSources();
+            const fundSource = fundSources.find(fs => fs.id === transaction.fundSourceId);
+            if (fundSource && fundSource.isShared) {
+                transaction.isShared = true;
+                // Update the transaction in storage
+                const transactions = this.storage.getTransactions();
+                const index = transactions.findIndex(t => t.id === transaction.id);
+                if (index !== -1) {
+                    transactions[index] = transaction;
+                    this.storage.setTransactions(transactions);
+                }
+            }
         }
         
         return transaction;
@@ -63,9 +77,96 @@ class DataManager {
         return deleted;
     }
 
+    // Fund source deletion with validation
+    deleteFundSource(id) {
+        const transactions = this.getTransactions();
+        const hasTransactions = transactions.some(t => t.fundSourceId === id);
+        
+        if (hasTransactions) {
+            throw new Error('この資金元は取引で使用されているため削除できません');
+        }
+        
+        return this.storage.deleteFundSource(id);
+    }
+
+    canDeleteFundSource(id) {
+        const transactions = this.getTransactions();
+        return !transactions.some(t => t.fundSourceId === id);
+    }
+
+    // Subcategory management
+    getSubcategories(categoryId = null) {
+        const subcategories = this.storage.getSubcategories();
+        if (categoryId) {
+            return subcategories.filter(sc => sc.categoryId === categoryId);
+        }
+        return subcategories;
+    }
+
+    addSubcategory(subcategoryData) {
+        // Check for duplicate names within the same category
+        const existingSubcategories = this.getSubcategories(subcategoryData.categoryId);
+        const isDuplicate = existingSubcategories.some(sc => 
+            sc.name.toLowerCase() === subcategoryData.name.toLowerCase()
+        );
+        
+        if (isDuplicate) {
+            throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
+        }
+        
+        return this.storage.addSubcategory(subcategoryData);
+    }
+
+    updateSubcategory(id, updates) {
+        // Check for duplicate names if name is being updated
+        if (updates.name) {
+            const subcategory = this.storage.getSubcategories().find(sc => sc.id === id);
+            if (subcategory) {
+                const existingSubcategories = this.getSubcategories(subcategory.categoryId);
+                const isDuplicate = existingSubcategories.some(sc => 
+                    sc.id !== id && sc.name.toLowerCase() === updates.name.toLowerCase()
+                );
+                
+                if (isDuplicate) {
+                    throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
+                }
+            }
+        }
+        
+        return this.storage.updateSubcategory(id, updates);
+    }
+
+    deleteSubcategory(id) {
+        const transactions = this.getTransactions();
+        const hasTransactions = transactions.some(t => t.subcategoryId === id);
+        
+        if (hasTransactions) {
+            throw new Error('このサブカテゴリは取引で使用されているため削除できません');
+        }
+        
+        return this.storage.deleteSubcategory(id);
+    }
+
+    canDeleteSubcategory(id) {
+        const transactions = this.getTransactions();
+        return !transactions.some(t => t.subcategoryId === id);
+    }
+
     // Filter methods
     setFilters(filters) {
         this.filters = { ...this.filters, ...filters };
+    }
+
+    // Add sharing-related filters
+    setAdvancedFilters(filters) {
+        this.filters = { 
+            ...this.filters, 
+            ...filters,
+            createdBy: filters.createdBy || null,
+            fundSource: filters.fundSource || null,
+            showOnlyMyTransactions: filters.showOnlyMyTransactions || false,
+            showOnlySharedTransactions: filters.showOnlySharedTransactions || false
+        };
     }
 
     clearFilters() {
@@ -73,7 +174,10 @@ class DataManager {
             startDate: null,
             endDate: null,
             category: null,
-            fundSource: null
+            fundSource: null,
+            createdBy: null,
+            showOnlyMyTransactions: false,
+            showOnlySharedTransactions: false
         };
     }
 
@@ -82,6 +186,8 @@ class DataManager {
     }
 
     applyFilters(transactions) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        
         return transactions.filter(transaction => {
             // Date filter
             if (this.filters.startDate && new Date(transaction.date) < new Date(this.filters.startDate)) {
@@ -99,6 +205,25 @@ class DataManager {
             // Fund source filter
             if (this.filters.fundSource && transaction.fundSourceId !== this.filters.fundSource) {
                 return false;
+            }
+            
+            // Creator filter
+            if (this.filters.createdBy && transaction.createdBy !== this.filters.createdBy) {
+                return false;
+            }
+            
+            // Show only my transactions
+            if (this.filters.showOnlyMyTransactions && currentUser) {
+                if (transaction.createdBy !== currentUser.id) {
+                    return false;
+                }
+            }
+            
+            // Show only shared transactions
+            if (this.filters.showOnlySharedTransactions) {
+                if (!transaction.isShared) {
+                    return false;
+                }
             }
             
             return true;
@@ -236,6 +361,44 @@ class DataManager {
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    // Sharing-related methods
+    canEditTransaction(transaction) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        if (!currentUser) return false;
+        
+        // User can edit their own transactions
+        return transaction.createdBy === currentUser.id;
+    }
+
+    getTransactionCreatorDisplay(transaction) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        
+        if (!transaction.createdBy) {
+            return 'ゲスト';
+        }
+        
+        if (currentUser && transaction.createdBy === currentUser.id) {
+            return '自分';
+        }
+        
+        return transaction.createdByUsername || 'ユーザー';
+    }
+
+    isTransactionShared(transaction) {
+        const fundSources = this.storage.getFundSources();
+        const fundSource = fundSources.find(fs => fs.id === transaction.fundSourceId);
+        return fundSource ? fundSource.isShared : false;
+    }
+
+    getSharedUsers() {
+        // For demo purposes, return mock shared users
+        // In a real app, this would fetch from a server
+        return [
+            { id: 'user1', username: '田中太郎', email: 'tanaka@example.com' },
+            { id: 'user2', username: '佐藤花子', email: 'sato@example.com' }
+        ];
     }
 
     // Validation methods

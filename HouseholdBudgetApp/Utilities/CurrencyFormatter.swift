@@ -27,11 +27,29 @@ class CurrencyFormatter {
 }
 
 extension DateFormatter {
-    static func shortDate(from date: Date) -> String {
+    static let shortDate: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .none
-        return formatter.string(from: date)
+        return formatter
+    }()
+    
+    static let longDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter
+    }()
+    
+    static let longDateTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .short
+        return formatter
+    }()
+    
+    static func shortDate(from date: Date) -> String {
+        return shortDate.string(from: date)
     }
     
     static func mediumDate(from date: Date) -> String {
