@@ -3,6 +3,7 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(UserAccountViewModel.self) private var userAccountViewModel
     @EnvironmentObject private var dataIntegrityService: DataIntegrityService
     @State private var showingIntegrityAlert = false
     @State private var showingBackupAlert = false
@@ -12,8 +13,8 @@ struct SettingsView: View {
     @State private var showingAccountSettings = false
     @State private var showingSharingSettings = false
     @State private var showingIntegrationTests = false
+    @State private var showingLogoutConfirmation = false
     
-    @State private var userAccountViewModel: UserAccountViewModel?
     @State private var fundSourceViewModel: FundSourceViewModel?
     
     // MARK: - App Information
@@ -34,34 +35,83 @@ struct SettingsView: View {
         NavigationView {
             List {
                 Section("settings.account".localized) {
-                    Button(action: { showingAccountSettings = true }) {
-                        HStack {
-                            Image(systemName: "person.circle")
-                                .foregroundColor(ColorManager.primaryAccent)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading) {
-                                Text("settings.user".localized)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                if let currentAccount = userAccountViewModel?.currentAccount {
+                    if userAccountViewModel.isLoggedIn, let currentAccount = userAccountViewModel.currentAccount {
+                        // Current Account Info
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "person.circle.fill")
+                                    .foregroundColor(ColorManager.primaryAccent)
+                                    .font(.title2)
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading) {
                                     Text(currentAccount.username)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text(currentAccount.email)
                                         .font(.caption)
                                         .foregroundColor(ColorManager.secondaryText)
-                                } else {
-                                    Text("account.noAccount".localized)
+                                    if let lastLogin = currentAccount.lastLoginDate {
+                                        Text("Last login: \(DateFormatter.localizedString(from: lastLogin, dateStyle: .short, timeStyle: .short))")
+                                            .font(.caption2)
+                                            .foregroundColor(ColorManager.secondaryText)
+                                    }
+                                }
+                                Spacer()
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        
+                        // Account Management
+                        Button(action: { showingAccountSettings = true }) {
+                            HStack {
+                                Image(systemName: "person.badge.key")
+                                    .foregroundColor(.blue)
+                                    .accessibilityHidden(true)
+                                Text("settings.manageAccounts")
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(ColorManager.secondaryText)
+                                    .font(.caption)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        
+                        // Sign Out
+                        Button(action: { showingLogoutConfirmation = true }) {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    .foregroundColor(.red)
+                                    .accessibilityHidden(true)
+                                Text("settings.signOut")
+                                    .font(.body)
+                                    .foregroundColor(.red)
+                                Spacer()
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    } else {
+                        // Not logged in
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "person.circle")
+                                    .foregroundColor(ColorManager.secondaryText)
+                                    .font(.title2)
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading) {
+                                    Text("settings.noAccount")
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text("settings.createAccountHint")
                                         .font(.caption)
                                         .foregroundColor(ColorManager.secondaryText)
                                 }
+                                Spacer()
                             }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(ColorManager.secondaryText)
-                                .font(.caption)
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("settings.accountSettings".localized)
                 }
                 
                 Section("settings.sharing".localized) {
@@ -74,7 +124,7 @@ struct SettingsView: View {
                                 Text("settings.budgetSharing".localized)
                                     .font(.body)
                                     .foregroundColor(.primary)
-                                if let currentAccount = userAccountViewModel?.currentAccount {
+                                if let currentAccount = userAccountViewModel.currentAccount {
                                     let sharedCount = currentAccount.sharedFundSources.count
                                     Text(sharedCount > 0 ? "\(sharedCount)個の資金元を共有中" : "sharing.notShared".localized)
                                         .font(.caption)
@@ -91,9 +141,32 @@ struct SettingsView: View {
                                 .font(.caption)
                         }
                     }
+                    .disabled(!userAccountViewModel.isLoggedIn)
                     .padding(.vertical, 4)
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("settings.budgetSharing".localized)
+                }
+                
+                Section("settings.categories".localized) {
+                    NavigationLink(destination: SubcategoryManagementView(viewModel: CategoryViewModel(modelContext: modelContext))) {
+                        HStack {
+                            Image(systemName: "folder.badge.gearshape")
+                                .foregroundColor(.orange)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading) {
+                                Text("subcategory.management".localized)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                Text("settings.categoriesDescription".localized)
+                                    .font(.caption)
+                                    .foregroundColor(ColorManager.secondaryText)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("subcategory.management".localized)
                 }
                 
                 Section("settings.dataManagement".localized) {
@@ -286,27 +359,29 @@ struct SettingsView: View {
                 Text(alertMessage)
             }
             .sheet(isPresented: $showingAccountSettings) {
-                if let userAccountViewModel = userAccountViewModel {
-                    UserAccountListView(viewModel: userAccountViewModel)
-                }
+                UserAccountListView(viewModel: userAccountViewModel)
             }
             .sheet(isPresented: $showingSharingSettings) {
-                if let userAccountViewModel = userAccountViewModel,
-                   let fundSourceViewModel = fundSourceViewModel {
+                if let fundSourceViewModel = fundSourceViewModel {
                     SharingSettingsView(
                         userAccountViewModel: userAccountViewModel,
                         fundSourceViewModel: fundSourceViewModel
                     )
                 }
             }
+            .confirmationDialog("Sign Out", isPresented: $showingLogoutConfirmation) {
+                Button("settings.signOut", role: .destructive) {
+                    userAccountViewModel.logout()
+                }
+                Button("common.cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to sign out?")
+            }
             .sheet(isPresented: $showingIntegrationTests) {
                 IntegrationTestView(modelContext: modelContext)
             }
             .onAppear {
-                // Initialize ViewModels with the actual modelContext
-                if userAccountViewModel == nil {
-                    userAccountViewModel = UserAccountViewModel(modelContext: modelContext)
-                }
+                // Initialize FundSourceViewModel with the actual modelContext
                 if fundSourceViewModel == nil {
                     fundSourceViewModel = FundSourceViewModel(modelContext: modelContext)
                 }

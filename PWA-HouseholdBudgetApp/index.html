@@ -122,6 +122,38 @@
                 <!-- Settings View -->
                 <div id="settings-view" class="view">
                     <div class="settings-sections">
+                        <!-- User Account Section -->
+                        <div class="settings-section">
+                            <h3>アカウント</h3>
+                            <div id="user-info" class="user-info-section">
+                                <!-- User info will be populated here -->
+                            </div>
+                            <div class="settings-item" id="logout-btn" style="display: none;">
+                                <span class="icon">🚪</span>
+                                <span>ログアウト</span>
+                                <span class="arrow">›</span>
+                            </div>
+                            <div class="settings-item" id="show-login" style="display: none;">
+                                <span class="icon">👤</span>
+                                <span>ログイン</span>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-section" id="sharing-section" style="display: none;">
+                            <h3>共有設定</h3>
+                            <div class="settings-item" id="manage-sharing">
+                                <span class="icon">🔗</span>
+                                <span>資金元の共有管理</span>
+                                <span class="arrow">›</span>
+                            </div>
+                            <div class="settings-item" id="shared-users">
+                                <span class="icon">👥</span>
+                                <span>共有ユーザー</span>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+
                         <div class="settings-section">
                             <h3>データ管理</h3>
                             <div class="settings-item" id="export-data">
@@ -190,15 +222,15 @@
                 <form id="transaction-form" class="modal-body">
                     <div class="form-group">
                         <label>取引タイプ</label>
-                        <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="radio" name="type" value="expense" checked>
-                                支出
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                <input type="radio" name="type" value="income">
-                                収入
-                            </label>
+                        <div class="transaction-type-group">
+                            <div class="transaction-type-option">
+                                <input type="radio" id="type-expense" name="type" value="expense" checked>
+                                <label for="type-expense">支出</label>
+                            </div>
+                            <div class="transaction-type-option">
+                                <input type="radio" id="type-income" name="type" value="income">
+                                <label for="type-income">収入</label>
+                            </div>
                         </div>
                     </div>
                     
@@ -212,6 +244,16 @@
                         <select id="category" name="category" required>
                             <option value="">選択してください</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subcategory">サブカテゴリ</label>
+                        <select id="subcategory" name="subcategory">
+                            <option value="">選択してください</option>
+                        </select>
+                        <button type="button" id="manage-subcategories" class="btn secondary small" style="margin-top: 8px;">
+                            サブカテゴリ管理
+                        </button>
                     </div>
                     
                     <div class="form-group">
@@ -290,9 +332,195 @@
                         </select>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="filter-fund-source">資金元</label>
+                        <select id="filter-fund-source">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filter-creator">登録者</label>
+                        <select id="filter-creator">
+                            <option value="">すべて</option>
+                            <option value="me">自分の取引のみ</option>
+                            <option value="shared">共有取引のみ</option>
+                        </select>
+                    </div>
+                    
                     <div class="form-actions">
                         <button type="button" class="btn secondary" id="clear-filters">クリア</button>
                         <button type="button" class="btn primary" id="apply-filters">適用</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subcategory Management Modal -->
+        <div id="subcategory-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>サブカテゴリ管理</h2>
+                    <button class="close-btn" data-modal="subcategory-modal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="subcategory-section">
+                        <div class="section-header">
+                            <h3 id="selected-category-name">カテゴリを選択してください</h3>
+                            <button type="button" id="add-subcategory" class="btn primary small" disabled>
+                                + サブカテゴリ追加
+                            </button>
+                        </div>
+                        <div id="subcategory-list" class="subcategory-list">
+                            <!-- Subcategories will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subcategory Form Modal -->
+        <div id="subcategory-form-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="subcategory-form-title">サブカテゴリを追加</h2>
+                    <button class="close-btn" data-modal="subcategory-form-modal">×</button>
+                </div>
+                <form id="subcategory-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="subcategory-name">サブカテゴリ名</label>
+                        <input type="text" id="subcategory-name" name="name" required placeholder="サブカテゴリ名を入力">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn secondary" data-modal="subcategory-form-modal">キャンセル</button>
+                        <button type="submit" class="btn primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Authentication Modal -->
+        <div id="auth-modal" class="auth-modal">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <div class="app-logo">📊</div>
+                    <h1>家計簿アプリ</h1>
+                    <p>アカウントにログインして家計管理を始めましょう</p>
+                </div>
+
+                <!-- Login View -->
+                <div id="login-view" class="auth-view">
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="login-email">メールアドレス</label>
+                            <input type="email" id="login-email" name="email" required placeholder="メールアドレスを入力">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="login-password">パスワード</label>
+                            <input type="password" id="login-password" name="password" required placeholder="パスワードを入力">
+                        </div>
+                        
+                        <button type="submit" class="btn primary full-width">ログイン</button>
+                    </form>
+                    
+                    <div class="auth-links">
+                        <button type="button" class="link-btn" onclick="authManager.switchAuthMode('reset')">
+                            パスワードを忘れた場合
+                        </button>
+                        <div class="auth-switch">
+                            <span>アカウントをお持ちでない方は</span>
+                            <button type="button" class="link-btn" onclick="authManager.switchAuthMode('register')">
+                                新規登録
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Register View -->
+                <div id="register-view" class="auth-view" style="display: none;">
+                    <form id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="register-email">メールアドレス</label>
+                            <input type="email" id="register-email" name="email" required placeholder="メールアドレスを入力">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="register-username">ユーザー名</label>
+                            <input type="text" id="register-username" name="username" required placeholder="ユーザー名を入力">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="register-password">パスワード</label>
+                            <input type="password" id="register-password" name="password" required placeholder="パスワードを入力">
+                            <div class="password-requirements">
+                                <small>8文字以上で、英字と数字を含む必要があります</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="register-confirm-password">パスワード確認</label>
+                            <input type="password" id="register-confirm-password" name="confirmPassword" required placeholder="パスワードを再入力">
+                        </div>
+                        
+                        <button type="submit" class="btn primary full-width">アカウント作成</button>
+                    </form>
+                    
+                    <div class="auth-links">
+                        <div class="auth-switch">
+                            <span>既にアカウントをお持ちの方は</span>
+                            <button type="button" class="link-btn" onclick="authManager.switchAuthMode('login')">
+                                ログイン
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Reset View -->
+                <div id="reset-view" class="auth-view" style="display: none;">
+                    <form id="reset-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="reset-email">メールアドレス</label>
+                            <input type="email" id="reset-email" name="email" required placeholder="メールアドレスを入力">
+                        </div>
+                        
+                        <button type="submit" class="btn primary full-width">リセットトークンを送信</button>
+                    </form>
+                    
+                    <div id="reset-token-display" class="reset-token-section" style="display: none;">
+                        <!-- Reset token will be displayed here -->
+                    </div>
+                    
+                    <div id="reset-password-section" class="reset-password-form" style="display: none;">
+                        <form id="reset-password-form">
+                            <div class="form-group">
+                                <label for="reset-token">リセットトークン</label>
+                                <input type="text" id="reset-token" name="token" required placeholder="リセットトークンを入力">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="new-password">新しいパスワード</label>
+                                <input type="password" id="new-password" name="newPassword" required placeholder="新しいパスワードを入力">
+                                <div class="password-requirements">
+                                    <small>8文字以上で、英字と数字を含む必要があります</small>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn primary full-width">パスワードを更新</button>
+                        </form>
+                        
+                        <div class="auth-links">
+                            <button type="button" class="link-btn" onclick="document.getElementById('reset-password-section').style.display='none'; document.getElementById('reset-token-display').style.display='block';">
+                                トークンを再表示
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="auth-links">
+                        <button type="button" class="link-btn" onclick="authManager.switchAuthMode('login')">
+                            ログインに戻る
+                        </button>
                     </div>
                 </div>
             </div>
@@ -343,6 +571,7 @@
     
     <!-- Load scripts directly -->
     <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/data.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/charts.js"></script>

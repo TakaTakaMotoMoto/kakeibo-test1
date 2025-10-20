@@ -59,8 +59,15 @@ final class Transaction {
     var category: Category?
     var subcategory: Subcategory?
     var fundSource: FundSource?
+    var createdBy: UserAccount?
+    var isShared: Bool
     var createdAt: Date
     var updatedAt: Date
+    
+    var canEdit: Bool {
+        // 現在のユーザーが作成者の場合のみ編集可能
+        return createdBy?.id == currentUser?.id
+    }
 }
 ```
 
@@ -97,9 +104,15 @@ final class FundSource {
     var name: String
     var currentBalance: Decimal
     var initialBalance: Decimal
-    var isShared: Bool
+    var owner: UserAccount?
+    var shares: [FundSourceShare]
     var transactions: [Transaction]
     var createdAt: Date
+    var updatedAt: Date
+    
+    var isShared: Bool {
+        return !shares.isEmpty
+    }
 }
 ```
 
@@ -110,8 +123,29 @@ final class UserAccount {
     var id: UUID
     var username: String
     var email: String
-    var sharedFundSources: [FundSource]
+    var passwordHash: String
+    var isLoggedIn: Bool
     var createdAt: Date
+    var updatedAt: Date
+}
+```
+
+#### FundSourceShare（資金元共有）
+```swift
+@Model
+final class FundSourceShare {
+    var id: UUID
+    var fundSource: FundSource?
+    var ownerAccount: UserAccount?
+    var sharedAccount: UserAccount?
+    var permissions: SharePermission
+    var createdAt: Date
+}
+
+enum SharePermission: String, CaseIterable, Codable {
+    case readOnly = "read"
+    case readWrite = "write"
+    case admin = "admin"
 }
 ```
 
@@ -124,14 +158,27 @@ final class TransactionViewModel {
     private let modelContext: ModelContext
     
     var transactions: [Transaction] = []
+    var filteredTransactions: [Transaction] = []
     var selectedCategory: Category?
     var selectedSubcategory: Subcategory?
     var selectedFundSource: FundSource?
     
+    // フィルタリング条件
+    var filterByFundSource: FundSource?
+    var filterByCategory: Category?
+    var filterByCreator: UserAccount?
+    var showOnlyMyTransactions: Bool = false
+    var showOnlySharedTransactions: Bool = false
+    
     func createTransaction(amount: Decimal, date: Date, note: String?)
     func updateTransaction(_ transaction: Transaction)
-    func deleteTransaction(_ transaction: Transaction)
+    func deleteTransaction(_ transaction: Transaction) throws
     func fetchTransactions(for period: DateInterval)
+    func validateTransactionDeletion(_ transaction: Transaction) -> Bool
+    func applyFilters()
+    func clearFilters()
+    func canEditTransaction(_ transaction: Transaction) -> Bool
+    func getTransactionCreatorDisplay(_ transaction: Transaction) -> String
 }
 ```
 
@@ -145,9 +192,12 @@ final class CategoryViewModel {
     var predefinedCategories: [Category] = []
     
     func createCategory(name: String, iconName: String?, colorHex: String)
-    func createSubcategory(name: String, for category: Category)
+    func createSubcategory(name: String, for category: Category) throws
+    func updateSubcategory(_ subcategory: Subcategory, name: String) throws
+    func deleteSubcategory(_ subcategory: Subcategory) throws
     func fetchCategories()
     func initializePredefinedCategories()
+    func validateSubcategoryName(_ name: String, in category: Category) -> Bool
 }
 ```
 
@@ -162,7 +212,44 @@ final class FundSourceViewModel {
     func createFundSource(name: String, initialBalance: Decimal)
     func updateBalance(for fundSource: FundSource, amount: Decimal)
     func adjustBalance(for fundSource: FundSource, newBalance: Decimal)
+    func deleteFundSource(_ fundSource: FundSource) throws
     func fetchFundSources()
+}
+```
+
+#### UserAccountViewModel
+```swift
+@Observable
+final class UserAccountViewModel {
+    private let modelContext: ModelContext
+    
+    var currentUser: UserAccount?
+    var isLoggedIn: Bool = false
+    var loginError: String?
+    
+    func register(email: String, username: String, password: String) async throws
+    func login(email: String, password: String) async throws
+    func logout()
+    func resetPassword(email: String) async throws
+    func validatePassword(_ password: String) -> Bool
+}
+```
+
+#### SharingViewModel
+```swift
+@Observable
+final class SharingViewModel {
+    private let modelContext: ModelContext
+    
+    var availableUsers: [UserAccount] = []
+    var fundSourceShares: [FundSourceShare] = []
+    var searchResults: [UserAccount] = []
+    
+    func searchUsers(by email: String) async
+    func shareFundSource(_ fundSource: FundSource, with user: UserAccount, permission: SharePermission)
+    func removeFundSourceShare(_ share: FundSourceShare)
+    func updateSharePermission(_ share: FundSourceShare, permission: SharePermission)
+    func fetchSharedFundSources(for user: UserAccount)
 }
 ```
 
@@ -212,6 +299,38 @@ final class ChartViewModel {
 - アカウント設定
 - 共有設定
 - アプリ設定（言語、外観など）
+
+#### LoginView
+- ログインフォーム（メール、パスワード）
+- 新規登録リンク
+- パスワードリセットリンク
+
+#### RegisterView
+- 新規登録フォーム（メール、ユーザー名、パスワード）
+- パスワード確認入力
+- 利用規約同意
+
+#### SharingSettingsView
+- 資金元別共有設定
+- 共有ユーザー一覧
+- 新規共有招待
+
+#### SubcategoryManagementView
+- カテゴリ別サブカテゴリ一覧
+- サブカテゴリ作成・編集・削除
+- サブカテゴリ使用状況表示
+
+#### TransactionFilterView
+- 資金元による絞り込み
+- カテゴリによる絞り込み
+- 登録者による絞り込み
+- 複数条件の組み合わせ
+- フィルタークリア機能
+
+#### SharedTransactionIndicatorView
+- 取引の登録者表示
+- 共有状態の視覚的表示
+- 編集権限の表示
 
 ## データモデル
 
@@ -268,6 +387,14 @@ enum BudgetAppError: LocalizedError {
     case insufficientBalance
     case dataCorruption
     case syncFailure
+    case invalidCredentials
+    case weakPassword
+    case emailAlreadyExists
+    case userNotFound
+    case networkError
+    case deletionNotAllowed(reason: String)
+    case duplicateSubcategoryName
+    case subcategoryInUse
     
     var errorDescription: String? {
         switch self {
@@ -275,6 +402,14 @@ enum BudgetAppError: LocalizedError {
             return NSLocalizedString("error.invalidAmount", comment: "")
         case .missingCategory:
             return NSLocalizedString("error.missingCategory", comment: "")
+        case .invalidCredentials:
+            return NSLocalizedString("error.invalidCredentials", comment: "")
+        case .weakPassword:
+            return NSLocalizedString("error.weakPassword", comment: "")
+        case .deletionNotAllowed(let reason):
+            return NSLocalizedString("error.deletionNotAllowed", comment: "") + ": \(reason)"
+        case .duplicateSubcategoryName:
+            return NSLocalizedString("error.duplicateSubcategoryName", comment: "")
         // ... その他のケース
         }
     }

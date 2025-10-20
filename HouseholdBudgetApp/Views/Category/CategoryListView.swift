@@ -64,8 +64,9 @@ struct CategoryListView: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button("action.delete".localized, role: .destructive) {
-                                viewModel.deleteCategory(category)
+                                viewModel.confirmDeleteCategory(category)
                             }
+                            .disabled(!viewModel.canDeleteCategory(category))
                             .accessibilityLabel("accessibility.deleteCategory".localized)
                         }
                     }
@@ -84,6 +85,18 @@ struct CategoryListView: View {
             viewModel.fetchCategories()
         }
         .errorAlert($viewModel.currentError)
+        .alert("category.deleteConfirmation".localized, isPresented: $viewModel.showingDeleteConfirmation) {
+            Button("category.deleteButton".localized, role: .destructive) {
+                viewModel.executeDeleteCategory()
+            }
+            Button("category.cancelDelete".localized, role: .cancel) {
+                viewModel.cancelDeleteCategory()
+            }
+        } message: {
+            if let category = viewModel.categoryToDelete {
+                Text(viewModel.canDeleteCategory(category) ? "category.deleteMessage".localized : "category.deleteInUseMessage".localized)
+            }
+        }
     }
 }
 

@@ -36,6 +36,9 @@
 
 // MARK: - Transaction Form
 "transaction.info" = "Transaction Information";
+"transaction.type" = "Transaction Type";
+"transaction.type.expense" = "Expense";
+"transaction.type.income" = "Income";
 "transaction.amount" = "Amount";
 "transaction.date" = "Date";
 "transaction.note" = "Note (Optional)";
@@ -44,6 +47,52 @@
 "transaction.fundSource" = "Fund Source";
 "transaction.selectPlaceholder" = "Please select";
 "transaction.balance" = "Balance: $%@";
+
+// MARK: - Sharing
+"sharing.addUser" = "Add User";
+"sharing.searchPlaceholder" = "Search by email or username";
+"sharing.searching" = "Searching...";
+"sharing.noUsersFound" = "No users found";
+"sharing.noUsersFound.description" = "No users found matching the entered email or username.";
+"sharing.searchInstructions" = "Search for Users";
+"sharing.searchInstructions.description" = "Enter the email address or username of the user you want to share with.";
+"sharing.alreadyShared" = "Already Shared";
+"sharing.selectPermissionFor" = "Select permissions for %@";
+"sharing.permissions" = "Permissions";
+"sharing.currentShares" = "Current Shares";
+"sharing.pendingInvitations" = "Pending Invitations";
+"sharing.actions" = "Actions";
+"sharing.generateInvite" = "Generate Invite";
+"sharing.history" = "History";
+"sharing.fundSourceDetail" = "Fund Source Sharing";
+"sharing.removeShare.title" = "Remove Share";
+"sharing.removeShare.message" = "Are you sure you want to remove this share?";
+"sharing.unknownUser" = "Unknown User";
+"sharing.since" = "Since %@";
+"sharing.editPermissions" = "Edit Permissions";
+"sharing.pendingInvitation" = "Pending Invitation";
+"sharing.inviteCode" = "Invite Code: %@";
+"sharing.expires" = "Expires: %@";
+"sharing.waitingAcceptance" = "Waiting for acceptance";
+"sharing.recentActivity" = "Recent Activity";
+"sharing.noRecentActivity" = "No recent activity";
+
+// MARK: - Share Permissions
+"sharing.permission.readOnly" = "Read Only";
+"sharing.permission.readWrite" = "Read & Write";
+"sharing.permission.admin" = "Admin";
+"sharing.permission.readOnly.description" = "Can view transactions";
+"sharing.permission.readWrite.description" = "Can view, create, edit, and delete transactions";
+"sharing.permission.admin.description" = "Full access including sharing management";
+
+// MARK: - Fund Source
+"fundSource.owner" = "Owner: %@";
+
+// MARK: - Search
+"action.search" = "Search";
+
+// MARK: - Actions
+"action.remove" = "Remove";
 
 // MARK: - Transaction List
 "transaction.filterActive" = "Filter Active";
@@ -68,6 +117,11 @@
 "category.name" = "Category Name";
 "category.icon" = "Icon";
 "category.color" = "Color";
+"category.deleteConfirmation" = "Delete Category";
+"category.deleteMessage" = "Are you sure you want to delete this category? This action cannot be undone.";
+"category.deleteButton" = "Delete";
+"category.cancelDelete" = "Cancel";
+"category.deleteInUseMessage" = "This category cannot be deleted because it is used in transactions. Please delete related transactions first.";
 
 // MARK: - Predefined Categories
 "category.food" = "Food";
@@ -79,6 +133,29 @@
 // MARK: - Predefined Subcategories
 "subcategory.food.groceries" = "Groceries";
 "subcategory.food.beverages" = "Beverages";
+
+// MARK: - Subcategory Management
+"nav.subcategories" = "Subcategories";
+"nav.subcategoryManagement" = "Subcategory Management";
+"nav.newSubcategory" = "New Subcategory";
+"nav.editSubcategory" = "Edit Subcategory";
+"subcategory.noSubcategories" = "No subcategories";
+"subcategory.addSubcategoryHint" = "Please add a new subcategory";
+"subcategory.deleteConfirmation" = "Delete Subcategory";
+"subcategory.deleteMessage" = "Are you sure you want to delete this subcategory? This action cannot be undone.";
+"subcategory.deleteButton" = "Delete";
+"subcategory.cancelDelete" = "Cancel";
+"subcategory.deleteInUseMessage" = "This subcategory cannot be deleted because it is used in transactions. Please delete related transactions first.";
+"subcategory.name" = "Subcategory Name";
+"subcategory.parentCategory" = "Parent Category";
+"subcategory.basicInfo" = "Basic Information";
+"subcategory.preview" = "Preview";
+"subcategory.management" = "Subcategory Management";
+"subcategory.editTitle" = "Edit Subcategory";
+"subcategory.createTitle" = "New Subcategory";
+"subcategory.usageCount" = "Used %d times";
+"subcategory.cannotDelete" = "Cannot Delete";
+"subcategory.canDelete" = "Can Delete";
 
 // MARK: - Fund Sources
 "fundSource.noFundSources" = "No fund sources";
@@ -144,7 +221,9 @@
 
 // MARK: - Subcategory Errors
 "error.subcategory.createFailed" = "Failed to create subcategory: %@";
+"error.subcategory.updateFailed" = "Failed to update subcategory: %@";
 "error.subcategory.deleteFailed" = "Failed to delete subcategory: %@";
+"error.duplicateSubcategoryName" = "A subcategory with the same name already exists";
 
 // MARK: - Fund Source Errors
 "error.fundSource.createFailed" = "Failed to create fund source: %@";
@@ -157,6 +236,12 @@
 // MARK: - Chart Errors
 "error.chart.dataFetchFailed" = "Failed to fetch chart data: %@";
 "error.chart.calculationFailed" = "Failed to calculate chart data: %@";
+
+// MARK: - Deletion Errors
+"error.deletionNotAllowed" = "Cannot delete: %@";
+"error.fundSourceInUse" = "This fund source cannot be deleted because it is used in transactions";
+"error.categoryInUse" = "This category cannot be deleted because it is used in transactions";
+"error.subcategoryInUse" = "This subcategory cannot be deleted because it is used in transactions";
 
 // MARK: - Data Persistence Errors
 "error.dataCorruption" = "Data corruption detected";
@@ -172,6 +257,7 @@
 "error.reason.formValidation" = "There are issues with the input";
 "error.reason.dataCorruption" = "Data files may be corrupted";
 "error.reason.syncFailure" = "Network connection issues";
+"error.reason.deletionNotAllowed" = "Data in use cannot be deleted";
 
 // MARK: - Error Recovery Suggestions
 "error.recovery.invalidAmount" = "Please enter a positive number";
@@ -181,6 +267,7 @@
 "error.recovery.formValidation" = "Please fill in all required fields correctly";
 "error.recovery.dataCorruption" = "Please restart the app. If the problem persists, contact support";
 "error.recovery.syncFailure" = "Please check your internet connection and try again";
+"error.recovery.deletionNotAllowed" = "Please delete related transactions first and try again";
 "error.recovery.general" = "Please wait a moment and try again";
 
 // MARK: - Accessibility Labels
@@ -211,6 +298,10 @@
 "accessibility.tabFundSources" = "Fund sources tab";
 "accessibility.tabSettings" = "Settings tab";
 "accessibility.addAccount" = "Add new account";
+"accessibility.addSubcategory" = "Add new subcategory";
+"accessibility.editSubcategory" = "Edit subcategory";
+"accessibility.deleteSubcategory" = "Delete subcategory";
+"accessibility.viewTransaction" = "View transaction details";
 
 // MARK: - Accessibility Hints
 "accessibility.hint.addTransaction" = "Tap to record a new transaction";
@@ -224,6 +315,9 @@
 "accessibility.hint.periodSelector" = "Swipe to change display period";
 "accessibility.hint.formField" = "Double tap to edit";
 "accessibility.hint.helpSection" = "Tap to view help information";
+"accessibility.hint.deleteFundSource" = "Tap to delete fund source";
+"accessibility.hint.editSubcategory" = "Tap to edit subcategory";
+"accessibility.hint.viewTransaction" = "Tap to view transaction details";
 
 // MARK: - Accessibility Values
 "accessibility.value.amount" = "Amount: %@";
@@ -312,7 +406,96 @@ MARK: - Fund Source Errors (Additional)
 "sharing.generateInvite" = "Generate Invite Code";
 "sharing.acceptInvite" = "Accept Invite";
 "sharing.inviteExpired" = "Invite code has expired";
-"sharing.inviteInvalid" = "Invalid invite code";// MARK: 
+"sharing.inviteInvalid" = "Invalid invite code";
+
+// MARK: - Sharing Detail
+"sharing.fundSourceDetail" = "Fund Source Sharing";
+"sharing.currentShares" = "Current Shares";
+"sharing.pendingInvitations" = "Pending Invitations";
+"sharing.actions" = "Actions";
+"sharing.addUser" = "Add User";
+"sharing.history" = "Sharing History";
+"sharing.recentActivity" = "Recent Activity";
+"sharing.noRecentActivity" = "No recent activity";
+"sharing.unknownUser" = "Unknown User";
+"sharing.since" = "Since %@";
+"sharing.editPermissions" = "Edit Permissions";
+"sharing.removeShare" = "Remove Share";
+"sharing.removeShare.title" = "Remove Share";
+"sharing.removeShare.message" = "Are you sure you want to remove this share?";
+"sharing.pendingInvitation" = "Pending Invitation";
+"sharing.inviteCode" = "Invite Code: %@";
+"sharing.expires" = "Expires: %@";
+"sharing.waitingAcceptance" = "Waiting for acceptance";
+"sharing.manageSharingSettings" = "Manage Sharing Settings";
+
+// MARK: - Sharing Permissions
+"sharing.permissions" = "Permissions";
+"sharing.selectPermission" = "Select Permission";
+"sharing.selectPermissionFor" = "Select permission for %@";
+"sharing.selectNewPermission" = "Select New Permission";
+"sharing.currentPermission" = "Current Permission";
+"sharing.updatePermissions" = "Update Permissions";
+"sharing.confirmPermissionChange" = "Confirm Permission Change";
+"sharing.confirmPermissionChange.message" = "Change permission from %@ to %@?";
+"sharing.permissionChanges" = "Permission Changes";
+"sharing.createTransactions" = "Create Transactions";
+"sharing.editTransactions" = "Edit Transactions";
+"sharing.deleteTransactions" = "Delete Transactions";
+"sharing.adjustBalance" = "Adjust Balance";
+"sharing.manageSharing" = "Manage Sharing";
+
+"sharing.permission.readOnly" = "Read Only";
+"sharing.permission.readWrite" = "Read & Write";
+"sharing.permission.admin" = "Admin";
+"sharing.permission.readOnly.description" = "Can only view transactions";
+"sharing.permission.readWrite.description" = "Can create, edit, and delete transactions";
+"sharing.permission.admin.description" = "Full access including sharing management";
+
+// MARK: - Invite Generation
+"sharing.generateInvite.description" = "Generate an invite code for %@";
+"sharing.inviteGenerated" = "Invite code generated";
+"sharing.copyCode" = "Copy Code";
+"sharing.showQR" = "Show QR Code";
+"sharing.inviteExpiry" = "Invite code is valid for 7 days";
+"sharing.qrCode" = "QR Code";
+"sharing.qrCode.description" = "Have the recipient scan this QR code or share the invite code directly";
+
+// MARK: - User Search
+"sharing.searching" = "Searching...";
+"sharing.noUsersFound" = "No users found";
+"sharing.noUsersFound.description" = "No users match your search criteria";
+"sharing.searchInstructions" = "Search Users";
+"sharing.searchInstructions.description" = "Search by email address or username";
+"sharing.searchPlaceholder" = "Email or username";
+"sharing.alreadyShared" = "Already shared";
+
+// MARK: - Sharing Status
+"sharing.status" = "Sharing Status";
+"sharing.sharedFundSource" = "Shared Fund Source";
+"sharing.noActiveShares" = "No active shares";
+
+// MARK: - Fund Source Detail
+"fundSource.actions" = "Actions";
+"fundSource.adjustBalance" = "Adjust Balance";
+"fundSource.owner" = "Owner: %@";
+"transaction.recent" = "Recent Transactions";
+"transaction.noRecentTransactions" = "No recent transactions";
+"transaction.andMore" = "%d more";
+
+// MARK: - Transaction Detail
+"transaction.details" = "Transaction Details";
+"transaction.actions" = "Actions";
+"transaction.sharedTransaction" = "Shared Transaction";
+"transaction.createdBy" = "Created by %@";
+"transaction.info" = "Transaction Information";
+"sharing.info" = "Sharing Information";
+"category.unknown" = "Unknown";
+
+// MARK: - Common Actions
+"action.search" = "Search";
+"action.remove" = "Remove";
+"action.noChanges" = "No Changes";// MARK: 
 - iPad Interface
 "transaction.selectTransaction" = "Select Transaction";
 "transaction.selectTransactionHint" = "Select a transaction from the list to view details";
@@ -322,6 +505,8 @@ MARK: - Fund Source Errors (Additional)
 "transaction.updatedAt" = "Updated At";
 "transaction.deleteConfirmation" = "Delete Transaction";
 "transaction.deleteMessage" = "Are you sure you want to delete this transaction? This action cannot be undone.";
+"transaction.deleteButton" = "Delete";
+"transaction.cancelDelete" = "Cancel";
 
 "fundSource.selectFundSource" = "Select Fund Source";
 "fundSource.selectFundSourceHint" = "Select a fund source from the list to view details";
@@ -332,7 +517,10 @@ MARK: - Fund Source Errors (Additional)
 "fundSource.recentTransactions" = "Recent Transactions";
 "fundSource.noRecentTransactions" = "No recent transactions";
 "fundSource.deleteConfirmation" = "Delete Fund Source";
-"fundSource.deleteMessage" = "Are you sure you want to delete this fund source? All related transactions will also be deleted.";
+"fundSource.deleteMessage" = "Are you sure you want to delete this fund source? This action cannot be undone.";
+"fundSource.deleteButton" = "Delete";
+"fundSource.cancelDelete" = "Cancel";
+"fundSource.deleteInUseMessage" = "This fund source cannot be deleted because it is used in transactions. Please delete related transactions first.";
 
 "chart.summary" = "Summary";
 "chart.breakdown" = "Breakdown";
@@ -387,3 +575,132 @@ MARK: - Fund Source Errors (Additional)
 "settings.supportDescription" = "If you have any questions or need assistance, please don't hesitate to contact us.";
 "settings.legal" = "Legal Information";
 "settings.legalDescription" = "Please review our terms of service and privacy policy.";
+
+// MARK: - Authentication
+"auth.appTitle" = "Budget App";
+"auth.loginSubtitle" = "Sign in to your account to start managing your budget";
+"auth.login" = "Sign In";
+"auth.email" = "Email";
+"auth.emailPlaceholder" = "Enter your email";
+"auth.password" = "Password";
+"auth.passwordPlaceholder" = "Enter your password";
+"auth.forgotPassword" = "Forgot Password?";
+"auth.noAccount" = "Don't have an account?";
+"auth.signUp" = "Sign Up";
+"auth.error" = "Error";
+
+// MARK: - Registration
+"auth.createAccount" = "Create Account";
+"auth.registerSubtitle" = "Create a new account to start managing your budget";
+"auth.username" = "Username";
+"auth.usernamePlaceholder" = "Enter your username";
+"auth.confirmPassword" = "Confirm Password";
+"auth.confirmPasswordPlaceholder" = "Re-enter your password";
+"auth.passwordMismatch" = "Passwords do not match";
+"auth.passwordValid" = "Password is valid";
+"auth.passwordRequirements" = "Password must be at least 8 characters and contain both letters and numbers";
+
+// MARK: - Password Reset
+"auth.resetPassword" = "Reset Password";
+"auth.resetPasswordSubtitle" = "Enter your email address to receive a reset token";
+"auth.enterTokenSubtitle" = "Enter the token you received";
+"auth.setNewPasswordSubtitle" = "Set your new password";
+"auth.sendResetToken" = "Send Reset Token";
+"auth.verifyToken" = "Verify Token";
+"auth.updatePassword" = "Update Password";
+"auth.resetToken" = "Reset Token";
+"auth.resetTokenPlaceholder" = "Enter reset token";
+"auth.newPassword" = "New Password";
+"auth.tokenSentMessage" = "A reset token has been generated. Please enter the token below.";
+"auth.generatedToken" = "Generated Token (Demo):";
+"auth.backToEmailEntry" = "Back to Email Entry";
+"auth.success" = "Success";
+"auth.resetTokenSent" = "Reset token has been sent";
+"auth.invalidToken" = "Invalid token";
+"auth.passwordUpdated" = "Password has been updated";
+
+// MARK: - Authentication Errors
+"error.auth.invalidCredentials" = "Invalid email or password";
+"error.auth.weakPassword" = "Password is too weak";
+"error.auth.emailAlreadyExists" = "This email address is already in use";
+"error.auth.userNotFound" = "User not found";
+"error.auth.passwordResetTokenInvalid" = "Invalid reset token";
+"error.auth.passwordResetTokenExpired" = "Reset token has expired";
+"error.auth.loginFailed" = "Login failed: %@";
+"error.auth.registrationFailed" = "Registration failed: %@";
+"error.auth.passwordResetFailed" = "Password reset failed: %@";
+
+// MARK: - Authentication Error Reasons
+"error.reason.invalidCredentials" = "Authentication credentials are incorrect";
+"error.reason.weakPassword" = "Password does not meet requirements";
+"error.reason.emailAlreadyExists" = "Email address is already registered";
+
+// MARK: - Authentication Error Recovery
+"error.recovery.invalidCredentials" = "Please check your email and password";
+"error.recovery.weakPassword" = "Please use a password with at least 8 characters including letters and numbers";
+"error.recovery.emailAlreadyExists" = "Please use a different email address or sign in";
+
+// MARK: - Sharing Errors
+"error.sharing.createFailed" = "Failed to create share: %@";
+"error.sharing.updateFailed" = "Failed to update share: %@";
+"error.sharing.deleteFailed" = "Failed to delete share: %@";
+"error.sharing.fetchFailed" = "Failed to fetch sharing information: %@";
+"error.sharing.acceptanceFailed" = "Failed to accept invitation: %@";
+"error.sharing.invalidToken" = "Invalid invite code";
+"error.sharing.tokenExpired" = "Invite code has expired";
+"error.sharing.userSearchFailed" = "User search failed: %@";
+
+// MARK: - Sharing Error Reasons
+"error.reason.invalidInviteToken" = "Invite code is invalid or expired";
+
+// MARK: - Sharing Error Recovery
+"error.recovery.invalidInviteToken" = "Please request a new invite code";
+
+// MARK: - Common
+"common.ok" = "OK";
+"common.cancel" = "Cancel";// 
+MARK: - Error Messages
+"error.sharing.alreadyExists" = "Already sharing with this user";
+"error.sharing.dataSyncFailed" = "Data synchronization failed: %@";
+"error.sharing.createFailed" = "Failed to create share: %@";
+"error.sharing.updateFailed" = "Failed to update share: %@";
+"error.sharing.deleteFailed" = "Failed to delete share: %@";
+"error.sharing.fetchFailed" = "Failed to fetch sharing data: %@";
+"error.sharing.acceptanceFailed" = "Failed to accept invitation: %@";
+"error.sharing.invalidToken" = "Invalid invitation code";
+"error.sharing.tokenExpired" = "Invitation code has expired";
+"error.sharing.userSearchFailed" = "User search failed: %@";// 
+MARK: - Invite Acceptance
+"sharing.acceptInvitation" = "Accept Invitation";
+"sharing.acceptInvitation.description" = "Enter the invitation code to access the shared fund source.";
+"sharing.inviteCode.label" = "Invitation Code";
+"sharing.inviteCode.placeholder" = "Enter invitation code";
+"sharing.inviteCode.hint" = "Enter the 16-character code you received from the inviter.";
+"sharing.acceptInvitation.button" = "Accept Invitation";
+"sharing.invitationAccepted.title" = "Invitation Accepted";
+"sharing.invitationAccepted.message" = "Fund source has been successfully shared.";
+"sharing.invitationFailed.title" = "Invitation Failed";
+"sharing.invitationFailed.unknown" = "An unknown error occurred.";
+"error.auth.notLoggedIn" = "Please log in first.";// MARK:
+ - Transaction Creator
+"transaction.creator.unknown" = "Unknown";
+"transaction.creator.you" = "You";// MA
+RK: - Sync Status
+"sync.status.notSynced" = "Not Synced";
+"sync.status.syncing" = "Syncing";
+"sync.status.synced" = "Synced";
+"sync.status.error" = "Sync Error";// 
+MARK: - Sharing Management
+"sharing.management" = "Sharing Management";
+"sharing.syncStatus" = "Sync Status";
+"sharing.myFundSources" = "My Fund Sources";
+"sharing.sharedWithMe" = "Shared With Me";
+"sharing.syncNow" = "Sync Now";
+"sharing.noSharedFundSources" = "No Shared Fund Sources";
+"sharing.noSharedFundSources.description" = "Share fund sources with other users or accept invitations to get started.";
+"sharing.lastSync" = "Last sync: %@";
+"sharing.sharedWith" = "Shared with %@ users";
+"sharing.notShared" = "Not shared";
+"sharing.unknownFundSource" = "Unknown Fund Source";
+"sharing.accept" = "Accept";
+"sharing.decline" = "Decline";

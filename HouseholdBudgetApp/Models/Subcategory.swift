@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class Subcategory {
+final class Subcategory: Identifiable {
     var id: UUID
     var name: String
     

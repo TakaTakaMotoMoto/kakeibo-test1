@@ -30,6 +30,188 @@ final class CategoryViewModelTests: XCTestCase {
         try await super.tearDown()
     }
     
+    // MARK: - Subcategory Management Tests
+    
+    func testCreateSubcategory_Success() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        try! modelContext.save()
+        
+        let subcategoryName = "Test Subcategory"
+        
+        // When
+        categoryViewModel.createSubcategory(name: subcategoryName, for: category)
+        
+        // Then
+        XCTAssertNil(categoryViewModel.currentError)
+        XCTAssertEqual(category.subcategories.count, 1)
+        XCTAssertEqual(category.subcategories.first?.name, subcategoryName)
+    }
+    
+    func testCreateSubcategory_DuplicateName_ShouldFail() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let subcategoryName = "Duplicate Name"
+        let existingSubcategory = Subcategory(name: subcategoryName, category: category)
+        modelContext.insert(existingSubcategory)
+        try! modelContext.save()
+        
+        // When
+        categoryViewModel.createSubcategory(name: subcategoryName, for: category)
+        
+        // Then
+        XCTAssertNotNil(categoryViewModel.currentError)
+        if case .duplicateSubcategoryName = categoryViewModel.currentError {
+            // Expected error type
+        } else {
+            XCTFail("Expected duplicateSubcategoryName error")
+        }
+        XCTAssertEqual(category.subcategories.count, 1) // Should still be 1
+    }
+    
+    func testUpdateSubcategory_Success() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let subcategory = Subcategory(name: "Original Name", category: category)
+        modelContext.insert(subcategory)
+        try! modelContext.save()
+        
+        let newName = "Updated Name"
+        
+        // When
+        categoryViewModel.updateSubcategory(subcategory, name: newName)
+        
+        // Then
+        XCTAssertNil(categoryViewModel.currentError)
+        XCTAssertEqual(subcategory.name, newName)
+    }
+    
+    func testUpdateSubcategory_DuplicateName_ShouldFail() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let subcategory1 = Subcategory(name: "Subcategory 1", category: category)
+        let subcategory2 = Subcategory(name: "Subcategory 2", category: category)
+        modelContext.insert(subcategory1)
+        modelContext.insert(subcategory2)
+        try! modelContext.save()
+        
+        // When - try to update subcategory2 to have the same name as subcategory1
+        categoryViewModel.updateSubcategory(subcategory2, name: "Subcategory 1")
+        
+        // Then
+        XCTAssertNotNil(categoryViewModel.currentError)
+        if case .duplicateSubcategoryName = categoryViewModel.currentError {
+            // Expected error type
+        } else {
+            XCTFail("Expected duplicateSubcategoryName error")
+        }
+        XCTAssertEqual(subcategory2.name, "Subcategory 2") // Should remain unchanged
+    }
+    
+    func testValidateSubcategoryName_DuplicateExists_ReturnsTrue() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let existingSubcategory = Subcategory(name: "Existing Name", category: category)
+        modelContext.insert(existingSubcategory)
+        try! modelContext.save()
+        
+        // When
+        let isDuplicate = categoryViewModel.validateSubcategoryName("Existing Name", in: category)
+        
+        // Then
+        XCTAssertTrue(isDuplicate)
+    }
+    
+    func testValidateSubcategoryName_UniqueNameExists_ReturnsFalse() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        try! modelContext.save()
+        
+        // When
+        let isDuplicate = categoryViewModel.validateSubcategoryName("Unique Name", in: category)
+        
+        // Then
+        XCTAssertFalse(isDuplicate)
+    }
+    
+    func testValidateSubcategoryName_ExcludingSelf_ReturnsFalse() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let subcategory = Subcategory(name: "Test Name", category: category)
+        modelContext.insert(subcategory)
+        try! modelContext.save()
+        
+        // When - validate the same name but excluding the subcategory itself
+        let isDuplicate = categoryViewModel.validateSubcategoryName("Test Name", in: category, excluding: subcategory)
+        
+        // Then
+        XCTAssertFalse(isDuplicate)
+    }
+    
+    func testDeleteSubcategory_NotInUse_Success() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        modelContext.insert(category)
+        
+        let subcategory = Subcategory(name: "Test Subcategory", category: category)
+        modelContext.insert(subcategory)
+        try! modelContext.save()
+        
+        // When
+        categoryViewModel.deleteSubcategory(subcategory)
+        
+        // Then
+        XCTAssertNil(categoryViewModel.currentError)
+        XCTAssertEqual(category.subcategories.count, 0)
+    }
+    
+    func testDeleteSubcategory_InUse_ShouldFail() {
+        // Given
+        let category = Category(name: "Test Category", isCustom: true)
+        let subcategory = Subcategory(name: "Test Subcategory", category: category)
+        let fundSource = FundSource(name: "Test Fund", initialBalance: 1000)
+        
+        modelContext.insert(category)
+        modelContext.insert(subcategory)
+        modelContext.insert(fundSource)
+        
+        // Create a transaction that uses this subcategory
+        let transaction = Transaction(
+            amount: 100,
+            date: Date(),
+            note: "Test transaction",
+            category: category,
+            subcategory: subcategory,
+            fundSource: fundSource
+        )
+        modelContext.insert(transaction)
+        try! modelContext.save()
+        
+        // When
+        categoryViewModel.deleteSubcategory(subcategory)
+        
+        // Then
+        XCTAssertNotNil(categoryViewModel.currentError)
+        if case .subcategoryInUse = categoryViewModel.currentError {
+            // Expected error type
+        } else {
+            XCTFail("Expected subcategoryInUse error")
+        }
+        XCTAssertEqual(category.subcategories.count, 1) // Should still exist
+    }
+    
     // MARK: - Category Creation Tests
     
     func testCreateCategory_Success() {

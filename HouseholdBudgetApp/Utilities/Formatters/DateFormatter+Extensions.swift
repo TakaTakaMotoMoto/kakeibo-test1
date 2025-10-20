@@ -3,6 +3,22 @@ import Foundation
 extension DateFormatter {
     static let shared = DateFormatter()
     
+    static let shortDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .none
+        formatter.locale = Locale.current
+        return formatter
+    }()
+    
+    static let shortDateTime: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        formatter.locale = Locale.current
+        return formatter
+    }()
+    
     static func localizedString(from date: Date, dateStyle: DateFormatter.Style = .medium, timeStyle: DateFormatter.Style = .none) -> String {
         shared.dateStyle = dateStyle
         shared.timeStyle = timeStyle

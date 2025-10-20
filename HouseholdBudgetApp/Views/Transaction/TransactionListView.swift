@@ -135,6 +135,16 @@ struct TransactionListView: View {
             .refreshable {
                 transactionViewModel.fetchTransactions()
             }
+            .alert("transaction.deleteConfirmation".localized, isPresented: $transactionViewModel.showingDeleteConfirmation) {
+                Button("transaction.deleteButton".localized, role: .destructive) {
+                    transactionViewModel.executeDeleteTransaction()
+                }
+                Button("transaction.cancelDelete".localized, role: .cancel) {
+                    transactionViewModel.cancelDeleteTransaction()
+                }
+            } message: {
+                Text("transaction.deleteMessage".localized)
+            }
         }
     }
     
@@ -174,15 +184,29 @@ struct TransactionListView: View {
             // Transaction list
             List {
                 ForEach(filteredTransactions, id: \.id) { transaction in
-                    TransactionRowView(transaction: transaction)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            editingTransaction = transaction
-                            showingTransactionForm = true
+                    NavigationLink(destination: TransactionDetailView(transaction: transaction, transactionViewModel: transactionViewModel)) {
+                        TransactionRowView(transaction: transaction)
+                    }
+                    .accessibilityLabel("accessibility.viewTransaction".localized)
+                    .accessibilityHint("accessibility.hint.viewTransaction".localized)
+                    .accessibilityValue("\("accessibility.value.amount".localized(with: CurrencyFormatter.shared.string(from: transaction.amount))), \("accessibility.value.category".localized(with: transaction.category?.name ?? "")), \("accessibility.value.date".localized(with: DateFormatter.shortDate(from: transaction.date)))")
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        if transactionViewModel.canDeleteTransaction(transaction) {
+                            Button("action.delete".localized, role: .destructive) {
+                                transactionViewModel.confirmDeleteTransaction(transaction)
+                            }
+                            .accessibilityLabel("accessibility.deleteTransaction".localized)
                         }
-                        .accessibilityLabel("accessibility.editTransaction".localized)
-                        .accessibilityHint("accessibility.hint.editTransaction".localized)
-                        .accessibilityValue("\("accessibility.value.amount".localized(with: CurrencyFormatter.shared.string(from: transaction.amount))), \("accessibility.value.category".localized(with: transaction.category?.name ?? "")), \("accessibility.value.date".localized(with: DateFormatter.shortDate(from: transaction.date)))")
+                        
+                        if transactionViewModel.canEditTransaction(transaction) {
+                            Button("action.edit".localized) {
+                                editingTransaction = transaction
+                                showingTransactionForm = true
+                            }
+                            .tint(.blue)
+                            .accessibilityLabel("accessibility.editTransaction".localized)
+                        }
+                    }
                 }
                 .onDelete(perform: deleteTransactions)
                 .accessibilityHint("accessibility.hint.deleteTransaction".localized)
@@ -332,7 +356,7 @@ struct TransactionListView: View {
     private func deleteTransactions(offsets: IndexSet) {
         for index in offsets {
             let transaction = filteredTransactions[index]
-            transactionViewModel.deleteTransaction(transaction)
+            transactionViewModel.confirmDeleteTransaction(transaction)
         }
     }
     

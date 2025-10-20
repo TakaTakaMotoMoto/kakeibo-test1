@@ -2,6 +2,8 @@ import SwiftUI
 
 struct TransactionRowView: View {
     let transaction: Transaction
+    @Environment(\.modelContext) private var modelContext
+    @State private var createdByUser: UserAccount?
     
     var body: some View {
         HStack {
@@ -45,6 +47,27 @@ struct TransactionRowView: View {
                             .font(.caption)
                             .foregroundColor(ColorManager.secondaryText)
                     }
+                    
+                    // Show shared indicator and creator
+                    if transaction.isShared {
+                        Text("・")
+                            .font(.caption)
+                            .foregroundColor(ColorManager.secondaryText)
+                        
+                        Image(systemName: "person.2.fill")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                        
+                        if let createdByUser = createdByUser {
+                            Text(createdByUser.username)
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        } else {
+                            Text("transaction.sharedTransaction".localized)
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        }
+                    }
                 }
                 
                 // Note (if exists)
@@ -69,6 +92,9 @@ struct TransactionRowView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(buildAccessibilityLabel())
         .accessibilityValue(buildAccessibilityValue())
+        .onAppear {
+            loadCreatedByUser()
+        }
     }
     
     private func buildAccessibilityLabel() -> String {
@@ -89,6 +115,14 @@ struct TransactionRowView: View {
             components.append("accessibility.value.fundSource".localized(with: fundSource.name))
         }
         
+        if transaction.isShared {
+            if let createdByUser = createdByUser {
+                components.append("transaction.createdBy".localized(with: createdByUser.username))
+            } else {
+                components.append("transaction.sharedTransaction".localized)
+            }
+        }
+        
         return components.joined(separator: ", ")
     }
     
@@ -97,6 +131,23 @@ struct TransactionRowView: View {
             return note
         }
         return ""
+    }
+    
+    private func loadCreatedByUser() {
+        guard let createdByAccountId = transaction.createdByAccountId else { return }
+        
+        do {
+            let descriptor = FetchDescriptor<UserAccount>(
+                predicate: #Predicate<UserAccount> { account in
+                    account.id == createdByAccountId
+                }
+            )
+            
+            let users = try modelContext.fetch(descriptor)
+            createdByUser = users.first
+        } catch {
+            print("Failed to load created by user: \(error)")
+        }
     }
 }
 

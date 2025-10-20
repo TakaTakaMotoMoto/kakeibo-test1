@@ -10,6 +10,11 @@ final class CategoryViewModel {
     var predefinedCategories: [Category] = []
     var currentError: BudgetAppError?
     
+    // Deletion confirmation
+    var showingDeleteConfirmation = false
+    var categoryToDelete: Category?
+    var subcategoryToDelete: Subcategory?
+    
     init(modelContext: ModelContext, dataIntegrityService: DataIntegrityService = DataIntegrityService()) {
         self.modelContext = modelContext
         self.dataIntegrityService = dataIntegrityService
@@ -52,35 +57,116 @@ final class CategoryViewModel {
     
     func deleteCategory(_ category: Category) {
         do {
+            // Check if category is in use
+            if !category.transactions.isEmpty {
+                throw BudgetAppError.categoryInUse
+            }
+            
             modelContext.delete(category)
             try modelContext.save()
             fetchCategories()
+        } catch let budgetError as BudgetAppError {
+            currentError = budgetError
         } catch {
             currentError = BudgetAppError.from(error, context: .categoryDelete)
         }
+    }
+    
+    func confirmDeleteCategory(_ category: Category) {
+        categoryToDelete = category
+        showingDeleteConfirmation = true
+    }
+    
+    func executeDeleteCategory() {
+        guard let category = categoryToDelete else { return }
+        deleteCategory(category)
+        categoryToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func cancelDeleteCategory() {
+        categoryToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func canDeleteCategory(_ category: Category) -> Bool {
+        return category.transactions.isEmpty
     }
     
     // MARK: - Subcategory Operations
     
     func createSubcategory(name: String, for category: Category) {
         do {
+            // Check for duplicate name within the same category
+            if validateSubcategoryName(name, in: category) {
+                throw BudgetAppError.duplicateSubcategoryName
+            }
+            
             let subcategory = Subcategory(name: name, category: category)
             modelContext.insert(subcategory)
             try modelContext.save()
             fetchCategories()
+        } catch let budgetError as BudgetAppError {
+            currentError = budgetError
         } catch {
             currentError = BudgetAppError.from(error, context: .subcategoryCreate)
         }
     }
     
+    func updateSubcategory(_ subcategory: Subcategory, name: String) {
+        do {
+            // Check for duplicate name within the same category (excluding current subcategory)
+            if let category = subcategory.category,
+               validateSubcategoryName(name, in: category, excluding: subcategory) {
+                throw BudgetAppError.duplicateSubcategoryName
+            }
+            
+            subcategory.name = name
+            try modelContext.save()
+            fetchCategories()
+        } catch let budgetError as BudgetAppError {
+            currentError = budgetError
+        } catch {
+            currentError = BudgetAppError.from(error, context: .subcategoryUpdate)
+        }
+    }
+    
     func deleteSubcategory(_ subcategory: Subcategory) {
         do {
+            // Check if subcategory is in use
+            if !subcategory.transactions.isEmpty {
+                throw BudgetAppError.subcategoryInUse
+            }
+            
             modelContext.delete(subcategory)
             try modelContext.save()
             fetchCategories()
+        } catch let budgetError as BudgetAppError {
+            currentError = budgetError
         } catch {
             currentError = BudgetAppError.from(error, context: .subcategoryDelete)
         }
+    }
+    
+    func confirmDeleteSubcategory(_ subcategory: Subcategory) {
+        subcategoryToDelete = subcategory
+        showingDeleteConfirmation = true
+    }
+    
+    func executeDeleteSubcategory() {
+        guard let subcategory = subcategoryToDelete else { return }
+        deleteSubcategory(subcategory)
+        subcategoryToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func cancelDeleteSubcategory() {
+        subcategoryToDelete = nil
+        showingDeleteConfirmation = false
+    }
+    
+    func canDeleteSubcategory(_ subcategory: Subcategory) -> Bool {
+        return subcategory.transactions.isEmpty
     }
     
     // MARK: - Data Fetching
@@ -152,6 +238,20 @@ final class CategoryViewModel {
     
     func getSubcategories(for category: Category) -> [Subcategory] {
         return category.subcategories.sorted { $0.name < $1.name }
+    }
+    
+    /// Validates if a subcategory name already exists within a category
+    /// Returns true if duplicate exists, false if name is unique
+    func validateSubcategoryName(_ name: String, in category: Category, excluding: Subcategory? = nil) -> Bool {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        return category.subcategories.contains { subcategory in
+            // Skip the subcategory we're excluding (for updates)
+            if let excluding = excluding, subcategory.id == excluding.id {
+                return false
+            }
+            return subcategory.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == trimmedName
+        }
     }
     
     func clearError() {

@@ -213,9 +213,18 @@ struct CalendarDayView: View {
             // Transaction indicators
             HStack(spacing: 2) {
                 ForEach(Array(transactions.prefix(3).enumerated()), id: \.offset) { index, transaction in
-                    Circle()
-                        .fill(Color(hex: transaction.category?.colorHex ?? "#007AFF"))
-                        .frame(width: 4, height: 4)
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: transaction.category?.colorHex ?? "#007AFF"))
+                            .frame(width: 4, height: 4)
+                        
+                        // Shared transaction indicator
+                        if transaction.isShared {
+                            Circle()
+                                .stroke(Color.green, lineWidth: 1)
+                                .frame(width: 6, height: 6)
+                        }
+                    }
                 }
                 
                 if transactions.count > 3 {

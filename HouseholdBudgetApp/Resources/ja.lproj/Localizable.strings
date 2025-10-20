@@ -36,6 +36,9 @@
 
 // MARK: - Transaction Form
 "transaction.info" = "取引情報";
+"transaction.type" = "取引タイプ";
+"transaction.type.expense" = "支出";
+"transaction.type.income" = "収入";
 "transaction.amount" = "金額";
 "transaction.date" = "日付";
 "transaction.note" = "メモ（任意）";
@@ -44,6 +47,52 @@
 "transaction.fundSource" = "資金元";
 "transaction.selectPlaceholder" = "選択してください";
 "transaction.balance" = "残高: ¥%@";
+
+// MARK: - Sharing
+"sharing.addUser" = "ユーザーを追加";
+"sharing.searchPlaceholder" = "メールアドレスまたはユーザー名で検索";
+"sharing.searching" = "検索中...";
+"sharing.noUsersFound" = "ユーザーが見つかりません";
+"sharing.noUsersFound.description" = "入力したメールアドレスまたはユーザー名に一致するユーザーが見つかりませんでした。";
+"sharing.searchInstructions" = "ユーザーを検索";
+"sharing.searchInstructions.description" = "共有したいユーザーのメールアドレスまたはユーザー名を入力してください。";
+"sharing.alreadyShared" = "共有済み";
+"sharing.selectPermissionFor" = "%@の権限を選択してください";
+"sharing.permissions" = "権限";
+"sharing.currentShares" = "現在の共有";
+"sharing.pendingInvitations" = "保留中の招待";
+"sharing.actions" = "アクション";
+"sharing.generateInvite" = "招待コードを生成";
+"sharing.history" = "履歴";
+"sharing.fundSourceDetail" = "資金元の共有設定";
+"sharing.removeShare.title" = "共有を削除";
+"sharing.removeShare.message" = "この共有を削除してもよろしいですか？";
+"sharing.unknownUser" = "不明なユーザー";
+"sharing.since" = "%@から";
+"sharing.editPermissions" = "権限を編集";
+"sharing.pendingInvitation" = "招待待ち";
+"sharing.inviteCode" = "招待コード: %@";
+"sharing.expires" = "期限: %@";
+"sharing.waitingAcceptance" = "承認待ちです";
+"sharing.recentActivity" = "最近のアクティビティ";
+"sharing.noRecentActivity" = "最近のアクティビティはありません";
+
+// MARK: - Share Permissions
+"sharing.permission.readOnly" = "閲覧のみ";
+"sharing.permission.readWrite" = "読み書き";
+"sharing.permission.admin" = "管理者";
+"sharing.permission.readOnly.description" = "取引を閲覧できます";
+"sharing.permission.readWrite.description" = "取引の閲覧・作成・編集・削除ができます";
+"sharing.permission.admin.description" = "すべての操作と共有管理ができます";
+
+// MARK: - Fund Source
+"fundSource.owner" = "所有者: %@";
+
+// MARK: - Search
+"action.search" = "検索";
+
+// MARK: - Actions
+"action.remove" = "削除";
 
 // MARK: - Transaction List
 "transaction.filterActive" = "フィルター適用中";
@@ -68,6 +117,11 @@
 "category.name" = "カテゴリ名";
 "category.icon" = "アイコン";
 "category.color" = "色";
+"category.deleteConfirmation" = "カテゴリを削除";
+"category.deleteMessage" = "このカテゴリを削除してもよろしいですか？この操作は取り消せません。";
+"category.deleteButton" = "削除";
+"category.cancelDelete" = "キャンセル";
+"category.deleteInUseMessage" = "このカテゴリは取引で使用されているため削除できません。関連する取引を先に削除してください。";
 
 // MARK: - Predefined Categories
 "category.food" = "食費";
@@ -79,6 +133,29 @@
 // MARK: - Predefined Subcategories
 "subcategory.food.groceries" = "食品";
 "subcategory.food.beverages" = "飲料";
+
+// MARK: - Subcategory Management
+"nav.subcategories" = "サブカテゴリ";
+"nav.subcategoryManagement" = "サブカテゴリ管理";
+"nav.newSubcategory" = "新しいサブカテゴリ";
+"nav.editSubcategory" = "サブカテゴリ編集";
+"subcategory.noSubcategories" = "サブカテゴリがありません";
+"subcategory.addSubcategoryHint" = "新しいサブカテゴリを追加してください";
+"subcategory.deleteConfirmation" = "サブカテゴリを削除";
+"subcategory.deleteMessage" = "このサブカテゴリを削除してもよろしいですか？この操作は取り消せません。";
+"subcategory.deleteButton" = "削除";
+"subcategory.cancelDelete" = "キャンセル";
+"subcategory.deleteInUseMessage" = "このサブカテゴリは取引で使用されているため削除できません。関連する取引を先に削除してください。";
+"subcategory.name" = "サブカテゴリ名";
+"subcategory.parentCategory" = "親カテゴリ";
+"subcategory.basicInfo" = "基本情報";
+"subcategory.preview" = "プレビュー";
+"subcategory.management" = "サブカテゴリ管理";
+"subcategory.editTitle" = "サブカテゴリを編集";
+"subcategory.createTitle" = "新しいサブカテゴリ";
+"subcategory.usageCount" = "使用回数: %d回";
+"subcategory.cannotDelete" = "削除不可";
+"subcategory.canDelete" = "削除可能";
 
 // MARK: - Fund Sources
 "fundSource.noFundSources" = "資金元がありません";
@@ -144,7 +221,9 @@
 
 // MARK: - Subcategory Errors
 "error.subcategory.createFailed" = "サブカテゴリの作成に失敗しました: %@";
+"error.subcategory.updateFailed" = "サブカテゴリの更新に失敗しました: %@";
 "error.subcategory.deleteFailed" = "サブカテゴリの削除に失敗しました: %@";
+"error.duplicateSubcategoryName" = "同じ名前のサブカテゴリが既に存在します";
 
 // MARK: - Fund Source Errors
 "error.fundSource.createFailed" = "資金元の作成に失敗しました: %@";
@@ -167,6 +246,12 @@
 "error.chart.dataFetchFailed" = "グラフデータの取得に失敗しました: %@";
 "error.chart.calculationFailed" = "グラフデータの計算に失敗しました: %@";
 
+// MARK: - Deletion Errors
+"error.deletionNotAllowed" = "削除できません: %@";
+"error.fundSourceInUse" = "この資金元は取引で使用されているため削除できません";
+"error.categoryInUse" = "このカテゴリは取引で使用されているため削除できません";
+"error.subcategoryInUse" = "このサブカテゴリは取引で使用されているため削除できません";
+
 // MARK: - Data Persistence Errors
 "error.dataCorruption" = "データが破損しています";
 "error.syncFailure" = "データの同期に失敗しました";
@@ -181,6 +266,7 @@
 "error.reason.formValidation" = "入力内容に問題があります";
 "error.reason.dataCorruption" = "データファイルが破損している可能性があります";
 "error.reason.syncFailure" = "ネットワーク接続に問題があります";
+"error.reason.deletionNotAllowed" = "使用中のデータは削除できません";
 
 // MARK: - Error Recovery Suggestions
 "error.recovery.invalidAmount" = "正の数値を入力してください";
@@ -190,6 +276,7 @@
 "error.recovery.formValidation" = "すべての必須項目を正しく入力してください";
 "error.recovery.dataCorruption" = "アプリを再起動してください。問題が続く場合はサポートにお問い合わせください";
 "error.recovery.syncFailure" = "インターネット接続を確認して再試行してください";
+"error.recovery.deletionNotAllowed" = "関連する取引を削除してから再試行してください";
 "error.recovery.general" = "しばらく待ってから再試行してください";
 
 // MARK: - Accessibility Labels
@@ -220,6 +307,10 @@
 "accessibility.tabFundSources" = "資金元タブ";
 "accessibility.tabSettings" = "設定タブ";
 "accessibility.addAccount" = "新しいアカウントを追加";
+"accessibility.addSubcategory" = "新しいサブカテゴリを追加";
+"accessibility.editSubcategory" = "サブカテゴリを編集";
+"accessibility.deleteSubcategory" = "サブカテゴリを削除";
+"accessibility.viewTransaction" = "取引詳細を表示";
 
 // MARK: - Accessibility Hints
 "accessibility.hint.addTransaction" = "タップして新しい取引を記録します";
@@ -233,6 +324,9 @@
 "accessibility.hint.periodSelector" = "スワイプして表示期間を変更します";
 "accessibility.hint.formField" = "ダブルタップして編集します";
 "accessibility.hint.helpSection" = "タップしてヘルプ情報を表示します";
+"accessibility.hint.deleteFundSource" = "タップして資金元を削除します";
+"accessibility.hint.editSubcategory" = "タップしてサブカテゴリを編集します";
+"accessibility.hint.viewTransaction" = "タップして取引の詳細を表示します";
 
 // MARK: - Accessibility Values
 "accessibility.value.amount" = "金額: %@";
@@ -310,7 +404,96 @@ Settings - Data Management
 "sharing.generateInvite" = "招待コードを生成";
 "sharing.acceptInvite" = "招待を受け入れる";
 "sharing.inviteExpired" = "招待コードの有効期限が切れています";
-"sharing.inviteInvalid" = "無効な招待コードです";// 
+"sharing.inviteInvalid" = "無効な招待コードです";
+
+// MARK: - Sharing Detail
+"sharing.fundSourceDetail" = "資金元共有設定";
+"sharing.currentShares" = "現在の共有";
+"sharing.pendingInvitations" = "保留中の招待";
+"sharing.actions" = "操作";
+"sharing.addUser" = "ユーザーを追加";
+"sharing.history" = "共有履歴";
+"sharing.recentActivity" = "最近のアクティビティ";
+"sharing.noRecentActivity" = "最近のアクティビティはありません";
+"sharing.unknownUser" = "不明なユーザー";
+"sharing.since" = "%@から";
+"sharing.editPermissions" = "権限を編集";
+"sharing.removeShare" = "共有を削除";
+"sharing.removeShare.title" = "共有を削除";
+"sharing.removeShare.message" = "この共有を削除してもよろしいですか？";
+"sharing.pendingInvitation" = "招待待ち";
+"sharing.inviteCode" = "招待コード: %@";
+"sharing.expires" = "期限: %@";
+"sharing.waitingAcceptance" = "承認待ち";
+"sharing.manageSharingSettings" = "共有設定を管理";
+
+// MARK: - Sharing Permissions
+"sharing.permissions" = "権限";
+"sharing.selectPermission" = "権限を選択";
+"sharing.selectPermissionFor" = "%@の権限を選択してください";
+"sharing.selectNewPermission" = "新しい権限を選択";
+"sharing.currentPermission" = "現在の権限";
+"sharing.updatePermissions" = "権限を更新";
+"sharing.confirmPermissionChange" = "権限変更の確認";
+"sharing.confirmPermissionChange.message" = "権限を%@から%@に変更してもよろしいですか？";
+"sharing.permissionChanges" = "権限の変更内容";
+"sharing.createTransactions" = "取引の作成";
+"sharing.editTransactions" = "取引の編集";
+"sharing.deleteTransactions" = "取引の削除";
+"sharing.adjustBalance" = "残高の調整";
+"sharing.manageSharing" = "共有の管理";
+
+"sharing.permission.readOnly" = "読み取り専用";
+"sharing.permission.readWrite" = "読み書き";
+"sharing.permission.admin" = "管理者";
+"sharing.permission.readOnly.description" = "取引の閲覧のみ可能";
+"sharing.permission.readWrite.description" = "取引の作成・編集・削除が可能";
+"sharing.permission.admin.description" = "すべての操作と共有管理が可能";
+
+// MARK: - Invite Generation
+"sharing.generateInvite.description" = "%@への招待コードを生成します";
+"sharing.inviteGenerated" = "招待コードが生成されました";
+"sharing.copyCode" = "コードをコピー";
+"sharing.showQR" = "QRコードを表示";
+"sharing.inviteExpiry" = "招待コードは7日間有効です";
+"sharing.qrCode" = "QRコード";
+"sharing.qrCode.description" = "このQRコードを相手に読み取ってもらうか、招待コードを直接共有してください";
+
+// MARK: - User Search
+"sharing.searching" = "検索中...";
+"sharing.noUsersFound" = "ユーザーが見つかりません";
+"sharing.noUsersFound.description" = "検索条件に一致するユーザーが見つかりませんでした";
+"sharing.searchInstructions" = "ユーザーを検索";
+"sharing.searchInstructions.description" = "メールアドレスまたはユーザー名で検索してください";
+"sharing.searchPlaceholder" = "メールアドレスまたはユーザー名";
+"sharing.alreadyShared" = "共有済み";
+
+// MARK: - Sharing Status
+"sharing.status" = "共有状況";
+"sharing.sharedFundSource" = "共有中の資金元";
+"sharing.noActiveShares" = "アクティブな共有はありません";
+
+// MARK: - Fund Source Detail
+"fundSource.actions" = "操作";
+"fundSource.adjustBalance" = "残高を調整";
+"fundSource.owner" = "所有者: %@";
+"transaction.recent" = "最近の取引";
+"transaction.noRecentTransactions" = "最近の取引はありません";
+"transaction.andMore" = "他%d件";
+
+// MARK: - Transaction Detail
+"transaction.details" = "取引詳細";
+"transaction.actions" = "操作";
+"transaction.sharedTransaction" = "共有取引";
+"transaction.createdBy" = "%@が作成";
+"transaction.info" = "取引情報";
+"sharing.info" = "共有情報";
+"category.unknown" = "未分類";
+
+// MARK: - Common Actions
+"action.search" = "検索";
+"action.remove" = "削除";
+"action.noChanges" = "変更なし";// 
 MARK: - iPad Interface
 "transaction.selectTransaction" = "取引を選択";
 "transaction.selectTransactionHint" = "左側のリストから取引を選択して詳細を表示";
@@ -320,6 +503,8 @@ MARK: - iPad Interface
 "transaction.updatedAt" = "更新日時";
 "transaction.deleteConfirmation" = "取引を削除";
 "transaction.deleteMessage" = "この取引を削除してもよろしいですか？この操作は取り消せません。";
+"transaction.deleteButton" = "削除";
+"transaction.cancelDelete" = "キャンセル";
 
 "fundSource.selectFundSource" = "資金元を選択";
 "fundSource.selectFundSourceHint" = "左側のリストから資金元を選択して詳細を表示";
@@ -330,7 +515,10 @@ MARK: - iPad Interface
 "fundSource.recentTransactions" = "最近の取引";
 "fundSource.noRecentTransactions" = "最近の取引はありません";
 "fundSource.deleteConfirmation" = "資金元を削除";
-"fundSource.deleteMessage" = "この資金元を削除してもよろしいですか？関連する取引も削除されます。";
+"fundSource.deleteMessage" = "この資金元を削除してもよろしいですか？この操作は取り消せません。";
+"fundSource.deleteButton" = "削除";
+"fundSource.cancelDelete" = "キャンセル";
+"fundSource.deleteInUseMessage" = "この資金元は取引で使用されているため削除できません。関連する取引を先に削除してください。";
 
 "chart.summary" = "サマリー";
 "chart.breakdown" = "内訳";
@@ -385,3 +573,133 @@ MARK: - iPad Interface
 "settings.supportDescription" = "ご質問やお困りのことがございましたら、お気軽にお問い合わせください。";
 "settings.legal" = "法的情報";
 "settings.legalDescription" = "利用規約とプライバシーポリシーをご確認ください。";
+
+// MARK: - Authentication
+"auth.appTitle" = "家計簿アプリ";
+"auth.loginSubtitle" = "アカウントにログインして家計管理を始めましょう";
+"auth.login" = "ログイン";
+"auth.email" = "メールアドレス";
+"auth.emailPlaceholder" = "メールアドレスを入力";
+"auth.password" = "パスワード";
+"auth.passwordPlaceholder" = "パスワードを入力";
+"auth.forgotPassword" = "パスワードを忘れた場合";
+"auth.noAccount" = "アカウントをお持ちでない方は";
+"auth.signUp" = "新規登録";
+"auth.error" = "エラー";
+
+// MARK: - Registration
+"auth.createAccount" = "アカウント作成";
+"auth.registerSubtitle" = "新しいアカウントを作成して家計管理を始めましょう";
+"auth.username" = "ユーザー名";
+"auth.usernamePlaceholder" = "ユーザー名を入力";
+"auth.confirmPassword" = "パスワード確認";
+"auth.confirmPasswordPlaceholder" = "パスワードを再入力";
+"auth.passwordMismatch" = "パスワードが一致しません";
+"auth.passwordValid" = "パスワードは有効です";
+"auth.passwordRequirements" = "パスワードは8文字以上で、英字と数字を含む必要があります";
+
+// MARK: - Password Reset
+"auth.resetPassword" = "パスワードリセット";
+"auth.resetPasswordSubtitle" = "メールアドレスを入力してリセットトークンを受け取ってください";
+"auth.enterTokenSubtitle" = "受け取ったトークンを入力してください";
+"auth.setNewPasswordSubtitle" = "新しいパスワードを設定してください";
+"auth.sendResetToken" = "リセットトークンを送信";
+"auth.verifyToken" = "トークンを確認";
+"auth.updatePassword" = "パスワードを更新";
+"auth.resetToken" = "リセットトークン";
+"auth.resetTokenPlaceholder" = "リセットトークンを入力";
+"auth.newPassword" = "新しいパスワード";
+"auth.tokenSentMessage" = "リセットトークンが生成されました。以下のトークンを入力してください。";
+"auth.generatedToken" = "生成されたトークン（デモ用）:";
+"auth.backToEmailEntry" = "メールアドレス入力に戻る";
+"auth.success" = "成功";
+"auth.resetTokenSent" = "リセットトークンが送信されました";
+"auth.invalidToken" = "無効なトークンです";
+"auth.passwordUpdated" = "パスワードが更新されました";
+
+// MARK: - Authentication Errors
+"error.auth.invalidCredentials" = "メールアドレスまたはパスワードが正しくありません";
+"error.auth.weakPassword" = "パスワードが弱すぎます";
+"error.auth.emailAlreadyExists" = "このメールアドレスは既に使用されています";
+"error.auth.userNotFound" = "ユーザーが見つかりません";
+"error.auth.passwordResetTokenInvalid" = "無効なリセットトークンです";
+"error.auth.passwordResetTokenExpired" = "リセットトークンの有効期限が切れています";
+"error.auth.loginFailed" = "ログインに失敗しました: %@";
+"error.auth.registrationFailed" = "登録に失敗しました: %@";
+"error.auth.passwordResetFailed" = "パスワードリセットに失敗しました: %@";
+
+// MARK: - Authentication Error Reasons
+"error.reason.invalidCredentials" = "認証情報が正しくありません";
+"error.reason.weakPassword" = "パスワードが要件を満たしていません";
+"error.reason.emailAlreadyExists" = "メールアドレスが既に登録されています";
+
+// MARK: - Authentication Error Recovery
+"error.recovery.invalidCredentials" = "メールアドレスとパスワードを確認してください";
+"error.recovery.weakPassword" = "8文字以上で英字と数字を含むパスワードを設定してください";
+"error.recovery.emailAlreadyExists" = "別のメールアドレスを使用するか、ログインしてください";
+
+// MARK: - Sharing Errors
+"error.sharing.createFailed" = "共有の作成に失敗しました: %@";
+"error.sharing.updateFailed" = "共有の更新に失敗しました: %@";
+"error.sharing.deleteFailed" = "共有の削除に失敗しました: %@";
+"error.sharing.fetchFailed" = "共有情報の取得に失敗しました: %@";
+"error.sharing.acceptanceFailed" = "招待の承認に失敗しました: %@";
+"error.sharing.invalidToken" = "無効な招待コードです";
+"error.sharing.tokenExpired" = "招待コードの有効期限が切れています";
+"error.sharing.userSearchFailed" = "ユーザー検索に失敗しました: %@";
+
+// MARK: - Sharing Error Reasons
+"error.reason.invalidInviteToken" = "招待コードが無効または期限切れです";
+
+// MARK: - Sharing Error Recovery
+"error.recovery.invalidInviteToken" = "新しい招待コードを生成してもらってください";
+
+// MARK: - Common
+"common.ok" = "OK";
+"common.cancel" = "キャンセル";
+// MAR
+K: - Error Messages
+"error.sharing.alreadyExists" = "このユーザーとは既に共有されています";
+"error.sharing.dataSyncFailed" = "データ同期に失敗しました: %@";
+"error.sharing.createFailed" = "共有の作成に失敗しました: %@";
+"error.sharing.updateFailed" = "共有の更新に失敗しました: %@";
+"error.sharing.deleteFailed" = "共有の削除に失敗しました: %@";
+"error.sharing.fetchFailed" = "共有データの取得に失敗しました: %@";
+"error.sharing.acceptanceFailed" = "招待の承認に失敗しました: %@";
+"error.sharing.invalidToken" = "無効な招待コードです";
+"error.sharing.tokenExpired" = "招待コードの有効期限が切れています";
+"error.sharing.userSearchFailed" = "ユーザー検索に失敗しました: %@";// MARK
+: - Invite Acceptance
+"sharing.acceptInvitation" = "招待を承認";
+"sharing.acceptInvitation.description" = "共有された資金元にアクセスするために招待コードを入力してください。";
+"sharing.inviteCode.label" = "招待コード";
+"sharing.inviteCode.placeholder" = "招待コードを入力";
+"sharing.inviteCode.hint" = "招待者から受け取った16文字のコードを入力してください。";
+"sharing.acceptInvitation.button" = "招待を承認";
+"sharing.invitationAccepted.title" = "招待が承認されました";
+"sharing.invitationAccepted.message" = "資金元が正常に共有されました。";
+"sharing.invitationFailed.title" = "招待の承認に失敗";
+"sharing.invitationFailed.unknown" = "不明なエラーが発生しました。";
+"error.auth.notLoggedIn" = "ログインしてください。";// MA
+RK: - Transaction Creator
+"transaction.creator.unknown" = "不明";
+"transaction.creator.you" = "あなた";// 
+MARK: - Sync Status
+"sync.status.notSynced" = "未同期";
+"sync.status.syncing" = "同期中";
+"sync.status.synced" = "同期済み";
+"sync.status.error" = "同期エラー";// MAR
+K: - Sharing Management
+"sharing.management" = "共有管理";
+"sharing.syncStatus" = "同期状況";
+"sharing.myFundSources" = "自分の資金元";
+"sharing.sharedWithMe" = "共有された資金元";
+"sharing.syncNow" = "今すぐ同期";
+"sharing.noSharedFundSources" = "共有された資金元がありません";
+"sharing.noSharedFundSources.description" = "他のユーザーと資金元を共有するか、招待を受け取ってください。";
+"sharing.lastSync" = "最終同期: %@";
+"sharing.sharedWith" = "%@人と共有";
+"sharing.notShared" = "未共有";
+"sharing.unknownFundSource" = "不明な資金元";
+"sharing.accept" = "承認";
+"sharing.decline" = "拒否";
