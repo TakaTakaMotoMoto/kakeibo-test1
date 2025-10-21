@@ -540,15 +540,37 @@ class UIManager {
 // Initialize UI Manager when dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
     const initUI = () => {
-        if (window.storage && window.dataManager && window.UIUtils && window.ModalManager && window.FormValidator && window.UIRenderer) {
-            window.uiManager = new UIManager();
-            console.log('UI Manager initialized');
+        const requiredDependencies = [
+            'storage', 'dataManager', 'UIUtils', 'ModalManager', 'FormValidator', 'UIRenderer'
+        ];
+        
+        const missingDependencies = requiredDependencies.filter(dep => !window[dep]);
+        
+        if (missingDependencies.length === 0) {
+            try {
+                window.uiManager = new UIManager();
+                console.log('UI Manager initialized successfully');
+                
+                // Hide loading screen and show main app
+                const loadingScreen = document.getElementById('loading-screen');
+                const mainApp = document.getElementById('main-app');
+                
+                if (loadingScreen && mainApp) {
+                    loadingScreen.style.display = 'none';
+                    mainApp.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error initializing UI Manager:', error);
+                UIUtils.showNotification('アプリの初期化でエラーが発生しました', 'error');
+            }
         } else {
-            console.log('Waiting for dependencies...');
+            console.log('Waiting for dependencies:', missingDependencies);
             setTimeout(initUI, 100);
         }
     };
-    initUI();
+    
+    // Start initialization after a short delay to ensure all scripts are loaded
+    setTimeout(initUI, 200);
 });
 
 // Export for use in other modules

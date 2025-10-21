@@ -1087,13 +1087,27 @@ class DataManager {
 
 // Create global instance when storage is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for storage to be initialized
-    if (window.storage) {
-        window.dataManager = new DataManager(window.storage);
-    } else {
-        // Retry after a short delay
-        setTimeout(() => {
-            window.dataManager = new DataManager(window.storage);
-        }, 100);
-    }
+    const initDataManager = () => {
+        if (window.storage) {
+            try {
+                window.dataManager = new DataManager(window.storage);
+                console.log('DataManager initialized successfully');
+                
+                // Notify that data manager is ready
+                window.dispatchEvent(new CustomEvent('dataManagerReady'));
+            } catch (error) {
+                console.error('Error initializing DataManager:', error);
+                setTimeout(initDataManager, 200);
+            }
+        } else {
+            console.log('Waiting for storage to be ready...');
+            setTimeout(initDataManager, 100);
+        }
+    };
+    
+    // Listen for storage ready event
+    window.addEventListener('storageReady', initDataManager);
+    
+    // Also try to initialize immediately in case storage is already ready
+    setTimeout(initDataManager, 100);
 });
