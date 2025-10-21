@@ -385,36 +385,13 @@ window.addEventListener('unhandledrejection', (e) => {
 // Initialize app when DOM is loaded and all dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
     const initApp = () => {
-        const requiredDependencies = ['storage', 'authManager', 'dataManager', 'uiManager'];
-        const optionalDependencies = ['dataIntegrityManager'];
-        
-        const missingRequired = requiredDependencies.filter(dep => !window[dep]);
-        const missingOptional = optionalDependencies.filter(dep => !window[dep]);
-        
-        if (missingRequired.length === 0) {
-            console.log('All required dependencies loaded, initializing app...');
-            if (missingOptional.length > 0) {
-                console.warn('Optional dependencies missing:', missingOptional);
-            }
-            
-            try {
-                window.budgetApp = new BudgetApp();
-                console.log('Budget App initialized successfully');
-            } catch (error) {
-                console.error('Error initializing Budget App:', error);
-                // Show error notification
-                if (window.UIUtils) {
-                    window.UIUtils.showNotification('アプリの初期化でエラーが発生しました', 'error');
-                }
-            }
+        if (window.storage && window.authManager && window.dataManager && window.uiManager && window.dataIntegrityManager) {
+            window.budgetApp = new BudgetApp();
         } else {
-            console.log('Waiting for required dependencies:', missingRequired);
             setTimeout(initApp, 200);
         }
     };
-    
-    // Start initialization after a delay to ensure all scripts are loaded
-    setTimeout(initApp, 300);
+    initApp();
 });
 
 // Add some CSS for notifications
