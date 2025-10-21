@@ -929,7 +929,9 @@ class StorageManager {
                     canView: true,
                     canEdit: false,
                     canDelete: false
-                }
+                },
+                createdAt: new Date(),
+                updatedAt: new Date()
             },
             { 
                 id: 'fs2', 
@@ -943,11 +945,13 @@ class StorageManager {
                     canView: true,
                     canEdit: false,
                     canDelete: false
-                }
+                },
+                createdAt: new Date(),
+                updatedAt: new Date()
             },
             { 
                 id: 'fs3', 
-                name: 'クレジットカード', 
+                name: 'クレジットカード',
                 initialBalance: 0, 
                 currentBalance: 0, 
                 type: 'credit', 
@@ -957,9 +961,24 @@ class StorageManager {
                     canView: true,
                     canEdit: false,
                     canDelete: false
-                }
+                },
+                createdAt: new Date(),
+                updatedAt: new Date()
             }
         ];
+    }
+
+    // Sharing users management
+    getSharingUsers() {
+        if (!this.hasDataAccess()) return [];
+        
+        return this.getItem(this.getUserKey(this.keys.sharingUsers), []);
+    }
+
+    setSharingUsers(sharingUsers) {
+        if (!this.hasDataAccess()) return false;
+        
+        return this.setItem(this.getUserKey(this.keys.sharingUsers), sharingUsers);
     }
 
     // Sharing users management
