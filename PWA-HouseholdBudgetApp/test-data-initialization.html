@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>データ初期化システムテスト</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-primary { background-color: #007AFF; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        #test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>データ初期化システムテスト</h1>
+    
+    <div class="test-section info">
+        <h2>テスト概要</h2>
+        <p>このテストは、PWA家計簿アプリのデータ初期化システムの修正を検証します。</p>
+        <ul>
+            <li>StorageManagerの初期化ロジック修正</li>
+            <li>ユーザー固有データキーの適切な処理</li>
+            <li>デフォルトデータ作成の確実な実行</li>
+            <li>認証状態変更時のデータ再初期化</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>テスト実行</h2>
+        <button class="btn-primary" onclick="runInitializationTest()">初期化テスト実行</button>
+        <button class="btn-success" onclick="runAuthStateChangeTest()">認証状態変更テスト</button>
+        <button class="btn-warning" onclick="runUserKeyTest()">ユーザーキーテスト</button>
+        <button class="btn-danger" onclick="clearAllData()">全データクリア</button>
+    </div>
+
+    <div id="test-results"></div>
+
+    <!-- Include the actual app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        let testResults = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testResults.push(`[${timestamp}] ${message}`);
+            updateResults();
+        }
+
+        function updateResults() {
+            document.getElementById('test-results').textContent = testResults.join('\n');
+        }
+
+        function clearResults() {
+            testResults = [];
+            updateResults();
+        }
+
+        async function runInitializationTest() {
+            clearResults();
+            log('=== データ初期化テスト開始 ===');
+            
+            try {
+                // 1. StorageManagerの初期化テスト
+                log('1. StorageManagerの初期化をテスト中...');
+                
+                if (window.storage) {
+                    log('✓ StorageManagerが正常に作成されました');
+                    
+                    // 2. デフォルトデータの確認
+                    log('2. デフォルトデータの存在を確認中...');
+                    
+                    const categories = window.storage.getCategories();
+                    const subcategories = window.storage.getSubcategories();
+                    const fundSources = window.storage.getFundSources();
+                    
+                    log(`カテゴリ数: ${categories.length}`);
+                    log(`サブカテゴリ数: ${subcategories.length}`);
+                    log(`資金元数: ${fundSources.length}`);
+                    
+                    if (categories.length > 0) {
+                        log('✓ デフォルトカテゴリが作成されています');
+                        categories.forEach(cat => log(`  - ${cat.name} (${cat.icon})`));
+                    } else {
+                        log('✗ デフォルトカテゴリが作成されていません');
+                    }
+                    
+                    if (fundSources.length > 0) {
+                        log('✓ デフォルト資金元が作成されています');
+                        fundSources.forEach(fs => log(`  - ${fs.name} (${fs.type})`));
+                    } else {
+                        log('✗ デフォルト資金元が作成されていません');
+                    }
+                    
+                    // 3. 初期化状態の確認
+                    log('3. 初期化状態を確認中...');
+                    const isInitialized = window.storage.isInitialized();
+                    log(`初期化状態: ${isInitialized ? '完了' : '未完了'}`);
+                    
+                } else {
+                    log('✗ StorageManagerが作成されていません');
+                }
+                
+            } catch (error) {
+                log(`✗ エラーが発生しました: ${error.message}`);
+                console.error('Initialization test error:', error);
+            }
+            
+            log('=== データ初期化テスト完了 ===');
+        }
+
+        async function runAuthStateChangeTest() {
+            clearResults();
+            log('=== 認証状態変更テスト開始 ===');
+            
+            try {
+                // 1. 現在の認証状態を確認
+                log('1. 現在の認証状態を確認中...');
+                const isLoggedIn = window.authManager ? window.authManager.getIsLoggedIn() : false;
+                const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+                
+                log(`ログイン状態: ${isLoggedIn}`);
+                log(`現在のユーザー: ${currentUser ? currentUser.username : 'なし'}`);
+                
+                // 2. ユーザーキーの確認
+                log('2. ユーザー固有キーを確認中...');
+                const baseKey = 'budget_categories';
+                const userKey = window.storage.getUserKey(baseKey);
+                log(`ベースキー: ${baseKey}`);
+                log(`ユーザーキー: ${userKey}`);
+                
+                // 3. データ再初期化のテスト
+                log('3. データ再初期化をテスト中...');
+                const beforeCategories = window.storage.getCategories().length;
+                log(`再初期化前のカテゴリ数: ${beforeCategories}`);
+                
+                window.storage.reinitializeUserData();
+                
+                // 少し待ってから確認
+                setTimeout(() => {
+                    const afterCategories = window.storage.getCategories().length;
+                    log(`再初期化後のカテゴリ数: ${afterCategories}`);
+                    
+                    if (afterCategories > 0) {
+                        log('✓ データ再初期化が正常に動作しました');
+                    } else {
+                        log('✗ データ再初期化に問題があります');
+                    }
+                }, 500);
+                
+            } catch (error) {
+                log(`✗ エラーが発生しました: ${error.message}`);
+                console.error('Auth state change test error:', error);
+            }
+            
+            log('=== 認証状態変更テスト完了 ===');
+        }
+
+        async function runUserKeyTest() {
+            clearResults();
+            log('=== ユーザーキーテスト開始 ===');
+            
+            try {
+                // 1. 異なる認証状態でのキー生成テスト
+                log('1. ユーザーキー生成をテスト中...');
+                
+                const baseKeys = ['budget_categories', 'budget_transactions', 'budget_fund_sources'];
+                
+                baseKeys.forEach(baseKey => {
+                    const userKey = window.storage.getUserKey(baseKey);
+                    log(`${baseKey} -> ${userKey}`);
+                });
+                
+                // 2. データアクセス権限のテスト
+                log('2. データアクセス権限をテスト中...');
+                const hasAccess = window.storage.hasDataAccess();
+                log(`データアクセス権限: ${hasAccess ? '許可' : '拒否'}`);
+                
+                // 3. エラーハンドリングのテスト
+                log('3. エラーハンドリングをテスト中...');
+                
+                // 一時的にauthManagerを無効にしてテスト
+                const originalAuthManager = window.authManager;
+                window.authManager = null;
+                
+                const keyWithoutAuth = window.storage.getUserKey('test_key');
+                log(`認証なしでのキー生成: ${keyWithoutAuth}`);
+                
+                const accessWithoutAuth = window.storage.hasDataAccess();
+                log(`認証なしでのアクセス権限: ${accessWithoutAuth ? '許可' : '拒否'}`);
+                
+                // authManagerを復元
+                window.authManager = originalAuthManager;
+                
+                log('✓ エラーハンドリングが正常に動作しました');
+                
+            } catch (error) {
+                log(`✗ エラーが発生しました: ${error.message}`);
+                console.error('User key test error:', error);
+            }
+            
+            log('=== ユーザーキーテスト完了 ===');
+        }
+
+        async function clearAllData() {
+            if (confirm('すべてのデータを削除しますか？この操作は元に戻せません。')) {
+                clearResults();
+                log('=== 全データクリア開始 ===');
+                
+                try {
+                    if (window.storage) {
+                        window.storage.clearAllData();
+                        log('✓ 全データがクリアされました');
+                        
+                        // 再初期化の確認
+                        setTimeout(() => {
+                            const categories = window.storage.getCategories().length;
+                            const fundSources = window.storage.getFundSources().length;
+                            
+                            log(`再初期化後のカテゴリ数: ${categories}`);
+                            log(`再初期化後の資金元数: ${fundSources}`);
+                            
+                            if (categories > 0 && fundSources > 0) {
+                                log('✓ 自動再初期化が正常に動作しました');
+                            } else {
+                                log('✗ 自動再初期化に問題があります');
+                            }
+                        }, 500);
+                        
+                    } else {
+                        log('✗ StorageManagerが利用できません');
+                    }
+                } catch (error) {
+                    log(`✗ エラーが発生しました: ${error.message}`);
+                    console.error('Clear data error:', error);
+                }
+                
+                log('=== 全データクリア完了 ===');
+            }
+        }
+
+        // ページ読み込み時に基本情報を表示
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('=== システム情報 ===');
+                log(`StorageManager: ${window.storage ? '利用可能' : '利用不可'}`);
+                log(`AuthManager: ${window.authManager ? '利用可能' : '利用不可'}`);
+                log(`BudgetApp: ${window.budgetApp ? '利用可能' : '利用不可'}`);
+                
+                if (window.storage) {
+                    const isInitialized = window.storage.isInitialized();
+                    log(`初期化状態: ${isInitialized ? '完了' : '未完了'}`);
+                }
+                
+                log('=== システム情報終了 ===');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -22,74 +22,123 @@ class DataManager {
     }
 
     addTransaction(transactionData) {
-        const transaction = this.storage.addTransaction(transactionData);
-        
-        // Update fund source balance
-        if (transaction.fundSourceId) {
-            this.storage.updateFundSourceBalance(transaction.fundSourceId, transaction.amount);
-            
-            // Mark transaction as shared if fund source is shared
-            const fundSources = this.storage.getFundSources();
-            const fundSource = fundSources.find(fs => fs.id === transaction.fundSourceId);
-            if (fundSource && fundSource.isShared) {
-                transaction.isShared = true;
-                // Update the transaction in storage
-                const transactions = this.storage.getTransactions();
-                const index = transactions.findIndex(t => t.id === transaction.id);
-                if (index !== -1) {
-                    transactions[index] = transaction;
-                    this.storage.setTransactions(transactions);
-                }
+        // Validate transaction data
+        const validationErrors = this.validateTransaction(transactionData);
+        if (validationErrors.length > 0) {
+            throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
+        }
+
+        // Use transaction-like operation for data consistency
+        if (window.dataIntegrityManager) {
+            try {
+                const result = window.dataIntegrityManager.executeTransaction([{
+                    type: 'transaction',
+                    action: 'create',
+                    data: transactionData
+                }]);
+                return result.results[0];
+            } catch (error) {
+                console.error('Transaction creation failed:', error);
+                throw error;
             }
         }
-        
+
+        // Fallback to direct storage operation
+        const transaction = this.storage.addTransaction(transactionData);
         return transaction;
     }
 
     updateTransaction(id, updates) {
-        const oldTransaction = this.storage.getTransactions().find(t => t.id === id);
-        const updatedTransaction = this.storage.updateTransaction(id, updates);
-        
-        if (updatedTransaction && oldTransaction) {
-            // Revert old balance change
-            if (oldTransaction.fundSourceId) {
-                this.storage.updateFundSourceBalance(oldTransaction.fundSourceId, -oldTransaction.amount);
-            }
-            
-            // Apply new balance change
-            if (updatedTransaction.fundSourceId) {
-                this.storage.updateFundSourceBalance(updatedTransaction.fundSourceId, updatedTransaction.amount);
+        // Validate updated transaction data
+        const existingTransaction = this.storage.getTransactions().find(t => t.id === id);
+        if (!existingTransaction) {
+            throw new Error('Transaction not found');
+        }
+
+        const updatedData = { ...existingTransaction, ...updates };
+        const validationErrors = this.validateTransaction(updatedData);
+        if (validationErrors.length > 0) {
+            throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
+        }
+
+        // Use transaction-like operation for data consistency
+        if (window.dataIntegrityManager) {
+            try {
+                const result = window.dataIntegrityManager.executeTransaction([{
+                    type: 'transaction',
+                    action: 'update',
+                    id: id,
+                    data: updates
+                }]);
+                return result.results[0];
+            } catch (error) {
+                console.error('Transaction update failed:', error);
+                throw error;
             }
         }
-        
-        return updatedTransaction;
+
+        // Fallback to direct storage operation
+        return this.storage.updateTransaction(id, updates);
     }
 
     deleteTransaction(id) {
         const transaction = this.storage.getTransactions().find(t => t.id === id);
-        const deleted = this.storage.deleteTransaction(id);
-        
-        if (deleted && transaction && transaction.fundSourceId) {
-            // Revert balance change
-            this.storage.updateFundSourceBalance(transaction.fundSourceId, -transaction.amount);
+        if (!transaction) {
+            throw new Error('Transaction not found');
         }
-        
-        return deleted;
+
+        // Use transaction-like operation for data consistency
+        if (window.dataIntegrityManager) {
+            try {
+                const result = window.dataIntegrityManager.executeTransaction([{
+                    type: 'transaction',
+                    action: 'delete',
+                    id: id
+                }]);
+                return result.results[0];
+            } catch (error) {
+                console.error('Transaction deletion failed:', error);
+                throw error;
+            }
+        }
+
+        // Fallback to direct storage operation
+        return this.storage.deleteTransaction(id);
     }
 
     // Fund source deletion with validation
     deleteFundSource(id) {
-        const transactions = this.getTransactions();
-        const hasTransactions = transactions.some(t => t.fundSourceId === id);
-        
-        if (hasTransactions) {
+        // Check if deletion is allowed
+        if (!this.canDeleteFundSource(id)) {
             throw new Error('この資金元は取引で使用されているため削除できません');
         }
-        
+
+        // Use transaction-like operation for data consistency
+        if (window.dataIntegrityManager) {
+            try {
+                const result = window.dataIntegrityManager.executeTransaction([{
+                    type: 'fundSource',
+                    action: 'delete',
+                    id: id
+                }]);
+                return result.results[0];
+            } catch (error) {
+                console.error('Fund source deletion failed:', error);
+                throw error;
+            }
+        }
+
+        // Fallback to direct storage operation
         return this.storage.deleteFundSource(id);
     }
 
     canDeleteFundSource(id) {
+        // Use integrity manager if available
+        if (window.dataIntegrityManager) {
+            return window.dataIntegrityManager.canDelete('fundSources', id);
+        }
+
+        // Fallback check
         const transactions = this.getTransactions();
         return !transactions.some(t => t.fundSourceId === id);
     }
@@ -104,33 +153,70 @@ class DataManager {
     }
 
     addSubcategory(subcategoryData) {
-        // Check for duplicate names within the same category
+        // Validate input data
+        if (!subcategoryData.name || !subcategoryData.name.trim()) {
+            throw new Error('サブカテゴリ名を入力してください');
+        }
+        
+        if (!subcategoryData.categoryId) {
+            throw new Error('カテゴリが選択されていません');
+        }
+        
+        // Normalize the name
+        const normalizedName = subcategoryData.name.trim();
+        
+        // Check for duplicate names within the same category (case-insensitive)
         const existingSubcategories = this.getSubcategories(subcategoryData.categoryId);
         const isDuplicate = existingSubcategories.some(sc => 
-            sc.name.toLowerCase() === subcategoryData.name.toLowerCase()
+            sc.name.toLowerCase().trim() === normalizedName.toLowerCase()
         );
         
         if (isDuplicate) {
             throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
         }
         
-        return this.storage.addSubcategory(subcategoryData);
+        // Create the subcategory with normalized name
+        const subcategoryToAdd = {
+            ...subcategoryData,
+            name: normalizedName
+        };
+        
+        return this.storage.addSubcategory(subcategoryToAdd);
     }
 
     updateSubcategory(id, updates) {
+        // Validate input
+        if (!id) {
+            throw new Error('サブカテゴリIDが指定されていません');
+        }
+        
         // Check for duplicate names if name is being updated
         if (updates.name) {
-            const subcategory = this.storage.getSubcategories().find(sc => sc.id === id);
-            if (subcategory) {
-                const existingSubcategories = this.getSubcategories(subcategory.categoryId);
-                const isDuplicate = existingSubcategories.some(sc => 
-                    sc.id !== id && sc.name.toLowerCase() === updates.name.toLowerCase()
-                );
-                
-                if (isDuplicate) {
-                    throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
-                }
+            const normalizedName = updates.name.trim();
+            
+            if (!normalizedName) {
+                throw new Error('サブカテゴリ名を入力してください');
             }
+            
+            const subcategory = this.storage.getSubcategories().find(sc => sc.id === id);
+            if (!subcategory) {
+                throw new Error('更新対象のサブカテゴリが見つかりません');
+            }
+            
+            const existingSubcategories = this.getSubcategories(subcategory.categoryId);
+            const isDuplicate = existingSubcategories.some(sc => 
+                sc.id !== id && sc.name.toLowerCase().trim() === normalizedName.toLowerCase()
+            );
+            
+            if (isDuplicate) {
+                throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
+            }
+            
+            // Normalize the name in updates
+            updates = {
+                ...updates,
+                name: normalizedName
+            };
         }
         
         return this.storage.updateSubcategory(id, updates);
@@ -393,32 +479,255 @@ class DataManager {
     }
 
     getSharedUsers() {
-        // For demo purposes, return mock shared users
-        // In a real app, this would fetch from a server
-        return [
-            { id: 'user1', username: '田中太郎', email: 'tanaka@example.com' },
-            { id: 'user2', username: '佐藤花子', email: 'sato@example.com' }
-        ];
+        // Get actual shared users from storage
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        if (!currentUser) return [];
+
+        // Get sharing data from storage
+        const sharingData = this.storage.getSharingUsers();
+        
+        // Filter users that are sharing with current user
+        return sharingData.filter(user => 
+            user.sharedWith && user.sharedWith.includes(currentUser.id)
+        );
     }
 
-    // Validation methods
+    // Add shared user management methods
+    addSharedUser(userEmail, fundSourceIds = []) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        if (!currentUser) {
+            throw new Error('ログインが必要です');
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userEmail)) {
+            throw new Error('有効なメールアドレスを入力してください');
+        }
+
+        const sharingData = this.storage.getSharingUsers();
+        
+        // Check if user already exists
+        const existingUser = sharingData.find(user => user.email === userEmail);
+        if (existingUser) {
+            throw new Error('このユーザーは既に共有リストに存在します');
+        }
+
+        // Create new shared user entry
+        const newSharedUser = {
+            id: this.storage.generateId(),
+            email: userEmail,
+            username: userEmail.split('@')[0], // Use email prefix as username
+            sharedWith: [currentUser.id],
+            sharedFundSources: fundSourceIds,
+            invitedBy: currentUser.id,
+            invitedAt: new Date(),
+            status: 'pending' // pending, accepted, declined
+        };
+
+        sharingData.push(newSharedUser);
+        this.storage.setSharingUsers(sharingData);
+        
+        return newSharedUser;
+    }
+
+    removeSharedUser(userId) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        if (!currentUser) {
+            throw new Error('ログインが必要です');
+        }
+
+        const sharingData = this.storage.getSharingUsers();
+        const userIndex = sharingData.findIndex(user => user.id === userId);
+        
+        if (userIndex === -1) {
+            throw new Error('指定されたユーザーが見つかりません');
+        }
+
+        const user = sharingData[userIndex];
+        
+        // Check if current user has permission to remove this user
+        if (!user.sharedWith.includes(currentUser.id) && user.invitedBy !== currentUser.id) {
+            throw new Error('このユーザーを削除する権限がありません');
+        }
+
+        // Remove user from sharing data
+        sharingData.splice(userIndex, 1);
+        this.storage.setSharingUsers(sharingData);
+
+        // Remove user from all fund source sharing
+        const fundSources = this.storage.getFundSources();
+        let fundSourcesUpdated = false;
+        
+        fundSources.forEach(fs => {
+            if (fs.sharedWith && fs.sharedWith.includes(userId)) {
+                fs.sharedWith = fs.sharedWith.filter(id => id !== userId);
+                if (fs.sharedWith.length === 0) {
+                    fs.isShared = false;
+                }
+                fundSourcesUpdated = true;
+            }
+        });
+
+        if (fundSourcesUpdated) {
+            this.storage.setFundSources(fundSources);
+        }
+
+        return true;
+    }
+
+    updateSharedUserStatus(userId, status) {
+        const sharingData = this.storage.getSharingUsers();
+        const userIndex = sharingData.findIndex(user => user.id === userId);
+        
+        if (userIndex === -1) {
+            throw new Error('指定されたユーザーが見つかりません');
+        }
+
+        sharingData[userIndex].status = status;
+        sharingData[userIndex].updatedAt = new Date();
+        
+        this.storage.setSharingUsers(sharingData);
+        return sharingData[userIndex];
+    }
+
+    // Get fund source sharing settings
+    getFundSourceSharingSettings(fundSourceId) {
+        const fundSources = this.storage.getFundSources();
+        const fundSource = fundSources.find(fs => fs.id === fundSourceId);
+        
+        if (!fundSource) {
+            return null;
+        }
+
+        return {
+            isShared: fundSource.isShared || false,
+            sharedWith: fundSource.sharedWith || [],
+            permissions: fundSource.permissions || {
+                canView: true,
+                canEdit: false,
+                canDelete: false
+            }
+        };
+    }
+
+    // Update fund source sharing settings
+    updateFundSourceSharing(fundSourceId, settings) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        if (!currentUser) {
+            throw new Error('ログインが必要です');
+        }
+
+        const fundSources = this.storage.getFundSources();
+        const fundSourceIndex = fundSources.findIndex(fs => fs.id === fundSourceId);
+        
+        if (fundSourceIndex === -1) {
+            throw new Error('指定された資金元が見つかりません');
+        }
+
+        const fundSource = fundSources[fundSourceIndex];
+        
+        // Update sharing settings
+        fundSource.isShared = settings.isShared || false;
+        fundSource.sharedWith = settings.sharedWith || [];
+        fundSource.permissions = settings.permissions || {
+            canView: true,
+            canEdit: false,
+            canDelete: false
+        };
+        fundSource.updatedAt = new Date();
+
+        // If sharing is disabled, clear shared users
+        if (!fundSource.isShared) {
+            fundSource.sharedWith = [];
+        }
+
+        fundSources[fundSourceIndex] = fundSource;
+        this.storage.setFundSources(fundSources);
+
+        // Update related transactions sharing status
+        this.updateTransactionSharingStatus(fundSourceId, fundSource.isShared);
+
+        return fundSource;
+    }
+
+    // Update transaction sharing status based on fund source
+    updateTransactionSharingStatus(fundSourceId, isShared) {
+        const transactions = this.storage.getTransactions();
+        let updated = false;
+
+        transactions.forEach(transaction => {
+            if (transaction.fundSourceId === fundSourceId) {
+                transaction.isShared = isShared;
+                transaction.updatedAt = new Date();
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            this.storage.setTransactions(transactions);
+        }
+    }
+
+    // Enhanced validation methods
     validateTransaction(data) {
         const errors = [];
         
+        // Amount validation
         if (!data.amount || data.amount === 0) {
             errors.push('金額を入力してください');
+        } else if (typeof data.amount !== 'number' || isNaN(data.amount)) {
+            errors.push('有効な金額を入力してください');
+        } else if (Math.abs(data.amount) > 10000000) {
+            errors.push('金額が範囲を超えています');
         }
         
+        // Category validation
         if (!data.categoryId) {
             errors.push('カテゴリを選択してください');
+        } else {
+            const categories = this.storage.getCategories();
+            if (!categories.some(c => c.id === data.categoryId)) {
+                errors.push('選択されたカテゴリが存在しません');
+            }
         }
         
+        // Fund source validation
         if (!data.fundSourceId) {
             errors.push('資金元を選択してください');
+        } else {
+            const fundSources = this.storage.getFundSources();
+            if (!fundSources.some(fs => fs.id === data.fundSourceId)) {
+                errors.push('選択された資金元が存在しません');
+            }
         }
         
+        // Date validation
         if (!data.date) {
             errors.push('日付を選択してください');
+        } else {
+            const date = new Date(data.date);
+            if (isNaN(date.getTime())) {
+                errors.push('有効な日付を入力してください');
+            } else if (date > new Date()) {
+                errors.push('未来の日付は入力できません');
+            }
+        }
+        
+        // Subcategory validation (if provided)
+        if (data.subcategoryId) {
+            const subcategories = this.storage.getSubcategories();
+            const subcategory = subcategories.find(sc => sc.id === data.subcategoryId);
+            if (!subcategory) {
+                errors.push('選択されたサブカテゴリが存在しません');
+            } else if (subcategory.categoryId !== data.categoryId) {
+                errors.push('サブカテゴリが選択されたカテゴリと一致しません');
+            }
+        }
+        
+        // Note validation (if provided)
+        if (data.note && data.note.length > 500) {
+            errors.push('メモは500文字以内で入力してください');
         }
         
         return errors;
@@ -427,15 +736,352 @@ class DataManager {
     validateFundSource(data) {
         const errors = [];
         
+        // Name validation
         if (!data.name || data.name.trim() === '') {
             errors.push('名前を入力してください');
+        } else if (data.name.trim().length > 50) {
+            errors.push('名前は50文字以内で入力してください');
+        } else {
+            // Check for duplicate names
+            const existingFundSources = this.storage.getFundSources();
+            const duplicate = existingFundSources.find(fs => 
+                fs.name.toLowerCase().trim() === data.name.toLowerCase().trim() && 
+                fs.id !== data.id
+            );
+            if (duplicate) {
+                errors.push('この名前の資金元は既に存在します');
+            }
         }
         
+        // Balance validation
         if (data.initialBalance === undefined || data.initialBalance === null) {
             errors.push('初期残高を入力してください');
+        } else if (typeof data.initialBalance !== 'number' || isNaN(data.initialBalance)) {
+            errors.push('有効な初期残高を入力してください');
+        } else if (Math.abs(data.initialBalance) > 10000000) {
+            errors.push('初期残高が範囲を超えています');
+        }
+        
+        // Type validation
+        if (data.type) {
+            const validTypes = ['cash', 'bank', 'credit', 'savings', 'investment'];
+            if (!validTypes.includes(data.type)) {
+                errors.push('無効な資金元タイプです');
+            }
         }
         
         return errors;
+    }
+
+    validateSubcategory(data) {
+        const errors = [];
+        
+        // Name validation
+        if (!data.name || data.name.trim() === '') {
+            errors.push('サブカテゴリ名を入力してください');
+        } else if (data.name.trim().length > 30) {
+            errors.push('サブカテゴリ名は30文字以内で入力してください');
+        }
+        
+        // Category validation
+        if (!data.categoryId) {
+            errors.push('カテゴリが選択されていません');
+        } else {
+            const categories = this.storage.getCategories();
+            if (!categories.some(c => c.id === data.categoryId)) {
+                errors.push('選択されたカテゴリが存在しません');
+            }
+            
+            // Check for duplicate names within the same category
+            if (data.name && data.name.trim()) {
+                const existingSubcategories = this.getSubcategories(data.categoryId);
+                const duplicate = existingSubcategories.find(sc => 
+                    sc.name.toLowerCase().trim() === data.name.toLowerCase().trim() && 
+                    sc.id !== data.id
+                );
+                if (duplicate) {
+                    errors.push('このカテゴリ内に同じ名前のサブカテゴリが既に存在します');
+                }
+            }
+        }
+        
+        return errors;
+    }
+
+    // Data consistency check methods
+    checkDataConsistency() {
+        const issues = [];
+        
+        try {
+            // Check for orphaned transactions
+            const orphanedTransactions = this.findOrphanedTransactions();
+            if (orphanedTransactions.length > 0) {
+                issues.push({
+                    type: 'orphaned_transactions',
+                    count: orphanedTransactions.length,
+                    description: '参照先が存在しない取引があります'
+                });
+            }
+            
+            // Check for orphaned subcategories
+            const orphanedSubcategories = this.findOrphanedSubcategories();
+            if (orphanedSubcategories.length > 0) {
+                issues.push({
+                    type: 'orphaned_subcategories',
+                    count: orphanedSubcategories.length,
+                    description: '参照先カテゴリが存在しないサブカテゴリがあります'
+                });
+            }
+            
+            // Check fund source balance consistency
+            const balanceIssues = this.checkFundSourceBalanceConsistency();
+            if (balanceIssues.length > 0) {
+                issues.push({
+                    type: 'balance_inconsistencies',
+                    count: balanceIssues.length,
+                    description: '資金元の残高に不整合があります'
+                });
+            }
+            
+            // Check for duplicate names
+            const duplicateIssues = this.findDuplicateNames();
+            if (duplicateIssues.length > 0) {
+                issues.push({
+                    type: 'duplicate_names',
+                    count: duplicateIssues.length,
+                    description: '重複する名前があります'
+                });
+            }
+            
+        } catch (error) {
+            console.error('Error during consistency check:', error);
+            issues.push({
+                type: 'check_error',
+                description: 'データ整合性チェック中にエラーが発生しました'
+            });
+        }
+        
+        return {
+            hasIssues: issues.length > 0,
+            issues: issues,
+            checkedAt: new Date()
+        };
+    }
+
+    findOrphanedTransactions() {
+        const transactions = this.getTransactions();
+        const categories = this.storage.getCategories();
+        const fundSources = this.storage.getFundSources();
+        const subcategories = this.storage.getSubcategories();
+        
+        return transactions.filter(transaction => {
+            const hasValidCategory = categories.some(c => c.id === transaction.categoryId);
+            const hasValidFundSource = fundSources.some(fs => fs.id === transaction.fundSourceId);
+            const hasValidSubcategory = !transaction.subcategoryId || 
+                subcategories.some(sc => sc.id === transaction.subcategoryId);
+            
+            return !hasValidCategory || !hasValidFundSource || !hasValidSubcategory;
+        });
+    }
+
+    findOrphanedSubcategories() {
+        const subcategories = this.storage.getSubcategories();
+        const categories = this.storage.getCategories();
+        
+        return subcategories.filter(subcategory => 
+            !categories.some(c => c.id === subcategory.categoryId)
+        );
+    }
+
+    checkFundSourceBalanceConsistency() {
+        const fundSources = this.storage.getFundSources();
+        const transactions = this.getTransactions();
+        const issues = [];
+        
+        for (const fundSource of fundSources) {
+            const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
+            const calculatedBalance = fundSource.initialBalance + 
+                relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
+            
+            if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
+                issues.push({
+                    fundSourceId: fundSource.id,
+                    name: fundSource.name,
+                    storedBalance: fundSource.currentBalance,
+                    calculatedBalance: calculatedBalance
+                });
+            }
+        }
+        
+        return issues;
+    }
+
+    findDuplicateNames() {
+        const duplicates = [];
+        
+        // Check fund source names
+        const fundSources = this.storage.getFundSources();
+        const fsNames = new Map();
+        for (const fs of fundSources) {
+            const lowerName = fs.name.toLowerCase().trim();
+            if (fsNames.has(lowerName)) {
+                duplicates.push({
+                    type: 'fund_source',
+                    name: fs.name,
+                    ids: [fsNames.get(lowerName), fs.id]
+                });
+            } else {
+                fsNames.set(lowerName, fs.id);
+            }
+        }
+        
+        // Check category names
+        const categories = this.storage.getCategories();
+        const catNames = new Map();
+        for (const cat of categories) {
+            const lowerName = cat.name.toLowerCase().trim();
+            if (catNames.has(lowerName)) {
+                duplicates.push({
+                    type: 'category',
+                    name: cat.name,
+                    ids: [catNames.get(lowerName), cat.id]
+                });
+            } else {
+                catNames.set(lowerName, cat.id);
+            }
+        }
+        
+        return duplicates;
+    }
+
+    // Auto-repair methods
+    repairDataInconsistencies(issues) {
+        const repairResults = [];
+        
+        for (const issue of issues) {
+            try {
+                switch (issue.type) {
+                    case 'balance_inconsistencies':
+                        const balanceFixed = this.repairBalanceInconsistencies();
+                        repairResults.push({
+                            type: issue.type,
+                            success: true,
+                            fixed: balanceFixed,
+                            message: `${balanceFixed}件の残高不整合を修正しました`
+                        });
+                        break;
+                        
+                    case 'orphaned_transactions':
+                        const orphanedFixed = this.repairOrphanedTransactions();
+                        repairResults.push({
+                            type: issue.type,
+                            success: true,
+                            fixed: orphanedFixed,
+                            message: `${orphanedFixed}件の孤立した取引を修正しました`
+                        });
+                        break;
+                        
+                    case 'orphaned_subcategories':
+                        const subcategoriesFixed = this.repairOrphanedSubcategories();
+                        repairResults.push({
+                            type: issue.type,
+                            success: true,
+                            fixed: subcategoriesFixed,
+                            message: `${subcategoriesFixed}件の孤立したサブカテゴリを削除しました`
+                        });
+                        break;
+                        
+                    default:
+                        repairResults.push({
+                            type: issue.type,
+                            success: false,
+                            fixed: 0,
+                            message: '自動修復に対応していません'
+                        });
+                }
+            } catch (error) {
+                console.error(`Error repairing ${issue.type}:`, error);
+                repairResults.push({
+                    type: issue.type,
+                    success: false,
+                    fixed: 0,
+                    message: `修復中にエラーが発生しました: ${error.message}`
+                });
+            }
+        }
+        
+        return repairResults;
+    }
+
+    repairBalanceInconsistencies() {
+        const fundSources = this.storage.getFundSources();
+        const transactions = this.getTransactions();
+        let fixed = 0;
+        
+        for (const fundSource of fundSources) {
+            const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
+            const calculatedBalance = fundSource.initialBalance + 
+                relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
+            
+            if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
+                fundSource.currentBalance = calculatedBalance;
+                fundSource.updatedAt = new Date();
+                fixed++;
+            }
+        }
+        
+        if (fixed > 0) {
+            this.storage.setFundSources(fundSources);
+        }
+        
+        return fixed;
+    }
+
+    repairOrphanedTransactions() {
+        const transactions = this.getTransactions();
+        const categories = this.storage.getCategories();
+        const fundSources = this.storage.getFundSources();
+        const subcategories = this.storage.getSubcategories();
+        let fixed = 0;
+        
+        for (const transaction of transactions) {
+            let modified = false;
+            
+            // Remove invalid subcategory references
+            if (transaction.subcategoryId && 
+                !subcategories.some(sc => sc.id === transaction.subcategoryId)) {
+                transaction.subcategoryId = null;
+                modified = true;
+                fixed++;
+            }
+            
+            if (modified) {
+                transaction.updatedAt = new Date();
+            }
+        }
+        
+        if (fixed > 0) {
+            this.storage.setTransactions(transactions);
+        }
+        
+        return fixed;
+    }
+
+    repairOrphanedSubcategories() {
+        const subcategories = this.storage.getSubcategories();
+        const categories = this.storage.getCategories();
+        
+        const validSubcategories = subcategories.filter(subcategory => 
+            categories.some(c => c.id === subcategory.categoryId)
+        );
+        
+        const fixed = subcategories.length - validSubcategories.length;
+        
+        if (fixed > 0) {
+            this.storage.setSubcategories(validSubcategories);
+        }
+        
+        return fixed;
     }
 }
 

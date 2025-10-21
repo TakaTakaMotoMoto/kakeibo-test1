@@ -52,14 +52,48 @@ class BudgetApp {
     }
 
     initializeAuth() {
-        // Update auth UI after all components are loaded
-        if (window.authManager) {
-            window.authManager.updateAuthUI();
-        }
-        
-        // Update UI manager auth-dependent components
-        if (window.uiManager) {
-            window.uiManager.updateAuthDependentUI();
+        try {
+            // Update auth UI after all components are loaded
+            if (window.authManager) {
+                try {
+                    window.authManager.updateAuthUI();
+                } catch (authError) {
+                    console.error('Error updating auth UI:', authError);
+                    this.showNotification('認証UIの更新でエラーが発生しました', 'warning');
+                }
+            }
+            
+            // Ensure storage is properly initialized
+            if (window.storage) {
+                try {
+                    // Check if storage needs initialization
+                    if (typeof window.storage.isInitialized === 'function' && !window.storage.isInitialized()) {
+                        console.log('Storage not properly initialized, forcing reinitialization...');
+                        if (typeof window.storage.forceReinitialize === 'function') {
+                            window.storage.forceReinitialize();
+                        }
+                    }
+                } catch (storageError) {
+                    console.error('Error initializing storage:', storageError);
+                    this.showNotification('ストレージの初期化でエラーが発生しました', 'warning');
+                }
+            }
+            
+            // Update UI manager auth-dependent components
+            if (window.uiManager && typeof window.uiManager.updateAuthDependentUI === 'function') {
+                // Delay UI update to ensure data is ready
+                setTimeout(() => {
+                    try {
+                        window.uiManager.updateAuthDependentUI();
+                    } catch (uiError) {
+                        console.error('Error updating auth-dependent UI in initializeAuth:', uiError);
+                        this.showNotification('UI初期化でエラーが発生しました', 'warning');
+                    }
+                }, 200);
+            }
+        } catch (error) {
+            console.error('Error in initializeAuth:', error);
+            this.showNotification('認証システムの初期化でエラーが発生しました', 'error');
         }
     }
 
@@ -182,12 +216,35 @@ class BudgetApp {
     }
 
     showNotification(message, type = 'info') {
+        // Remove existing notifications of the same type to prevent spam
+        const existingNotifications = document.querySelectorAll(`.notification-${type}`);
+        existingNotifications.forEach(n => {
+            if (n.parentNode) {
+                n.style.transform = 'translateX(100%)';
+                setTimeout(() => n.parentNode.removeChild(n), 300);
+            }
+        });
+        
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
-        notification.textContent = message;
         
-        // Style the notification
+        // Create notification content with icon
+        const icons = {
+            success: '✅',
+            warning: '⚠️',
+            error: '❌',
+            info: 'ℹ️'
+        };
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">${icons[type] || icons.info}</span>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        // Enhanced styling
         Object.assign(notification.style, {
             position: 'fixed',
             top: '20px',
@@ -198,37 +255,59 @@ class BudgetApp {
             fontWeight: '500',
             zIndex: '10000',
             transform: 'translateX(100%)',
-            transition: 'transform 0.3s ease',
+            transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
             maxWidth: '300px',
-            wordWrap: 'break-word'
+            wordWrap: 'break-word',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+            backdropFilter: 'blur(10px)',
+            cursor: 'pointer'
         });
         
-        // Set background color based on type
-        const colors = {
-            success: '#34C759',
-            warning: '#FF9500',
-            error: '#FF3B30',
-            info: '#007AFF'
+        // Set background with gradient based on type
+        const backgrounds = {
+            success: 'linear-gradient(135deg, #34C759, #30D158)',
+            warning: 'linear-gradient(135deg, #FF9500, #FF9F0A)',
+            error: 'linear-gradient(135deg, #FF3B30, #FF453A)',
+            info: 'linear-gradient(135deg, #007AFF, #0A84FF)'
         };
-        notification.style.backgroundColor = colors[type] || colors.info;
+        notification.style.background = backgrounds[type] || backgrounds.info;
         
-        // Add to DOM
-        document.body.appendChild(notification);
-        
-        // Animate in
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Remove after delay
-        setTimeout(() => {
+        // Add click to dismiss
+        notification.addEventListener('click', () => {
             notification.style.transform = 'translateX(100%)';
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
             }, 300);
-        }, 3000);
+        });
+        
+        // Add to DOM
+        document.body.appendChild(notification);
+        
+        // Animate in with enhanced timing
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 50);
+        
+        // Auto-remove with different timing based on type
+        const delays = {
+            success: 2000,
+            warning: 4000,
+            error: 5000,
+            info: 3000
+        };
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, delays[type] || delays.info);
     }
 
     // Error handling
@@ -306,7 +385,7 @@ window.addEventListener('unhandledrejection', (e) => {
 // Initialize app when DOM is loaded and all dependencies are ready
 document.addEventListener('DOMContentLoaded', () => {
     const initApp = () => {
-        if (window.storage && window.authManager && window.dataManager && window.uiManager) {
+        if (window.storage && window.authManager && window.dataManager && window.uiManager && window.dataIntegrityManager) {
             window.budgetApp = new BudgetApp();
         } else {
             setTimeout(initApp, 200);

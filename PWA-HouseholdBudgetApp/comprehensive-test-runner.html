@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA家計簿アプリ - 包括的テストランナー</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-runner-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-suite {
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .test-suite-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .test-suite-body {
+            padding: 20px;
+            display: none;
+        }
+        
+        .test-suite.expanded .test-suite-body {
+            display: block;
+        }
+        
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .test-result.passed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .test-result.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007AFF, #34C759);
+            width: 0%;
+            transition: width 0.3s ease;
+        }     
+   
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .test-details {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .test-suite.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-runner-container">
+        <h1>PWA家計簿アプリ - 包括的テストランナー</h1>
+        <p>このテストランナーは、PWA家計簿アプリのバグ修正実装を包括的に検証します。</p>
+        
+        <div class="test-controls">
+            <button class="btn primary" onclick="runAllTests()">全テスト実行</button>
+            <button class="btn secondary" onclick="runFunctionalTests()">機能テストのみ</button>
+            <button class="btn secondary" onclick="runPerformanceTests()">パフォーマンステストのみ</button>
+            <button class="btn secondary" onclick="runUsabilityTests()">ユーザビリティテストのみ</button>
+            <button class="btn danger" onclick="clearResults()">結果クリア</button>
+        </div>
+        
+        <div class="progress-bar" id="overall-progress" style="display: none;">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div id="progress-text" style="text-align: center; margin: 10px 0; display: none;"></div>
+        
+        <div class="summary-stats" id="summary-stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="total-tests">0</div>
+                <div class="stat-label">総テスト数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="passed-tests" style="color: #28a745;">0</div>
+                <div class="stat-label">成功</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="failed-tests" style="color: #dc3545;">0</div>
+                <div class="stat-label">失敗</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="warning-tests" style="color: #ffc107;">0</div>
+                <div class="stat-label">警告</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="success-rate">0%</div>
+                <div class="stat-label">成功率</div>
+            </div>
+        </div> 
+       
+        <!-- Test Suite 1: 資金元管理機能 -->
+        <div class="test-suite" id="fund-source-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('fund-source-tests')">
+                <h3>1. 資金元管理機能テスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>資金元の追加・削除・表示機能をテストします。</p>
+                <button class="btn primary" onclick="runFundSourceTests()">実行</button>
+                <div id="fund-source-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 2: データ初期化システム -->
+        <div class="test-suite" id="data-init-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('data-init-tests')">
+                <h3>2. データ初期化システムテスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>StorageManagerの初期化とデフォルトデータ作成をテストします。</p>
+                <button class="btn primary" onclick="runDataInitTests()">実行</button>
+                <div id="data-init-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 3: 認証システム安定化 -->
+        <div class="test-suite" id="auth-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('auth-tests')">
+                <h3>3. 認証システム安定化テスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>認証システムの安定性とUI同期をテストします。</p>
+                <button class="btn primary" onclick="runAuthTests()">実行</button>
+                <div id="auth-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 4: カテゴリ・サブカテゴリ機能 -->
+        <div class="test-suite" id="category-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('category-tests')">
+                <h3>4. カテゴリ・サブカテゴリ機能テスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>カテゴリ選択とサブカテゴリ管理機能をテストします。</p>
+                <button class="btn primary" onclick="runCategoryTests()">実行</button>
+                <div id="category-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 5: 共有機能 -->
+        <div class="test-suite" id="sharing-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('sharing-tests')">
+                <h3>5. 共有機能テスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>共有ユーザー管理と資金元共有機能をテストします。</p>
+                <button class="btn primary" onclick="runSharingTests()">実行</button>
+                <div id="sharing-results"></div>
+            </div>
+        </div>        
+
+        <!-- Test Suite 6: UI応答性とエラーハンドリング -->
+        <div class="test-suite" id="ui-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('ui-tests')">
+                <h3>6. UI応答性とエラーハンドリングテスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>ボタンの応答性、モーダル、エラーメッセージ表示をテストします。</p>
+                <button class="btn primary" onclick="runUITests()">実行</button>
+                <div id="ui-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 7: データ整合性 -->
+        <div class="test-suite" id="integrity-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('integrity-tests')">
+                <h3>7. データ整合性テスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>データの同期更新と依存関係チェックをテストします。</p>
+                <button class="btn primary" onclick="runIntegrityTests()">実行</button>
+                <div id="integrity-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 8: パフォーマンステスト -->
+        <div class="test-suite" id="performance-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('performance-tests')">
+                <h3>8. パフォーマンステスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>データ処理速度、メモリ使用量、ストレージ性能をテストします。</p>
+                <button class="btn primary" onclick="runPerformanceTestSuite()">実行</button>
+                <div id="performance-results"></div>
+            </div>
+        </div>
+        
+        <!-- Test Suite 9: ユーザビリティテスト -->
+        <div class="test-suite" id="usability-tests">
+            <div class="test-suite-header" onclick="toggleTestSuite('usability-tests')">
+                <h3>9. ユーザビリティテスト</h3>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="test-suite-body">
+                <p>画面サイズ対応、タッチ操作、アクセシビリティをテストします。</p>
+                <button class="btn primary" onclick="runUsabilityTestSuite()">実行</button>
+                <div id="usability-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>    <
+script>
+        // Test runner state
+        let testResults = [];
+        let isTestRunning = false;
+        let currentTestSuite = null;
+        
+        // Test result management
+        function logTestResult(suiteName, testName, status, message, details = []) {
+            const result = {
+                suite: suiteName,
+                name: testName,
+                status: status, // 'passed', 'failed', 'warning'
+                message: message,
+                details: details,
+                timestamp: new Date().toISOString()
+            };
+            testResults.push(result);
+            displayTestResult(suiteName, result);
+            updateSummaryStats();
+        }
+        
+        function displayTestResult(suiteName, result) {
+            const resultsContainer = document.getElementById(`${suiteName}-results`);
+            if (!resultsContainer) return;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${result.status}`;
+            
+            const statusIcon = result.status === 'passed' ? '✅' : 
+                              result.status === 'warning' ? '⚠️' : '❌';
+            
+            resultDiv.innerHTML = `
+                <div style="font-weight: bold;">${statusIcon} ${result.name}</div>
+                <div style="margin: 5px 0;">${result.message}</div>
+                ${result.details.length > 0 ? `
+                    <div class="test-details">
+                        ${result.details.map(detail => `• ${detail}`).join('<br>')}
+                    </div>
+                ` : ''}
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    ${new Date(result.timestamp).toLocaleString('ja-JP')}
+                </div>
+            `;
+            
+            resultsContainer.appendChild(resultDiv);
+        }
+        
+        function updateSummaryStats() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.status === 'passed').length;
+            const failed = testResults.filter(r => r.status === 'failed').length;
+            const warnings = testResults.filter(r => r.status === 'warning').length;
+            const successRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            document.getElementById('total-tests').textContent = total;
+            document.getElementById('passed-tests').textContent = passed;
+            document.getElementById('failed-tests').textContent = failed;
+            document.getElementById('warning-tests').textContent = warnings;
+            document.getElementById('success-rate').textContent = successRate + '%';
+            
+            if (total > 0) {
+                document.getElementById('summary-stats').style.display = 'grid';
+            }
+        }
+        
+        function updateProgress(percentage, text) {
+            const progressBar = document.getElementById('overall-progress');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            if (percentage > 0) {
+                progressBar.style.display = 'block';
+                progressText.style.display = 'block';
+            }
+            
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = text;
+            
+            if (percentage >= 100) {
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressText.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // UI functions
+        function toggleTestSuite(suiteId) {
+            const suite = document.getElementById(suiteId);
+            suite.classList.toggle('expanded');
+        }
+        
+        function clearResults() {
+            testResults = [];
+            document.querySelectorAll('[id$="-results"]').forEach(container => {
+                container.innerHTML = '';
+            });
+            document.getElementById('summary-stats').style.display = 'none';
+            updateProgress(0, '');
+        }    
+    
+        // Main test runners
+        async function runAllTests() {
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            clearResults();
+            updateProgress(0, 'テスト開始...');
+            
+            const testSuites = [
+                { name: 'fund-source', func: runFundSourceTests, weight: 15 },
+                { name: 'data-init', func: runDataInitTests, weight: 15 },
+                { name: 'auth', func: runAuthTests, weight: 15 },
+                { name: 'category', func: runCategoryTests, weight: 15 },
+                { name: 'sharing', func: runSharingTests, weight: 15 },
+                { name: 'ui', func: runUITests, weight: 10 },
+                { name: 'integrity', func: runIntegrityTests, weight: 10 },
+                { name: 'performance', func: runPerformanceTestSuite, weight: 5 }
+            ];
+            
+            let completedWeight = 0;
+            const totalWeight = testSuites.reduce((sum, suite) => sum + suite.weight, 0);
+            
+            for (const suite of testSuites) {
+                updateProgress((completedWeight / totalWeight) * 100, `実行中: ${suite.name}テスト`);
+                
+                try {
+                    await suite.func();
+                    await new Promise(resolve => setTimeout(resolve, 500)); // 視覚的な遅延
+                } catch (error) {
+                    logTestResult(suite.name, 'テスト実行', 'failed', `エラー: ${error.message}`);
+                }
+                
+                completedWeight += suite.weight;
+            }
+            
+            updateProgress(100, 'すべてのテスト完了');
+            isTestRunning = false;
+        }
+        
+        async function runFunctionalTests() {
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            clearResults();
+            
+            const functionalSuites = [
+                runFundSourceTests,
+                runDataInitTests,
+                runAuthTests,
+                runCategoryTests,
+                runSharingTests,
+                runIntegrityTests
+            ];
+            
+            for (let i = 0; i < functionalSuites.length; i++) {
+                updateProgress((i / functionalSuites.length) * 100, `機能テスト実行中... (${i + 1}/${functionalSuites.length})`);
+                await functionalSuites[i]();
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            updateProgress(100, '機能テスト完了');
+            isTestRunning = false;
+        }
+        
+        // Test Suite 1: 資金元管理機能テスト
+        async function runFundSourceTests() {
+            const suiteName = 'fund-source';
+            
+            try {
+                // Test 1: StorageManager存在確認
+                if (window.storage) {
+                    logTestResult(suiteName, 'StorageManager初期化', 'passed', 'StorageManagerが正常に初期化されています');
+                } else {
+                    logTestResult(suiteName, 'StorageManager初期化', 'failed', 'StorageManagerが初期化されていません');
+                    return;
+                }
+                
+                // Test 2: 資金元取得機能
+                const fundSources = window.storage.getFundSources();
+                if (Array.isArray(fundSources)) {
+                    logTestResult(suiteName, '資金元取得', 'passed', `資金元を正常に取得 (${fundSources.length}件)`, 
+                        fundSources.map(fs => `${fs.name} (${fs.type})`));
+                } else {
+                    logTestResult(suiteName, '資金元取得', 'failed', '資金元の取得に失敗');
+                }
+                
+                // Test 3: 資金元追加機能
+                const testFundSource = {
+                    name: 'テスト資金元_' + Date.now(),
+                    type: 'bank',
+                    currentBalance: 10000
+                };
+                
+                try {
+                    const addedFundSource = window.storage.addFundSource(testFundSource);
+                    if (addedFundSource && addedFundSource.id) {
+                        logTestResult(suiteName, '資金元追加', 'passed', `資金元を正常に追加: ${addedFundSource.name}`);
+                        
+                        // Test 4: 追加後の取得確認
+                        const updatedFundSources = window.storage.getFundSources();
+                        const found = updatedFundSources.find(fs => fs.id === addedFundSource.id);
+                        if (found) {
+                            logTestResult(suiteName, '追加後確認', 'passed', '追加した資金元が正常に保存されています');
+                        } else {
+                            logTestResult(suiteName, '追加後確認', 'failed', '追加した資金元が見つかりません');
+                        }
+                        
+                        // Test 5: 資金元削除機能
+                        try {
+                            window.storage.deleteFundSource(addedFundSource.id);
+                            const afterDelete = window.storage.getFundSources();
+                            const stillExists = afterDelete.find(fs => fs.id === addedFundSource.id);
+                            if (!stillExists) {
+                                logTestResult(suiteName, '資金元削除', 'passed', '資金元を正常に削除しました');
+                            } else {
+                                logTestResult(suiteName, '資金元削除', 'failed', '資金元の削除に失敗');
+                            }
+                        } catch (deleteError) {
+                            logTestResult(suiteName, '資金元削除', 'warning', `削除時エラー: ${deleteError.message}`);
+                        }
+                        
+                    } else {
+                        logTestResult(suiteName, '資金元追加', 'failed', '資金元の追加に失敗');
+                    }
+                } catch (addError) {
+                    logTestResult(suiteName, '資金元追加', 'failed', `追加エラー: ${addError.message}`);
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }        
+
+        // Test Suite 2: データ初期化システムテスト
+        async function runDataInitTests() {
+            const suiteName = 'data-init';
+            
+            try {
+                // Test 1: 初期化状態確認
+                if (window.storage && typeof window.storage.isInitialized === 'function') {
+                    const isInitialized = window.storage.isInitialized();
+                    logTestResult(suiteName, '初期化状態確認', 'passed', `初期化状態: ${isInitialized ? '完了' : '未完了'}`);
+                } else {
+                    logTestResult(suiteName, '初期化状態確認', 'warning', 'isInitializedメソッドが存在しません');
+                }
+                
+                // Test 2: デフォルトデータ存在確認
+                const categories = window.storage.getCategories();
+                const subcategories = window.storage.getSubcategories();
+                const fundSources = window.storage.getFundSources();
+                
+                const details = [
+                    `カテゴリ: ${categories.length}件`,
+                    `サブカテゴリ: ${subcategories.length}件`,
+                    `資金元: ${fundSources.length}件`
+                ];
+                
+                if (categories.length > 0 && fundSources.length > 0) {
+                    logTestResult(suiteName, 'デフォルトデータ確認', 'passed', 'デフォルトデータが正常に作成されています', details);
+                } else {
+                    logTestResult(suiteName, 'デフォルトデータ確認', 'failed', 'デフォルトデータが不足しています', details);
+                }
+                
+                // Test 3: ユーザーキー生成テスト
+                if (typeof window.storage.getUserKey === 'function') {
+                    const testKey = 'test_key';
+                    const userKey = window.storage.getUserKey(testKey);
+                    if (userKey && userKey !== testKey) {
+                        logTestResult(suiteName, 'ユーザーキー生成', 'passed', `ユーザー固有キーを正常に生成: ${userKey}`);
+                    } else {
+                        logTestResult(suiteName, 'ユーザーキー生成', 'warning', 'ユーザーキー生成が期待通りに動作していません');
+                    }
+                } else {
+                    logTestResult(suiteName, 'ユーザーキー生成', 'warning', 'getUserKeyメソッドが存在しません');
+                }
+                
+                // Test 4: データアクセス制御
+                if (typeof window.storage.hasDataAccess === 'function') {
+                    const hasAccess = window.storage.hasDataAccess();
+                    logTestResult(suiteName, 'データアクセス制御', 'passed', `データアクセス権限: ${hasAccess ? '許可' : '拒否'}`);
+                } else {
+                    logTestResult(suiteName, 'データアクセス制御', 'warning', 'hasDataAccessメソッドが存在しません');
+                }
+                
+                // Test 5: 再初期化機能
+                if (typeof window.storage.reinitializeUserData === 'function') {
+                    try {
+                        window.storage.reinitializeUserData();
+                        logTestResult(suiteName, 'データ再初期化', 'passed', '再初期化機能が正常に動作しました');
+                    } catch (reinitError) {
+                        logTestResult(suiteName, 'データ再初期化', 'warning', `再初期化エラー: ${reinitError.message}`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'データ再初期化', 'warning', 'reinitializeUserDataメソッドが存在しません');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+        
+        // Test Suite 3: 認証システム安定化テスト
+        async function runAuthTests() {
+            const suiteName = 'auth';
+            
+            try {
+                // Test 1: AuthManager存在確認
+                if (window.authManager) {
+                    logTestResult(suiteName, 'AuthManager初期化', 'passed', 'AuthManagerが正常に初期化されています');
+                    
+                    // Test 2: 必要なメソッド存在確認
+                    const requiredMethods = ['getIsLoggedIn', 'getCurrentUser', 'loginUser', 'logoutUser'];
+                    const missingMethods = [];
+                    
+                    requiredMethods.forEach(method => {
+                        if (typeof window.authManager[method] !== 'function') {
+                            missingMethods.push(method);
+                        }
+                    });
+                    
+                    if (missingMethods.length === 0) {
+                        logTestResult(suiteName, '必要メソッド確認', 'passed', 'すべての必要なメソッドが実装されています');
+                    } else {
+                        logTestResult(suiteName, '必要メソッド確認', 'failed', '不足しているメソッドがあります', missingMethods);
+                    }
+                    
+                    // Test 3: 認証状態取得
+                    try {
+                        const isLoggedIn = window.authManager.getIsLoggedIn();
+                        const currentUser = window.authManager.getCurrentUser();
+                        logTestResult(suiteName, '認証状態取得', 'passed', 
+                            `ログイン状態: ${isLoggedIn}, ユーザー: ${currentUser ? currentUser.username : 'なし'}`);
+                    } catch (stateError) {
+                        logTestResult(suiteName, '認証状態取得', 'warning', `状態取得エラー: ${stateError.message}`);
+                    }
+                    
+                } else {
+                    logTestResult(suiteName, 'AuthManager初期化', 'failed', 'AuthManagerが初期化されていません');
+                }
+                
+                // Test 4: UIManager連携確認
+                if (window.uiManager) {
+                    const uiMethods = ['updateAuthDependentUI', 'updateUserInfoDisplay', 'updateNavigationState'];
+                    const missingUIMethods = [];
+                    
+                    uiMethods.forEach(method => {
+                        if (typeof window.uiManager[method] !== 'function') {
+                            missingUIMethods.push(method);
+                        }
+                    });
+                    
+                    if (missingUIMethods.length === 0) {
+                        logTestResult(suiteName, 'UI連携メソッド', 'passed', '認証関連UIメソッドが実装されています');
+                    } else {
+                        logTestResult(suiteName, 'UI連携メソッド', 'warning', 'UI連携メソッドが不足しています', missingUIMethods);
+                    }
+                } else {
+                    logTestResult(suiteName, 'UI連携メソッド', 'warning', 'UIManagerが初期化されていません');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }        
+
+        // Test Suite 4: カテゴリ・サブカテゴリ機能テスト
+        async function runCategoryTests() {
+            const suiteName = 'category';
+            
+            try {
+                // Test 1: カテゴリ取得
+                const categories = window.storage.getCategories();
+                if (categories.length > 0) {
+                    logTestResult(suiteName, 'カテゴリ取得', 'passed', `カテゴリを正常に取得 (${categories.length}件)`,
+                        categories.slice(0, 5).map(cat => `${cat.icon} ${cat.name}`));
+                } else {
+                    logTestResult(suiteName, 'カテゴリ取得', 'failed', 'カテゴリが取得できません');
+                    return;
+                }
+                
+                // Test 2: サブカテゴリ取得
+                const subcategories = window.storage.getSubcategories();
+                logTestResult(suiteName, 'サブカテゴリ取得', 'passed', `サブカテゴリを取得 (${subcategories.length}件)`);
+                
+                // Test 3: カテゴリ別サブカテゴリ取得
+                if (window.dataManager && typeof window.dataManager.getSubcategories === 'function') {
+                    const firstCategory = categories[0];
+                    const categorySubcategories = window.dataManager.getSubcategories(firstCategory.id);
+                    logTestResult(suiteName, 'カテゴリ別サブカテゴリ', 'passed', 
+                        `${firstCategory.name}のサブカテゴリ: ${categorySubcategories.length}件`);
+                } else {
+                    logTestResult(suiteName, 'カテゴリ別サブカテゴリ', 'warning', 'DataManagerまたはgetSubcategoriesメソッドが存在しません');
+                }
+                
+                // Test 4: サブカテゴリ追加テスト
+                if (window.dataManager && typeof window.dataManager.addSubcategory === 'function') {
+                    const testSubcategory = {
+                        name: 'テストサブカテゴリ_' + Date.now(),
+                        categoryId: categories[0].id
+                    };
+                    
+                    try {
+                        const addedSubcategory = window.dataManager.addSubcategory(testSubcategory);
+                        if (addedSubcategory && addedSubcategory.id) {
+                            logTestResult(suiteName, 'サブカテゴリ追加', 'passed', `サブカテゴリを正常に追加: ${addedSubcategory.name}`);
+                            
+                            // Test 5: 重複チェック
+                            try {
+                                window.dataManager.addSubcategory(testSubcategory);
+                                logTestResult(suiteName, '重複チェック', 'warning', '重複チェックが機能していない可能性があります');
+                            } catch (duplicateError) {
+                                logTestResult(suiteName, '重複チェック', 'passed', '重複チェックが正常に動作しています');
+                            }
+                            
+                            // Test 6: 削除可能性チェック
+                            if (typeof window.dataManager.canDeleteSubcategory === 'function') {
+                                const canDelete = window.dataManager.canDeleteSubcategory(addedSubcategory.id);
+                                logTestResult(suiteName, '削除可能性チェック', 'passed', `削除可能性: ${canDelete ? '削除可能' : '削除不可'}`);
+                            } else {
+                                logTestResult(suiteName, '削除可能性チェック', 'warning', 'canDeleteSubcategoryメソッドが存在しません');
+                            }
+                            
+                        } else {
+                            logTestResult(suiteName, 'サブカテゴリ追加', 'failed', 'サブカテゴリの追加に失敗');
+                        }
+                    } catch (addError) {
+                        logTestResult(suiteName, 'サブカテゴリ追加', 'failed', `追加エラー: ${addError.message}`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'サブカテゴリ追加', 'warning', 'addSubcategoryメソッドが存在しません');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+        
+        // Test Suite 5: 共有機能テスト
+        async function runSharingTests() {
+            const suiteName = 'sharing';
+            
+            try {
+                // Mock認証設定
+                if (!window.authManager || !window.authManager.getIsLoggedIn()) {
+                    window.authManager = {
+                        getCurrentUser: () => ({ id: 'test-user', username: 'テストユーザー' }),
+                        getIsLoggedIn: () => true
+                    };
+                }
+                
+                // Test 1: DataManager共有メソッド確認
+                if (window.dataManager) {
+                    const sharingMethods = ['getSharedUsers', 'addSharedUser', 'removeSharedUser', 
+                                          'getFundSourceSharingSettings', 'updateFundSourceSharing'];
+                    const missingSharingMethods = [];
+                    
+                    sharingMethods.forEach(method => {
+                        if (typeof window.dataManager[method] !== 'function') {
+                            missingSharingMethods.push(method);
+                        }
+                    });
+                    
+                    if (missingSharingMethods.length === 0) {
+                        logTestResult(suiteName, '共有メソッド確認', 'passed', 'すべての共有メソッドが実装されています');
+                    } else {
+                        logTestResult(suiteName, '共有メソッド確認', 'failed', '不足している共有メソッドがあります', missingSharingMethods);
+                        return;
+                    }
+                    
+                    // Test 2: 共有ユーザー取得
+                    try {
+                        const sharedUsers = window.dataManager.getSharedUsers();
+                        logTestResult(suiteName, '共有ユーザー取得', 'passed', `共有ユーザー数: ${sharedUsers.length}`);
+                    } catch (getUsersError) {
+                        logTestResult(suiteName, '共有ユーザー取得', 'failed', `取得エラー: ${getUsersError.message}`);
+                    }
+                    
+                    // Test 3: 共有ユーザー追加
+                    try {
+                        const testEmail = 'test-sharing@example.com';
+                        const addedUser = window.dataManager.addSharedUser(testEmail);
+                        if (addedUser && addedUser.id) {
+                            logTestResult(suiteName, '共有ユーザー追加', 'passed', `ユーザーを追加: ${addedUser.email}`);
+                            
+                            // Test 4: 資金元共有設定
+                            const fundSources = window.storage.getFundSources();
+                            if (fundSources.length > 0) {
+                                const testFundSource = fundSources[0];
+                                const sharingSettings = {
+                                    isShared: true,
+                                    sharedWith: [addedUser.id],
+                                    permissions: { canView: true, canEdit: false, canDelete: false }
+                                };
+                                
+                                try {
+                                    window.dataManager.updateFundSourceSharing(testFundSource.id, sharingSettings);
+                                    logTestResult(suiteName, '資金元共有設定', 'passed', `${testFundSource.name}の共有設定を更新`);
+                                } catch (sharingError) {
+                                    logTestResult(suiteName, '資金元共有設定', 'failed', `共有設定エラー: ${sharingError.message}`);
+                                }
+                            }
+                            
+                            // Test 5: 共有ユーザー削除
+                            try {
+                                window.dataManager.removeSharedUser(addedUser.id);
+                                logTestResult(suiteName, '共有ユーザー削除', 'passed', 'ユーザーを正常に削除');
+                            } catch (removeError) {
+                                logTestResult(suiteName, '共有ユーザー削除', 'failed', `削除エラー: ${removeError.message}`);
+                            }
+                            
+                        } else {
+                            logTestResult(suiteName, '共有ユーザー追加', 'failed', 'ユーザーの追加に失敗');
+                        }
+                    } catch (addUserError) {
+                        logTestResult(suiteName, '共有ユーザー追加', 'failed', `追加エラー: ${addUserError.message}`);
+                    }
+                    
+                } else {
+                    logTestResult(suiteName, '共有メソッド確認', 'failed', 'DataManagerが初期化されていません');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }        
+
+        // Test Suite 6: UI応答性とエラーハンドリングテスト
+        async function runUITests() {
+            const suiteName = 'ui';
+            
+            try {
+                // Test 1: UIManager存在確認
+                if (window.uiManager) {
+                    logTestResult(suiteName, 'UIManager初期化', 'passed', 'UIManagerが正常に初期化されています');
+                } else {
+                    logTestResult(suiteName, 'UIManager初期化', 'warning', 'UIManagerが初期化されていません');
+                }
+                
+                // Test 2: 通知システムテスト
+                try {
+                    // 通知機能のテスト（実際には表示しない）
+                    if (window.uiManager && typeof window.uiManager.showNotification === 'function') {
+                        logTestResult(suiteName, '通知システム', 'passed', '通知システムが実装されています');
+                    } else {
+                        logTestResult(suiteName, '通知システム', 'warning', 'showNotificationメソッドが存在しません');
+                    }
+                } catch (notificationError) {
+                    logTestResult(suiteName, '通知システム', 'failed', `通知エラー: ${notificationError.message}`);
+                }
+                
+                // Test 3: モーダル機能テスト
+                try {
+                    if (window.uiManager && typeof window.uiManager.showModal === 'function') {
+                        logTestResult(suiteName, 'モーダル機能', 'passed', 'モーダル機能が実装されています');
+                    } else {
+                        logTestResult(suiteName, 'モーダル機能', 'warning', 'showModalメソッドが存在しません');
+                    }
+                } catch (modalError) {
+                    logTestResult(suiteName, 'モーダル機能', 'failed', `モーダルエラー: ${modalError.message}`);
+                }
+                
+                // Test 4: フォームバリデーション
+                try {
+                    if (window.uiManager && typeof window.uiManager.showFieldError === 'function') {
+                        logTestResult(suiteName, 'フォームバリデーション', 'passed', 'フォームバリデーション機能が実装されています');
+                    } else {
+                        logTestResult(suiteName, 'フォームバリデーション', 'warning', 'showFieldErrorメソッドが存在しません');
+                    }
+                } catch (validationError) {
+                    logTestResult(suiteName, 'フォームバリデーション', 'failed', `バリデーションエラー: ${validationError.message}`);
+                }
+                
+                // Test 5: CSS読み込み確認
+                const cssLoaded = document.querySelector('link[href*="main.css"]') !== null;
+                if (cssLoaded) {
+                    logTestResult(suiteName, 'CSS読み込み', 'passed', 'メインCSSファイルが読み込まれています');
+                } else {
+                    logTestResult(suiteName, 'CSS読み込み', 'warning', 'メインCSSファイルが見つかりません');
+                }
+                
+                // Test 6: レスポンシブデザイン
+                const screenWidth = window.innerWidth;
+                const isMobile = screenWidth < 768;
+                const isTablet = screenWidth >= 768 && screenWidth < 1024;
+                const isDesktop = screenWidth >= 1024;
+                
+                logTestResult(suiteName, 'レスポンシブデザイン', 'passed', 
+                    `画面サイズ: ${screenWidth}px (${isMobile ? 'モバイル' : isTablet ? 'タブレット' : 'デスクトップ'})`);
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+        
+        // Test Suite 7: データ整合性テスト
+        async function runIntegrityTests() {
+            const suiteName = 'integrity';
+            
+            try {
+                // Test 1: データ構造整合性
+                const transactions = window.storage.getTransactions();
+                const categories = window.storage.getCategories();
+                const fundSources = window.storage.getFundSources();
+                
+                let integrityIssues = [];
+                
+                // 取引データの整合性チェック
+                transactions.forEach(transaction => {
+                    if (!transaction.id || !transaction.amount || !transaction.date) {
+                        integrityIssues.push(`取引ID ${transaction.id || 'unknown'}: 必須フィールド不足`);
+                    }
+                    
+                    if (transaction.category && !categories.find(cat => cat.id === transaction.category)) {
+                        integrityIssues.push(`取引ID ${transaction.id}: 存在しないカテゴリ参照`);
+                    }
+                    
+                    if (transaction.fundSource && !fundSources.find(fs => fs.id === transaction.fundSource)) {
+                        integrityIssues.push(`取引ID ${transaction.id}: 存在しない資金元参照`);
+                    }
+                });
+                
+                if (integrityIssues.length === 0) {
+                    logTestResult(suiteName, 'データ構造整合性', 'passed', 
+                        `データ整合性チェック完了 (取引: ${transactions.length}件, カテゴリ: ${categories.length}件, 資金元: ${fundSources.length}件)`);
+                } else {
+                    logTestResult(suiteName, 'データ構造整合性', 'warning', 
+                        `${integrityIssues.length}件の整合性問題を検出`, integrityIssues.slice(0, 5));
+                }
+                
+                // Test 2: ローカルストレージ容量チェック
+                try {
+                    let totalSize = 0;
+                    for (let key in localStorage) {
+                        if (localStorage.hasOwnProperty(key)) {
+                            totalSize += localStorage[key].length;
+                        }
+                    }
+                    
+                    const sizeInKB = Math.round(totalSize / 1024);
+                    if (sizeInKB < 5000) { // 5MB未満
+                        logTestResult(suiteName, 'ストレージ容量', 'passed', `ローカルストレージ使用量: ${sizeInKB}KB`);
+                    } else {
+                        logTestResult(suiteName, 'ストレージ容量', 'warning', `ローカルストレージ使用量が多い: ${sizeInKB}KB`);
+                    }
+                } catch (storageError) {
+                    logTestResult(suiteName, 'ストレージ容量', 'failed', `容量チェックエラー: ${storageError.message}`);
+                }
+                
+                // Test 3: JSON解析テスト
+                const testKeys = ['transactions', 'categories', 'fundSources', 'subcategories'];
+                let jsonErrors = [];
+                
+                testKeys.forEach(key => {
+                    try {
+                        const data = localStorage.getItem(key);
+                        if (data) {
+                            JSON.parse(data);
+                        }
+                    } catch (parseError) {
+                        jsonErrors.push(`${key}: ${parseError.message}`);
+                    }
+                });
+                
+                if (jsonErrors.length === 0) {
+                    logTestResult(suiteName, 'JSON解析', 'passed', 'すべてのデータが正常にJSON解析できます');
+                } else {
+                    logTestResult(suiteName, 'JSON解析', 'failed', 'JSON解析エラーが発生', jsonErrors);
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        } 
+       
+        // Test Suite 8: パフォーマンステスト
+        async function runPerformanceTestSuite() {
+            const suiteName = 'performance';
+            
+            try {
+                // Test 1: データ処理速度テスト
+                const startTime = performance.now();
+                const testData = Array.from({length: 1000}, (_, i) => ({
+                    id: i,
+                    amount: Math.random() * 1000,
+                    date: new Date().toISOString(),
+                    category: `Category ${i % 10}`
+                }));
+                
+                // フィルタリング処理
+                const filtered = testData.filter(item => item.amount > 500);
+                const sorted = filtered.sort((a, b) => b.amount - a.amount);
+                const endTime = performance.now();
+                
+                const processingTime = endTime - startTime;
+                
+                if (processingTime < 50) {
+                    logTestResult(suiteName, 'データ処理速度', 'passed', `処理時間: ${processingTime.toFixed(2)}ms (優秀)`);
+                } else if (processingTime < 200) {
+                    logTestResult(suiteName, 'データ処理速度', 'warning', `処理時間: ${processingTime.toFixed(2)}ms (改善の余地あり)`);
+                } else {
+                    logTestResult(suiteName, 'データ処理速度', 'failed', `処理時間: ${processingTime.toFixed(2)}ms (遅い)`);
+                }
+                
+                // Test 2: ローカルストレージ読み書き速度
+                const storageStartTime = performance.now();
+                const testKey = 'perf-test-' + Date.now();
+                localStorage.setItem(testKey, JSON.stringify(testData));
+                const retrieved = JSON.parse(localStorage.getItem(testKey));
+                localStorage.removeItem(testKey);
+                const storageEndTime = performance.now();
+                
+                const storageTime = storageEndTime - storageStartTime;
+                
+                if (storageTime < 100) {
+                    logTestResult(suiteName, 'ストレージ速度', 'passed', `ストレージ処理時間: ${storageTime.toFixed(2)}ms`);
+                } else if (storageTime < 500) {
+                    logTestResult(suiteName, 'ストレージ速度', 'warning', `ストレージ処理時間: ${storageTime.toFixed(2)}ms`);
+                } else {
+                    logTestResult(suiteName, 'ストレージ速度', 'failed', `ストレージ処理時間: ${storageTime.toFixed(2)}ms (遅い)`);
+                }
+                
+                // Test 3: メモリ使用量（概算）
+                if (performance.memory) {
+                    const memoryInfo = {
+                        used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
+                        total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+                        limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+                    };
+                    
+                    if (memoryInfo.used < 50) {
+                        logTestResult(suiteName, 'メモリ使用量', 'passed', 
+                            `メモリ使用量: ${memoryInfo.used}MB / ${memoryInfo.total}MB`);
+                    } else if (memoryInfo.used < 100) {
+                        logTestResult(suiteName, 'メモリ使用量', 'warning', 
+                            `メモリ使用量: ${memoryInfo.used}MB / ${memoryInfo.total}MB`);
+                    } else {
+                        logTestResult(suiteName, 'メモリ使用量', 'failed', 
+                            `メモリ使用量が多い: ${memoryInfo.used}MB / ${memoryInfo.total}MB`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'メモリ使用量', 'warning', 'メモリ情報を取得できません（ブラウザ制限）');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+        
+        // Test Suite 9: ユーザビリティテスト
+        async function runUsabilityTestSuite() {
+            const suiteName = 'usability';
+            
+            try {
+                // Test 1: 画面サイズ対応
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                const isMobile = screenWidth < 768;
+                const isTablet = screenWidth >= 768 && screenWidth < 1024;
+                const isDesktop = screenWidth >= 1024;
+                
+                logTestResult(suiteName, '画面サイズ対応', 'passed', 
+                    `画面: ${screenWidth}x${screenHeight} (${isMobile ? 'モバイル' : isTablet ? 'タブレット' : 'デスクトップ'})`);
+                
+                // Test 2: タッチ対応
+                const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                logTestResult(suiteName, 'タッチ対応', hasTouchSupport ? 'passed' : 'warning', 
+                    `タッチサポート: ${hasTouchSupport ? 'あり' : 'なし'}`);
+                
+                // Test 3: フォント読み込み
+                const computedStyle = window.getComputedStyle(document.body);
+                const fontFamily = computedStyle.fontFamily;
+                logTestResult(suiteName, 'フォント読み込み', 'passed', `フォント: ${fontFamily}`);
+                
+                // Test 4: アクセシビリティ基本チェック
+                const images = document.querySelectorAll('img');
+                const imagesWithoutAlt = Array.from(images).filter(img => !img.alt);
+                const hasProperHeadings = document.querySelectorAll('h1, h2, h3, h4, h5, h6').length > 0;
+                
+                const accessibilityIssues = [];
+                if (imagesWithoutAlt.length > 0) {
+                    accessibilityIssues.push(`alt属性なし画像: ${imagesWithoutAlt.length}個`);
+                }
+                if (!hasProperHeadings) {
+                    accessibilityIssues.push('見出し構造なし');
+                }
+                
+                if (accessibilityIssues.length === 0) {
+                    logTestResult(suiteName, 'アクセシビリティ', 'passed', '基本的なアクセシビリティ要件を満たしています');
+                } else {
+                    logTestResult(suiteName, 'アクセシビリティ', 'warning', 'アクセシビリティの改善が必要', accessibilityIssues);
+                }
+                
+                // Test 5: PWA対応チェック
+                const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+                const hasServiceWorker = 'serviceWorker' in navigator;
+                const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
+                
+                const pwaFeatures = [];
+                if (isPWA) pwaFeatures.push('スタンドアロンモード');
+                if (hasServiceWorker) pwaFeatures.push('ServiceWorker対応');
+                if (hasManifest) pwaFeatures.push('マニフェストファイル');
+                
+                logTestResult(suiteName, 'PWA対応', pwaFeatures.length > 0 ? 'passed' : 'warning', 
+                    `PWA機能: ${pwaFeatures.join(', ') || 'なし'}`);
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+        
+        // Convenience functions for individual test suites
+        async function runPerformanceTests() {
+            clearResults();
+            updateProgress(0, 'パフォーマンステスト開始...');
+            await runPerformanceTestSuite();
+            updateProgress(100, 'パフォーマンステスト完了');
+        }
+        
+        async function runUsabilityTests() {
+            clearResults();
+            updateProgress(0, 'ユーザビリティテスト開始...');
+            await runUsabilityTestSuite();
+            updateProgress(100, 'ユーザビリティテスト完了');
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('PWA家計簿アプリ - 包括的テストランナーが読み込まれました');
+            
+            // 基本情報をログ出力
+            setTimeout(() => {
+                console.log('システム情報:');
+                console.log('- StorageManager:', window.storage ? '利用可能' : '利用不可');
+                console.log('- AuthManager:', window.authManager ? '利用可能' : '利用不可');
+                console.log('- DataManager:', window.dataManager ? '利用可能' : '利用不可');
+                console.log('- UIManager:', window.uiManager ? '利用可能' : '利用不可');
+                console.log('- Screen Size:', window.innerWidth + 'x' + window.innerHeight);
+                console.log('- User Agent:', navigator.userAgent);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

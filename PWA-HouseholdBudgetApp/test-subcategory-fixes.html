@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サブカテゴリ機能テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button { margin: 5px; padding: 8px 12px; }
+        select, input { margin: 5px; padding: 5px; }
+        #test-results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>サブカテゴリ機能修正テスト</h1>
+    
+    <div class="test-section">
+        <h2>1. カテゴリ選択とサブカテゴリ更新テスト</h2>
+        <label>カテゴリ選択:</label>
+        <select id="test-category">
+            <option value="">選択してください</option>
+        </select>
+        <br>
+        <label>サブカテゴリ選択:</label>
+        <select id="test-subcategory">
+            <option value="">カテゴリを先に選択してください</option>
+        </select>
+        <br>
+        <button onclick="testCategorySelection()">カテゴリ選択テスト</button>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 重複チェックテスト</h2>
+        <label>カテゴリID:</label>
+        <input type="text" id="duplicate-category-id" placeholder="cat1">
+        <br>
+        <label>サブカテゴリ名:</label>
+        <input type="text" id="duplicate-subcategory-name" placeholder="テストサブカテゴリ">
+        <br>
+        <button onclick="testDuplicateCheck()">重複チェックテスト</button>
+        <button onclick="testAddSubcategory()">サブカテゴリ追加テスト</button>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 削除可能性判定テスト</h2>
+        <label>サブカテゴリID:</label>
+        <input type="text" id="delete-subcategory-id" placeholder="sub1">
+        <br>
+        <button onclick="testDeleteValidation()">削除可能性テスト</button>
+    </div>
+
+    <div id="test-results">
+        <h2>テスト結果</h2>
+        <div id="results-content"></div>
+    </div>
+
+    <!-- Include the necessary scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script>
+        let testResults = [];
+
+        function addResult(test, status, message) {
+            testResults.push({ test, status, message });
+            updateResultsDisplay();
+        }
+
+        function updateResultsDisplay() {
+            const content = document.getElementById('results-content');
+            content.innerHTML = testResults.map(result => 
+                `<div class="${result.status}">
+                    <strong>${result.test}:</strong> ${result.message}
+                </div>`
+            ).join('');
+        }
+
+        function testCategorySelection() {
+            try {
+                const categorySelect = document.getElementById('test-category');
+                const subcategorySelect = document.getElementById('test-subcategory');
+                
+                // Simulate category selection
+                if (window.uiManager) {
+                    window.uiManager.updateSubcategoryOptions('cat1');
+                    
+                    if (subcategorySelect.options.length > 1) {
+                        addResult('カテゴリ選択', 'success', 'サブカテゴリオプションが正常に更新されました');
+                    } else {
+                        addResult('カテゴリ選択', 'warning', 'サブカテゴリが見つかりませんでした（正常な場合もあります）');
+                    }
+                } else {
+                    addResult('カテゴリ選択', 'error', 'UIManagerが初期化されていません');
+                }
+            } catch (error) {
+                addResult('カテゴリ選択', 'error', `エラー: ${error.message}`);
+            }
+        }
+
+        function testDuplicateCheck() {
+            try {
+                const categoryId = document.getElementById('duplicate-category-id').value || 'cat1';
+                const subcategoryName = document.getElementById('duplicate-subcategory-name').value || 'テストサブカテゴリ';
+                
+                if (window.dataManager) {
+                    // First, try to add a subcategory
+                    const subcategoryData = {
+                        name: subcategoryName,
+                        categoryId: categoryId
+                    };
+                    
+                    try {
+                        window.dataManager.addSubcategory(subcategoryData);
+                        addResult('重複チェック', 'success', '最初のサブカテゴリが正常に追加されました');
+                        
+                        // Now try to add the same subcategory again
+                        try {
+                            window.dataManager.addSubcategory(subcategoryData);
+                            addResult('重複チェック', 'error', '重複チェックが機能していません');
+                        } catch (duplicateError) {
+                            addResult('重複チェック', 'success', `重複チェックが正常に動作: ${duplicateError.message}`);
+                        }
+                    } catch (error) {
+                        addResult('重複チェック', 'warning', `追加エラー: ${error.message}`);
+                    }
+                } else {
+                    addResult('重複チェック', 'error', 'DataManagerが初期化されていません');
+                }
+            } catch (error) {
+                addResult('重複チェック', 'error', `エラー: ${error.message}`);
+            }
+        }
+
+        function testAddSubcategory() {
+            try {
+                const categoryId = document.getElementById('duplicate-category-id').value || 'cat1';
+                const subcategoryName = document.getElementById('duplicate-subcategory-name').value || 'テストサブカテゴリ';
+                
+                if (window.dataManager) {
+                    const subcategoryData = {
+                        name: subcategoryName + '_' + Date.now(), // Make it unique
+                        categoryId: categoryId
+                    };
+                    
+                    const result = window.dataManager.addSubcategory(subcategoryData);
+                    addResult('サブカテゴリ追加', 'success', `サブカテゴリが正常に追加されました: ${result.name} (ID: ${result.id})`);
+                } else {
+                    addResult('サブカテゴリ追加', 'error', 'DataManagerが初期化されていません');
+                }
+            } catch (error) {
+                addResult('サブカテゴリ追加', 'error', `エラー: ${error.message}`);
+            }
+        }
+
+        function testDeleteValidation() {
+            try {
+                const subcategoryId = document.getElementById('delete-subcategory-id').value || 'sub1';
+                
+                if (window.dataManager) {
+                    const canDelete = window.dataManager.canDeleteSubcategory(subcategoryId);
+                    addResult('削除可能性判定', 'success', `サブカテゴリ ${subcategoryId} の削除可能性: ${canDelete ? '削除可能' : '削除不可（使用中）'}`);
+                } else {
+                    addResult('削除可能性判定', 'error', 'DataManagerが初期化されていません');
+                }
+            } catch (error) {
+                addResult('削除可能性判定', 'error', `エラー: ${error.message}`);
+            }
+        }
+
+        // Initialize test data
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (window.storage) {
+                    // Populate category select with available categories
+                    const categories = window.storage.getCategories();
+                    const categorySelect = document.getElementById('test-category');
+                    
+                    categories.forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat.id;
+                        option.textContent = `${cat.icon} ${cat.name}`;
+                        categorySelect.appendChild(option);
+                    });
+                    
+                    // Add event listener for category change
+                    categorySelect.addEventListener('change', (e) => {
+                        if (window.uiManager) {
+                            const subcategorySelect = document.getElementById('test-subcategory');
+                            if (e.target.value) {
+                                const subcategories = window.dataManager.getSubcategories(e.target.value);
+                                subcategorySelect.innerHTML = '<option value="">選択してください</option>' +
+                                    subcategories.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
+                            } else {
+                                subcategorySelect.innerHTML = '<option value="">カテゴリを先に選択してください</option>';
+                            }
+                        }
+                    });
+                    
+                    addResult('初期化', 'success', `テスト環境が初期化されました。カテゴリ数: ${categories.length}`);
+                } else {
+                    addResult('初期化', 'error', 'Storageが初期化されていません');
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

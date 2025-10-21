@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有機能テスト - PWA家計簿アプリ</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .test-button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>共有機能テスト</h1>
+        <p>このページは共有機能の実装をテストするためのものです。</p>
+        
+        <div class="test-section">
+            <h2>1. 基本機能テスト</h2>
+            <button class="test-button" onclick="testBasicFunctionality()">基本機能をテスト</button>
+            <div id="basic-test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. 共有ユーザー管理テスト</h2>
+            <button class="test-button" onclick="testUserManagement()">ユーザー管理をテスト</button>
+            <div id="user-management-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. 資金元共有テスト</h2>
+            <button class="test-button" onclick="testFundSourceSharing()">資金元共有をテスト</button>
+            <div id="fund-source-sharing-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. UI表示テスト</h2>
+            <button class="test-button" onclick="testUIDisplay()">UI表示をテスト</button>
+            <div id="ui-display-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. 統合テスト</h2>
+            <button class="test-button" onclick="runAllTests()">すべてのテストを実行</button>
+            <div id="integration-results"></div>
+        </div>
+    </div>
+
+    <!-- Include the app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        // Test utilities
+        function logResult(containerId, message, isSuccess = true) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        // Mock authentication for testing
+        function setupMockAuth() {
+            window.authManager = {
+                getCurrentUser: () => ({
+                    id: 'test-user-1',
+                    username: 'テストユーザー',
+                    email: 'test@example.com'
+                }),
+                getIsLoggedIn: () => true
+            };
+        }
+
+        // Test 1: Basic functionality
+        function testBasicFunctionality() {
+            clearResults('basic-test-results');
+            setupMockAuth();
+            
+            try {
+                // Test storage initialization
+                if (window.storage) {
+                    logResult('basic-test-results', '✓ StorageManager が正常に初期化されました');
+                } else {
+                    logResult('basic-test-results', '✗ StorageManager の初期化に失敗しました', false);
+                    return;
+                }
+                
+                // Test data manager initialization
+                if (window.dataManager) {
+                    logResult('basic-test-results', '✓ DataManager が正常に初期化されました');
+                } else {
+                    logResult('basic-test-results', '✗ DataManager の初期化に失敗しました', false);
+                    return;
+                }
+                
+                // Test sharing methods exist
+                const requiredMethods = [
+                    'getSharedUsers',
+                    'addSharedUser',
+                    'removeSharedUser',
+                    'getFundSourceSharingSettings',
+                    'updateFundSourceSharing'
+                ];
+                
+                let methodsExist = true;
+                requiredMethods.forEach(method => {
+                    if (typeof window.dataManager[method] === 'function') {
+                        logResult('basic-test-results', `✓ ${method} メソッドが存在します`);
+                    } else {
+                        logResult('basic-test-results', `✗ ${method} メソッドが存在しません`, false);
+                        methodsExist = false;
+                    }
+                });
+                
+                if (methodsExist) {
+                    logResult('basic-test-results', '✓ すべての必要なメソッドが実装されています');
+                }
+                
+            } catch (error) {
+                logResult('basic-test-results', `✗ エラーが発生しました: ${error.message}`, false);
+            }
+        }
+
+        // Test 2: User management
+        function testUserManagement() {
+            clearResults('user-management-results');
+            setupMockAuth();
+            
+            try {
+                // Test getting empty shared users
+                const initialUsers = window.dataManager.getSharedUsers();
+                logResult('user-management-results', `✓ 初期共有ユーザー数: ${initialUsers.length}`);
+                
+                // Test adding a shared user
+                const testEmail = 'shared-user@example.com';
+                const addedUser = window.dataManager.addSharedUser(testEmail);
+                logResult('user-management-results', `✓ ユーザーを追加しました: ${addedUser.email}`);
+                
+                // Test getting shared users after addition
+                const usersAfterAdd = window.dataManager.getSharedUsers();
+                if (usersAfterAdd.length === initialUsers.length + 1) {
+                    logResult('user-management-results', '✓ ユーザー追加後の数が正しいです');
+                } else {
+                    logResult('user-management-results', '✗ ユーザー追加後の数が正しくありません', false);
+                }
+                
+                // Test removing the user
+                window.dataManager.removeSharedUser(addedUser.id);
+                const usersAfterRemove = window.dataManager.getSharedUsers();
+                if (usersAfterRemove.length === initialUsers.length) {
+                    logResult('user-management-results', '✓ ユーザー削除が正常に動作しました');
+                } else {
+                    logResult('user-management-results', '✗ ユーザー削除が正常に動作しませんでした', false);
+                }
+                
+                // Test invalid email validation
+                try {
+                    window.dataManager.addSharedUser('invalid-email');
+                    logResult('user-management-results', '✗ 無効なメールアドレスの検証が動作していません', false);
+                } catch (validationError) {
+                    logResult('user-management-results', '✓ メールアドレスの検証が正常に動作しています');
+                }
+                
+            } catch (error) {
+                logResult('user-management-results', `✗ エラーが発生しました: ${error.message}`, false);
+            }
+        }
+
+        // Test 3: Fund source sharing
+        function testFundSourceSharing() {
+            clearResults('fund-source-sharing-results');
+            setupMockAuth();
+            
+            try {
+                // Get fund sources
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    logResult('fund-source-sharing-results', '✗ テスト用の資金元がありません', false);
+                    return;
+                }
+                
+                const testFundSource = fundSources[0];
+                logResult('fund-source-sharing-results', `✓ テスト対象資金元: ${testFundSource.name}`);
+                
+                // Test getting sharing settings
+                const initialSettings = window.dataManager.getFundSourceSharingSettings(testFundSource.id);
+                logResult('fund-source-sharing-results', `✓ 初期共有設定を取得: isShared=${initialSettings.isShared}`);
+                
+                // Add a test user first
+                const testUser = window.dataManager.addSharedUser('test-sharing@example.com');
+                
+                // Test updating sharing settings
+                const newSettings = {
+                    isShared: true,
+                    sharedWith: [testUser.id],
+                    permissions: {
+                        canView: true,
+                        canEdit: false,
+                        canDelete: false
+                    }
+                };
+                
+                const updatedFundSource = window.dataManager.updateFundSourceSharing(testFundSource.id, newSettings);
+                logResult('fund-source-sharing-results', '✓ 共有設定を更新しました');
+                
+                // Verify the update
+                const updatedSettings = window.dataManager.getFundSourceSharingSettings(testFundSource.id);
+                if (updatedSettings.isShared && updatedSettings.sharedWith.includes(testUser.id)) {
+                    logResult('fund-source-sharing-results', '✓ 共有設定の更新が正常に反映されました');
+                } else {
+                    logResult('fund-source-sharing-results', '✗ 共有設定の更新が正常に反映されませんでした', false);
+                }
+                
+                // Test disabling sharing
+                window.dataManager.updateFundSourceSharing(testFundSource.id, {
+                    isShared: false,
+                    sharedWith: [],
+                    permissions: { canView: true, canEdit: false, canDelete: false }
+                });
+                
+                const disabledSettings = window.dataManager.getFundSourceSharingSettings(testFundSource.id);
+                if (!disabledSettings.isShared && disabledSettings.sharedWith.length === 0) {
+                    logResult('fund-source-sharing-results', '✓ 共有停止が正常に動作しました');
+                } else {
+                    logResult('fund-source-sharing-results', '✗ 共有停止が正常に動作しませんでした', false);
+                }
+                
+                // Clean up
+                window.dataManager.removeSharedUser(testUser.id);
+                
+            } catch (error) {
+                logResult('fund-source-sharing-results', `✗ エラーが発生しました: ${error.message}`, false);
+            }
+        }
+
+        // Test 4: UI display
+        function testUIDisplay() {
+            clearResults('ui-display-results');
+            setupMockAuth();
+            
+            try {
+                // Test UI manager initialization
+                if (window.uiManager) {
+                    logResult('ui-display-results', '✓ UIManager が初期化されています');
+                } else {
+                    logResult('ui-display-results', '✗ UIManager が初期化されていません', false);
+                    return;
+                }
+                
+                // Test sharing methods exist in UI manager
+                const uiMethods = [
+                    'showSharingManagement',
+                    'showSharedUsers',
+                    'addSharedUser',
+                    'removeSharedUser',
+                    'toggleFundSourceSharing'
+                ];
+                
+                let uiMethodsExist = true;
+                uiMethods.forEach(method => {
+                    if (typeof window.uiManager[method] === 'function') {
+                        logResult('ui-display-results', `✓ UI ${method} メソッドが存在します`);
+                    } else {
+                        logResult('ui-display-results', `✗ UI ${method} メソッドが存在しません`, false);
+                        uiMethodsExist = false;
+                    }
+                });
+                
+                if (uiMethodsExist) {
+                    logResult('ui-display-results', '✓ すべてのUI共有メソッドが実装されています');
+                }
+                
+                // Test CSS classes exist
+                const requiredStyles = [
+                    'sharing-indicator',
+                    'shared-status',
+                    'status-indicator',
+                    'sharing-user-management'
+                ];
+                
+                const styleSheet = Array.from(document.styleSheets).find(sheet => 
+                    sheet.href && sheet.href.includes('main.css')
+                );
+                
+                if (styleSheet) {
+                    logResult('ui-display-results', '✓ メインCSSファイルが読み込まれています');
+                } else {
+                    logResult('ui-display-results', '✗ メインCSSファイルが見つかりません', false);
+                }
+                
+            } catch (error) {
+                logResult('ui-display-results', `✗ エラーが発生しました: ${error.message}`, false);
+            }
+        }
+
+        // Run all tests
+        function runAllTests() {
+            clearResults('integration-results');
+            logResult('integration-results', '=== 統合テスト開始 ===');
+            
+            try {
+                testBasicFunctionality();
+                testUserManagement();
+                testFundSourceSharing();
+                testUIDisplay();
+                
+                logResult('integration-results', '✓ すべてのテストが完了しました');
+                logResult('integration-results', '詳細は各セクションの結果を確認してください');
+                
+            } catch (error) {
+                logResult('integration-results', `✗ 統合テストでエラーが発生しました: ${error.message}`, false);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            logResult('integration-results', 'テストページが読み込まれました。各テストボタンをクリックしてテストを実行してください。');
+        });
+    </script>
+</body>
+</html>

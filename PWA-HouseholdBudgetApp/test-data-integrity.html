@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>データ整合性テスト - 家計簿アプリ</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-header {
+            border-bottom: 2px solid #007AFF;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .test-section {
+            margin-bottom: 32px;
+        }
+        .test-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px 8px 8px 0;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #0056CC;
+        }
+        .test-button.secondary {
+            background: #6C757D;
+        }
+        .test-button.danger {
+            background: #FF3B30;
+        }
+        .test-button.success {
+            background: #34C759;
+        }
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #34C759; }
+        .status-warning { background-color: #FF9500; }
+        .status-error { background-color: #FF3B30; }
+        .status-info { background-color: #007AFF; }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007AFF;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>📊 データ整合性テスト</h1>
+            <p>PWA家計簿アプリのデータ整合性機能をテストします</p>
+        </div>
+
+        <!-- System Status -->
+        <div class="test-section">
+            <h2>システム状態</h2>
+            <div class="summary-stats" id="system-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="transactions-count">-</div>
+                    <div class="stat-label">取引数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="categories-count">-</div>
+                    <div class="stat-label">カテゴリ数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="fundsources-count">-</div>
+                    <div class="stat-label">資金元数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="subcategories-count">-</div>
+                    <div class="stat-label">サブカテゴリ数</div>
+                </div>
+            </div>
+            <button class="test-button" onclick="updateSystemStats()">状態更新</button>
+        </div>
+
+        <!-- Data Validation Tests -->
+        <div class="test-section">
+            <h2>データ検証テスト</h2>
+            <button class="test-button" onclick="testTransactionValidation()">取引データ検証</button>
+            <button class="test-button" onclick="testFundSourceValidation()">資金元データ検証</button>
+            <button class="test-button" onclick="testSubcategoryValidation()">サブカテゴリ検証</button>
+            <button class="test-button secondary" onclick="testAllValidations()">全検証実行</button>
+        </div>
+
+        <!-- Data Consistency Tests -->
+        <div class="test-section">
+            <h2>データ整合性チェック</h2>
+            <button class="test-button" onclick="runConsistencyCheck()">整合性チェック実行</button>
+            <button class="test-button" onclick="findOrphanedData()">孤立データ検索</button>
+            <button class="test-button" onclick="checkBalanceConsistency()">残高整合性チェック</button>
+            <button class="test-button" onclick="findDuplicates()">重複データ検索</button>
+        </div>
+
+        <!-- Transaction Operations -->
+        <div class="test-section">
+            <h2>トランザクション操作テスト</h2>
+            <button class="test-button" onclick="testTransactionOperations()">トランザクション操作</button>
+            <button class="test-button" onclick="testRollbackScenario()">ロールバックテスト</button>
+            <button class="test-button" onclick="testConcurrentOperations()">並行操作テスト</button>
+        </div>
+
+        <!-- Data Repair -->
+        <div class="test-section">
+            <h2>データ修復</h2>
+            <button class="test-button success" onclick="repairDataIssues()">データ修復実行</button>
+            <button class="test-button" onclick="synchronizeAllData()">データ同期</button>
+            <button class="test-button danger" onclick="resetTestData()">テストデータリセット</button>
+        </div>
+
+        <!-- Test Results -->
+        <div class="test-section">
+            <h2>テスト結果</h2>
+            <div id="test-results" class="test-results">テスト結果がここに表示されます...</div>
+        </div>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/data-integrity.js"></script>
+
+    <script>
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusIcon = {
+                'success': '✅',
+                'warning': '⚠️',
+                'error': '❌',
+                'info': 'ℹ️'
+            }[type] || 'ℹ️';
+            
+            testResults.push(`[${timestamp}] ${statusIcon} ${message}`);
+            updateTestResults();
+        }
+
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.textContent = testResults.slice(-50).join('\n');
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function updateSystemStats() {
+            try {
+                if (!window.storage) {
+                    log('Storage not initialized', 'error');
+                    return;
+                }
+
+                const transactions = window.storage.getTransactions();
+                const categories = window.storage.getCategories();
+                const fundSources = window.storage.getFundSources();
+                const subcategories = window.storage.getSubcategories();
+
+                document.getElementById('transactions-count').textContent = transactions.length;
+                document.getElementById('categories-count').textContent = categories.length;
+                document.getElementById('fundsources-count').textContent = fundSources.length;
+                document.getElementById('subcategories-count').textContent = subcategories.length;
+
+                log(`System stats updated: ${transactions.length} transactions, ${categories.length} categories, ${fundSources.length} fund sources, ${subcategories.length} subcategories`, 'success');
+            } catch (error) {
+                log(`Error updating system stats: ${error.message}`, 'error');
+            }
+        }
+
+        function testTransactionValidation() {
+            log('Starting transaction validation tests...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            const testCases = [
+                // Valid transaction
+                {
+                    name: 'Valid transaction',
+                    data: {
+                        amount: -1000,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: new Date(),
+                        note: 'Test transaction'
+                    },
+                    shouldPass: true
+                },
+                // Invalid amount
+                {
+                    name: 'Invalid amount (zero)',
+                    data: {
+                        amount: 0,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: new Date()
+                    },
+                    shouldPass: false
+                },
+                // Missing category
+                {
+                    name: 'Missing category',
+                    data: {
+                        amount: -500,
+                        fundSourceId: 'fs1',
+                        date: new Date()
+                    },
+                    shouldPass: false
+                },
+                // Invalid date
+                {
+                    name: 'Invalid date',
+                    data: {
+                        amount: -300,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: 'invalid-date'
+                    },
+                    shouldPass: false
+                }
+            ];
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const testCase of testCases) {
+                try {
+                    const result = window.dataIntegrityManager.validateData('transaction', testCase.data);
+                    const actuallyPassed = result.isValid;
+                    
+                    if (actuallyPassed === testCase.shouldPass) {
+                        log(`✓ ${testCase.name}: ${actuallyPassed ? 'PASS' : 'FAIL (expected)'}`, 'success');
+                        passed++;
+                    } else {
+                        log(`✗ ${testCase.name}: Expected ${testCase.shouldPass ? 'PASS' : 'FAIL'}, got ${actuallyPassed ? 'PASS' : 'FAIL'}`, 'error');
+                        if (!result.isValid) {
+                            log(`  Errors: ${result.errors.join(', ')}`, 'warning');
+                        }
+                        failed++;
+                    }
+                } catch (error) {
+                    log(`✗ ${testCase.name}: Exception - ${error.message}`, 'error');
+                    failed++;
+                }
+            }
+
+            log(`Transaction validation tests completed: ${passed} passed, ${failed} failed`, passed === testCases.length ? 'success' : 'warning');
+        }
+
+        function testFundSourceValidation() {
+            log('Starting fund source validation tests...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            const testCases = [
+                {
+                    name: 'Valid fund source',
+                    data: {
+                        name: 'Test Bank Account',
+                        initialBalance: 50000,
+                        type: 'bank'
+                    },
+                    shouldPass: true
+                },
+                {
+                    name: 'Empty name',
+                    data: {
+                        name: '',
+                        initialBalance: 10000,
+                        type: 'cash'
+                    },
+                    shouldPass: false
+                },
+                {
+                    name: 'Invalid balance type',
+                    data: {
+                        name: 'Test Cash',
+                        initialBalance: 'not-a-number',
+                        type: 'cash'
+                    },
+                    shouldPass: false
+                }
+            ];
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const testCase of testCases) {
+                try {
+                    const result = window.dataIntegrityManager.validateData('fundSource', testCase.data);
+                    const actuallyPassed = result.isValid;
+                    
+                    if (actuallyPassed === testCase.shouldPass) {
+                        log(`✓ ${testCase.name}: ${actuallyPassed ? 'PASS' : 'FAIL (expected)'}`, 'success');
+                        passed++;
+                    } else {
+                        log(`✗ ${testCase.name}: Expected ${testCase.shouldPass ? 'PASS' : 'FAIL'}, got ${actuallyPassed ? 'PASS' : 'FAIL'}`, 'error');
+                        if (!result.isValid) {
+                            log(`  Errors: ${result.errors.join(', ')}`, 'warning');
+                        }
+                        failed++;
+                    }
+                } catch (error) {
+                    log(`✗ ${testCase.name}: Exception - ${error.message}`, 'error');
+                    failed++;
+                }
+            }
+
+            log(`Fund source validation tests completed: ${passed} passed, ${failed} failed`, passed === testCases.length ? 'success' : 'warning');
+        }
+
+        function testSubcategoryValidation() {
+            log('Starting subcategory validation tests...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            const testCases = [
+                {
+                    name: 'Valid subcategory',
+                    data: {
+                        name: 'Test Subcategory',
+                        categoryId: 'cat1'
+                    },
+                    options: { categoryId: 'cat1' },
+                    shouldPass: true
+                },
+                {
+                    name: 'Empty name',
+                    data: {
+                        name: '',
+                        categoryId: 'cat1'
+                    },
+                    options: { categoryId: 'cat1' },
+                    shouldPass: false
+                },
+                {
+                    name: 'Missing category',
+                    data: {
+                        name: 'Test Subcategory',
+                        categoryId: ''
+                    },
+                    options: {},
+                    shouldPass: false
+                }
+            ];
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const testCase of testCases) {
+                try {
+                    const result = window.dataIntegrityManager.validateData('subcategory', testCase.data, testCase.options);
+                    const actuallyPassed = result.isValid;
+                    
+                    if (actuallyPassed === testCase.shouldPass) {
+                        log(`✓ ${testCase.name}: ${actuallyPassed ? 'PASS' : 'FAIL (expected)'}`, 'success');
+                        passed++;
+                    } else {
+                        log(`✗ ${testCase.name}: Expected ${testCase.shouldPass ? 'PASS' : 'FAIL'}, got ${actuallyPassed ? 'PASS' : 'FAIL'}`, 'error');
+                        if (!result.isValid) {
+                            log(`  Errors: ${result.errors.join(', ')}`, 'warning');
+                        }
+                        failed++;
+                    }
+                } catch (error) {
+                    log(`✗ ${testCase.name}: Exception - ${error.message}`, 'error');
+                    failed++;
+                }
+            }
+
+            log(`Subcategory validation tests completed: ${passed} passed, ${failed} failed`, passed === testCases.length ? 'success' : 'warning');
+        }
+
+        function testAllValidations() {
+            log('Running all validation tests...', 'info');
+            testTransactionValidation();
+            testFundSourceValidation();
+            testSubcategoryValidation();
+            log('All validation tests completed', 'success');
+        }
+
+        async function runConsistencyCheck() {
+            log('Running comprehensive consistency check...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            try {
+                const result = await window.dataIntegrityManager.performConsistencyCheck();
+                
+                if (result.hasIssues) {
+                    log(`Consistency check found ${result.issues.length} issue(s):`, 'warning');
+                    for (const issue of result.issues) {
+                        log(`  - ${issue.type}: ${issue.count || 0} items (${issue.description || 'No description'})`, 'warning');
+                    }
+                } else {
+                    log('Consistency check passed - no issues found', 'success');
+                }
+                
+                log(`Consistency check completed at ${result.checkedAt.toLocaleTimeString()}`, 'info');
+            } catch (error) {
+                log(`Consistency check failed: ${error.message}`, 'error');
+            }
+        }
+
+        function findOrphanedData() {
+            log('Searching for orphaned data...', 'info');
+            
+            if (!window.dataManager) {
+                log('Data manager not available', 'error');
+                return;
+            }
+
+            try {
+                const orphanedTransactions = window.dataManager.findOrphanedTransactions();
+                const orphanedSubcategories = window.dataManager.findOrphanedSubcategories();
+                
+                if (orphanedTransactions.length > 0) {
+                    log(`Found ${orphanedTransactions.length} orphaned transaction(s)`, 'warning');
+                    for (const transaction of orphanedTransactions.slice(0, 5)) {
+                        log(`  - Transaction ${transaction.id}: ${transaction.issues?.join(', ') || 'Unknown issues'}`, 'warning');
+                    }
+                    if (orphanedTransactions.length > 5) {
+                        log(`  ... and ${orphanedTransactions.length - 5} more`, 'warning');
+                    }
+                } else {
+                    log('No orphaned transactions found', 'success');
+                }
+                
+                if (orphanedSubcategories.length > 0) {
+                    log(`Found ${orphanedSubcategories.length} orphaned subcategory(ies)`, 'warning');
+                    for (const subcategory of orphanedSubcategories.slice(0, 5)) {
+                        log(`  - Subcategory ${subcategory.name} (${subcategory.id})`, 'warning');
+                    }
+                } else {
+                    log('No orphaned subcategories found', 'success');
+                }
+            } catch (error) {
+                log(`Error finding orphaned data: ${error.message}`, 'error');
+            }
+        }
+
+        function checkBalanceConsistency() {
+            log('Checking fund source balance consistency...', 'info');
+            
+            if (!window.dataManager) {
+                log('Data manager not available', 'error');
+                return;
+            }
+
+            try {
+                const balanceIssues = window.dataManager.checkFundSourceBalanceConsistency();
+                
+                if (balanceIssues.length > 0) {
+                    log(`Found ${balanceIssues.length} balance inconsistency(ies)`, 'warning');
+                    for (const issue of balanceIssues) {
+                        log(`  - ${issue.name}: Stored=${issue.storedBalance}, Calculated=${issue.calculatedBalance}, Diff=${issue.difference}`, 'warning');
+                    }
+                } else {
+                    log('All fund source balances are consistent', 'success');
+                }
+            } catch (error) {
+                log(`Error checking balance consistency: ${error.message}`, 'error');
+            }
+        }
+
+        function findDuplicates() {
+            log('Searching for duplicate names...', 'info');
+            
+            if (!window.dataManager) {
+                log('Data manager not available', 'error');
+                return;
+            }
+
+            try {
+                const duplicates = window.dataManager.findDuplicateNames();
+                
+                if (duplicates.length > 0) {
+                    log(`Found ${duplicates.length} duplicate name(s)`, 'warning');
+                    for (const duplicate of duplicates) {
+                        log(`  - ${duplicate.type}: "${duplicate.name}" (IDs: ${duplicate.ids.join(', ')})`, 'warning');
+                    }
+                } else {
+                    log('No duplicate names found', 'success');
+                }
+            } catch (error) {
+                log(`Error finding duplicates: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTransactionOperations() {
+            log('Testing transaction operations...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            try {
+                // Test creating a transaction
+                const createOperation = {
+                    type: 'transaction',
+                    action: 'create',
+                    data: {
+                        amount: -1500,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: new Date(),
+                        note: 'Test transaction via integrity manager'
+                    }
+                };
+
+                const result = await window.dataIntegrityManager.executeTransaction([createOperation]);
+                
+                if (result.success) {
+                    log('Transaction operation completed successfully', 'success');
+                    log(`Created transaction with ID: ${result.results[0].id}`, 'info');
+                } else {
+                    log('Transaction operation failed', 'error');
+                }
+            } catch (error) {
+                log(`Transaction operation error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRollbackScenario() {
+            log('Testing rollback scenario...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            try {
+                // Create an operation that should fail validation
+                const invalidOperation = {
+                    type: 'transaction',
+                    action: 'create',
+                    data: {
+                        amount: 0, // Invalid amount
+                        categoryId: 'invalid-category',
+                        fundSourceId: 'invalid-fund-source',
+                        date: new Date()
+                    }
+                };
+
+                const result = await window.dataIntegrityManager.executeTransaction([invalidOperation]);
+                log('Rollback test failed - operation should have been rejected', 'error');
+            } catch (error) {
+                log(`Rollback test passed - operation correctly rejected: ${error.message}`, 'success');
+            }
+        }
+
+        async function testConcurrentOperations() {
+            log('Testing concurrent operations...', 'info');
+            
+            if (!window.dataIntegrityManager) {
+                log('Data integrity manager not available', 'error');
+                return;
+            }
+
+            try {
+                // Try to start multiple transactions simultaneously
+                const operation1 = window.dataIntegrityManager.executeTransaction([{
+                    type: 'transaction',
+                    action: 'create',
+                    data: {
+                        amount: -100,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: new Date(),
+                        note: 'Concurrent test 1'
+                    }
+                }]);
+
+                const operation2 = window.dataIntegrityManager.executeTransaction([{
+                    type: 'transaction',
+                    action: 'create',
+                    data: {
+                        amount: -200,
+                        categoryId: 'cat1',
+                        fundSourceId: 'fs1',
+                        date: new Date(),
+                        note: 'Concurrent test 2'
+                    }
+                }]);
+
+                const results = await Promise.allSettled([operation1, operation2]);
+                
+                let successful = 0;
+                let failed = 0;
+                
+                for (const result of results) {
+                    if (result.status === 'fulfilled') {
+                        successful++;
+                    } else {
+                        failed++;
+                        log(`Concurrent operation failed: ${result.reason.message}`, 'warning');
+                    }
+                }
+                
+                log(`Concurrent operations test: ${successful} successful, ${failed} failed`, successful > 0 ? 'success' : 'warning');
+            } catch (error) {
+                log(`Concurrent operations test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function repairDataIssues() {
+            log('Starting data repair process...', 'info');
+            
+            if (!window.dataManager) {
+                log('Data manager not available', 'error');
+                return;
+            }
+
+            try {
+                // First, check for issues
+                const consistencyResult = window.dataManager.checkDataConsistency();
+                
+                if (!consistencyResult.hasIssues) {
+                    log('No data issues found to repair', 'success');
+                    return;
+                }
+
+                // Attempt to repair issues
+                const repairResults = window.dataManager.repairDataInconsistencies(consistencyResult.issues);
+                
+                let totalFixed = 0;
+                for (const result of repairResults) {
+                    if (result.success) {
+                        log(`✓ ${result.type}: ${result.message}`, 'success');
+                        totalFixed += result.fixed;
+                    } else {
+                        log(`✗ ${result.type}: ${result.message}`, 'warning');
+                    }
+                }
+                
+                log(`Data repair completed: ${totalFixed} issues fixed`, totalFixed > 0 ? 'success' : 'info');
+            } catch (error) {
+                log(`Data repair error: ${error.message}`, 'error');
+            }
+        }
+
+        function synchronizeAllData() {
+            log('Starting data synchronization...', 'info');
+            
+            if (!window.storage) {
+                log('Storage not available', 'error');
+                return;
+            }
+
+            try {
+                const result = window.storage.synchronizeData();
+                
+                if (result) {
+                    log('Data synchronization completed successfully', 'success');
+                } else {
+                    log('Data synchronization failed', 'error');
+                }
+            } catch (error) {
+                log(`Data synchronization error: ${error.message}`, 'error');
+            }
+        }
+
+        function resetTestData() {
+            if (confirm('This will reset all test data. Are you sure?')) {
+                log('Resetting test data...', 'warning');
+                
+                try {
+                    if (window.storage) {
+                        window.storage.clearAllData();
+                        log('Test data reset completed', 'success');
+                        updateSystemStats();
+                    } else {
+                        log('Storage not available for reset', 'error');
+                    }
+                } catch (error) {
+                    log(`Reset error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Data integrity test page loaded', 'info');
+            
+            // Wait for dependencies to load
+            setTimeout(() => {
+                if (window.storage && window.dataManager && window.dataIntegrityManager) {
+                    log('All dependencies loaded successfully', 'success');
+                    updateSystemStats();
+                } else {
+                    log('Some dependencies failed to load', 'warning');
+                    log(`Storage: ${!!window.storage}, DataManager: ${!!window.dataManager}, IntegrityManager: ${!!window.dataIntegrityManager}`, 'info');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

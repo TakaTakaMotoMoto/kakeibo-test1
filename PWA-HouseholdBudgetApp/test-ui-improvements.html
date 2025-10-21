@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI改善テスト - 家計簿アプリ</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--surface-color);
+        }
+        
+        .test-section h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .test-form {
+            max-width: 400px;
+        }
+        
+        .demo-notification {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-app">
+        <div class="app-header">
+            <h1>UI改善テスト</h1>
+        </div>
+        
+        <div class="main-content">
+            <div class="view active" style="padding: 1rem;">
+                
+                <!-- Button Feedback Test -->
+                <div class="test-section">
+                    <h3>1. ボタンフィードバックテスト</h3>
+                    <div class="test-buttons">
+                        <button class="btn primary" onclick="testButtonFeedback(this, 'primary')">プライマリボタン</button>
+                        <button class="btn secondary" onclick="testButtonFeedback(this, 'secondary')">セカンダリボタン</button>
+                        <button class="btn danger" onclick="testButtonFeedback(this, 'danger')">危険ボタン</button>
+                        <button class="btn primary" onclick="testLoadingButton(this)">ローディングテスト</button>
+                    </div>
+                </div>
+
+                <!-- Notification Test -->
+                <div class="test-section">
+                    <h3>2. 通知システムテスト</h3>
+                    <div class="test-buttons">
+                        <button class="btn primary" onclick="showTestNotification('success', '操作が完了しました')">成功通知</button>
+                        <button class="btn secondary" onclick="showTestNotification('info', '情報をお知らせします')">情報通知</button>
+                        <button class="btn" style="background: var(--warning-color); color: white;" onclick="showTestNotification('warning', '注意が必要です')">警告通知</button>
+                        <button class="btn danger" onclick="showTestNotification('error', 'エラーが発生しました')">エラー通知</button>
+                    </div>
+                </div>
+
+                <!-- Modal Animation Test -->
+                <div class="test-section">
+                    <h3>3. モーダルアニメーションテスト</h3>
+                    <div class="test-buttons">
+                        <button class="btn primary" onclick="showTestModal()">モーダルを開く</button>
+                    </div>
+                </div>
+
+                <!-- Form Validation Test -->
+                <div class="test-section">
+                    <h3>4. フォームバリデーションテスト</h3>
+                    <form class="test-form" id="test-form" onsubmit="testFormSubmit(event)">
+                        <div class="form-group">
+                            <label for="test-name">名前（必須）</label>
+                            <input type="text" id="test-name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="test-email">メールアドレス</label>
+                            <input type="email" id="test-email" name="email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="test-amount">金額</label>
+                            <input type="number" id="test-amount" name="amount" min="0" max="1000000">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary">送信</button>
+                            <button type="button" class="btn secondary" onclick="clearTestForm()">クリア</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Progress Indicator Test -->
+                <div class="test-section">
+                    <h3>5. プログレスインジケーターテスト</h3>
+                    <div class="test-buttons">
+                        <button class="btn primary" onclick="testProgress()">プログレス表示</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Modal -->
+    <div class="modal" id="test-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>テストモーダル</h2>
+                <button class="close-btn" onclick="closeTestModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>これはモーダルアニメーションのテストです。</p>
+                <p>ESCキーでも閉じることができます。</p>
+                <div class="form-actions">
+                    <button class="btn primary" onclick="closeTestModal()">OK</button>
+                    <button class="btn secondary" onclick="closeTestModal()">キャンセル</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock UI Manager for testing
+        class TestUIManager {
+            constructor() {
+                this.currentModalEscapeHandler = null;
+            }
+
+            showNotification(message, type = 'info') {
+                this.createFallbackNotification(message, type);
+            }
+
+            createFallbackNotification(message, type = 'info') {
+                const existingNotifications = document.querySelectorAll('.ui-notification');
+                existingNotifications.forEach(n => n.remove());
+                
+                const notification = document.createElement('div');
+                notification.className = `ui-notification notification-${type}`;
+                
+                const icons = {
+                    success: '✅',
+                    warning: '⚠️',
+                    error: '❌',
+                    info: 'ℹ️'
+                };
+                
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">${icons[type] || icons.info}</span>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                Object.assign(notification.style, {
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: '500',
+                    zIndex: '10000',
+                    transform: 'translateX(100%)',
+                    transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    maxWidth: '300px',
+                    wordWrap: 'break-word',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                    backdropFilter: 'blur(10px)',
+                    cursor: 'pointer'
+                });
+                
+                const backgrounds = {
+                    success: 'linear-gradient(135deg, #34C759, #30D158)',
+                    warning: 'linear-gradient(135deg, #FF9500, #FF9F0A)',
+                    error: 'linear-gradient(135deg, #FF3B30, #FF453A)',
+                    info: 'linear-gradient(135deg, #007AFF, #0A84FF)'
+                };
+                notification.style.background = backgrounds[type] || backgrounds.info;
+                
+                notification.addEventListener('click', () => {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                });
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(0)';
+                }, 50);
+                
+                const delays = { success: 2000, warning: 4000, error: 5000, info: 3000 };
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.transform = 'translateX(100%)';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, delays[type] || delays.info);
+            }
+
+            showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                
+                modal.style.pointerEvents = 'none';
+                modal.classList.add('active');
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.classList.add('bounce-in');
+                    setTimeout(() => {
+                        modalContent.classList.remove('bounce-in');
+                        modal.style.pointerEvents = 'auto';
+                    }, 500);
+                } else {
+                    modal.style.pointerEvents = 'auto';
+                }
+                
+                this.addModalEscapeHandler(modalId);
+            }
+
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.style.transform = 'translateY(50px) scale(0.95)';
+                }
+                
+                setTimeout(() => {
+                    modal.classList.remove('active');
+                    if (modalContent) {
+                        modalContent.style.transform = '';
+                    }
+                }, 150);
+                
+                this.removeModalEscapeHandler();
+            }
+
+            addModalEscapeHandler(modalId) {
+                this.currentModalEscapeHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal(modalId);
+                    }
+                };
+                document.addEventListener('keydown', this.currentModalEscapeHandler);
+            }
+
+            removeModalEscapeHandler() {
+                if (this.currentModalEscapeHandler) {
+                    document.removeEventListener('keydown', this.currentModalEscapeHandler);
+                    this.currentModalEscapeHandler = null;
+                }
+            }
+
+            showFieldError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const formGroup = field?.closest('.form-group');
+                if (!formGroup) return;
+                
+                this.clearFieldError(fieldId);
+                formGroup.classList.add('error');
+                formGroup.classList.remove('success');
+                
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = message;
+                formGroup.appendChild(errorMessage);
+                
+                setTimeout(() => {
+                    errorMessage.classList.add('show');
+                }, 10);
+                
+                field.focus();
+            }
+
+            clearFieldError(fieldId) {
+                const field = document.getElementById(fieldId);
+                const formGroup = field?.closest('.form-group');
+                if (!formGroup) return;
+                
+                formGroup.classList.remove('error', 'success');
+                const errorMessage = formGroup.querySelector('.error-message');
+                if (errorMessage) {
+                    errorMessage.remove();
+                }
+            }
+
+            showProgress(message = '処理中...') {
+                this.hideProgress();
+                
+                const progressOverlay = document.createElement('div');
+                progressOverlay.id = 'progress-overlay';
+                progressOverlay.innerHTML = `
+                    <div class="progress-content">
+                        <div class="progress-spinner"></div>
+                        <div class="progress-message">${message}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                `;
+                
+                Object.assign(progressOverlay.style, {
+                    position: 'fixed',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: '10001',
+                    backdropFilter: 'blur(5px)'
+                });
+                
+                document.body.appendChild(progressOverlay);
+            }
+
+            hideProgress() {
+                const progressOverlay = document.getElementById('progress-overlay');
+                if (progressOverlay) {
+                    progressOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        if (progressOverlay.parentNode) {
+                            progressOverlay.parentNode.removeChild(progressOverlay);
+                        }
+                    }, 300);
+                }
+            }
+        }
+
+        const testUI = new TestUIManager();
+
+        // Test functions
+        function testButtonFeedback(button, type) {
+            button.classList.add('loading');
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.classList.remove('loading');
+                button.disabled = false;
+                testUI.showNotification(`${type}ボタンがクリックされました`, 'success');
+            }, 1000);
+        }
+
+        function testLoadingButton(button) {
+            const originalText = button.textContent;
+            button.classList.add('loading');
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.textContent = originalText;
+                testUI.showNotification('ローディング完了', 'success');
+            }, 2000);
+        }
+
+        function showTestNotification(type, message) {
+            testUI.showNotification(message, type);
+        }
+
+        function showTestModal() {
+            testUI.showModal('test-modal');
+        }
+
+        function closeTestModal() {
+            testUI.closeModal('test-modal');
+        }
+
+        function testFormSubmit(event) {
+            event.preventDefault();
+            
+            const nameField = document.getElementById('test-name');
+            const emailField = document.getElementById('test-email');
+            const amountField = document.getElementById('test-amount');
+            
+            let isValid = true;
+            
+            // Clear previous errors
+            testUI.clearFieldError('test-name');
+            testUI.clearFieldError('test-email');
+            testUI.clearFieldError('test-amount');
+            
+            // Validate name
+            if (!nameField.value.trim()) {
+                testUI.showFieldError('test-name', '名前は必須です');
+                isValid = false;
+            }
+            
+            // Validate email
+            if (emailField.value && !isValidEmail(emailField.value)) {
+                testUI.showFieldError('test-email', '有効なメールアドレスを入力してください');
+                isValid = false;
+            }
+            
+            // Validate amount
+            if (amountField.value) {
+                const amount = parseFloat(amountField.value);
+                if (isNaN(amount) || amount < 0) {
+                    testUI.showFieldError('test-amount', '0以上の数値を入力してください');
+                    isValid = false;
+                } else if (amount > 1000000) {
+                    testUI.showFieldError('test-amount', '1,000,000以下の数値を入力してください');
+                    isValid = false;
+                }
+            }
+            
+            if (isValid) {
+                testUI.showNotification('フォームが正常に送信されました', 'success');
+            } else {
+                testUI.showNotification('入力内容を確認してください', 'error');
+            }
+        }
+
+        function clearTestForm() {
+            document.getElementById('test-form').reset();
+            testUI.clearFieldError('test-name');
+            testUI.clearFieldError('test-email');
+            testUI.clearFieldError('test-amount');
+            testUI.showNotification('フォームをクリアしました', 'info');
+        }
+
+        function testProgress() {
+            testUI.showProgress('データを処理中...');
+            
+            setTimeout(() => {
+                testUI.hideProgress();
+                testUI.showNotification('処理が完了しました', 'success');
+            }, 3000);
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Add ripple effect to buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('button') || e.target.closest('button')) {
+                const button = e.target.matches('button') ? e.target : e.target.closest('button');
+                addRippleEffect(button, e);
+            }
+        });
+
+        function addRippleEffect(button, event) {
+            if (button.disabled || button.classList.contains('loading')) return;
+            
+            const rect = button.getBoundingClientRect();
+            const ripple = document.createElement('span');
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                left: ${x}px;
+                top: ${y}px;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+                z-index: 1;
+            `;
+            
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 600);
+        }
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+            
+            .progress-content {
+                background: var(--surface-color);
+                padding: 2rem;
+                border-radius: 12px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                max-width: 300px;
+            }
+            
+            .progress-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid var(--border-color);
+                border-top: 3px solid var(--primary-color);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 1rem;
+            }
+            
+            .progress-message {
+                color: var(--text-primary);
+                margin-bottom: 1rem;
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

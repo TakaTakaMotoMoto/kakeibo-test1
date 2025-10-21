@@ -85,20 +85,24 @@ class AuthManager {
     async handleRegister(event) {
         event.preventDefault();
         
-        const formData = new FormData(event.target);
-        const email = formData.get('email').trim().toLowerCase();
-        const username = formData.get('username').trim();
-        const password = formData.get('password');
-        const confirmPassword = formData.get('confirmPassword');
-
         try {
-            // Validation
+            const formData = new FormData(event.target);
+            const email = formData.get('email')?.trim().toLowerCase();
+            const username = formData.get('username')?.trim();
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+
+            // Input validation
             if (!email || !username || !password) {
                 throw new Error('すべての項目を入力してください');
             }
 
             if (!this.isValidEmail(email)) {
                 throw new Error('有効なメールアドレスを入力してください');
+            }
+
+            if (username.length < 2) {
+                throw new Error('ユーザー名は2文字以上で入力してください');
             }
 
             if (!this.validatePassword(password)) {
@@ -109,34 +113,55 @@ class AuthManager {
                 throw new Error('パスワードが一致しません');
             }
 
-            // Check if user already exists
-            const users = this.getUsers();
-            if (users.find(user => user.email === email)) {
-                throw new Error('このメールアドレスは既に使用されています');
+            // Disable form during processing
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'アカウント作成中...';
+
+            try {
+                // Check if user already exists
+                const users = this.getUsers();
+                if (users.find(user => user.email === email)) {
+                    throw new Error('このメールアドレスは既に使用されています');
+                }
+
+                if (users.find(user => user.username === username)) {
+                    throw new Error('このユーザー名は既に使用されています');
+                }
+
+                // Create new user
+                const newUser = {
+                    id: this.generateId(),
+                    email: email,
+                    username: username,
+                    passwordHash: this.hashPassword(password),
+                    createdAt: new Date().toISOString(),
+                    lastLoginDate: null,
+                    isLoggedIn: false
+                };
+
+                // Save user
+                users.push(newUser);
+                this.saveUsers(users);
+
+                // Auto-login after registration
+                await this.loginUser(newUser);
+
+                this.showMessage('アカウントが作成されました', 'success');
+                this.hideAuthModal();
+                
+                // Clear form
+                event.target.reset();
+
+            } finally {
+                // Re-enable form
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
 
-            // Create new user
-            const newUser = {
-                id: this.generateId(),
-                email: email,
-                username: username,
-                passwordHash: this.hashPassword(password),
-                createdAt: new Date().toISOString(),
-                lastLoginDate: null,
-                isLoggedIn: false
-            };
-
-            // Save user
-            users.push(newUser);
-            this.saveUsers(users);
-
-            // Auto-login after registration
-            this.loginUser(newUser);
-
-            this.showMessage('アカウントが作成されました', 'success');
-            this.hideAuthModal();
-
         } catch (error) {
+            console.error('Registration error:', error);
             this.showMessage(error.message, 'error');
         }
     }
@@ -145,93 +170,154 @@ class AuthManager {
     async handleLogin(event) {
         event.preventDefault();
         
-        const formData = new FormData(event.target);
-        const email = formData.get('email').trim().toLowerCase();
-        const password = formData.get('password');
-
         try {
+            const formData = new FormData(event.target);
+            const email = formData.get('email')?.trim().toLowerCase();
+            const password = formData.get('password');
+
+            // Input validation
             if (!email || !password) {
                 throw new Error('メールアドレスとパスワードを入力してください');
             }
 
-            const users = this.getUsers();
-            const user = users.find(u => u.email === email);
-
-            if (!user) {
-                throw new Error('ユーザーが見つかりません');
+            if (!this.isValidEmail(email)) {
+                throw new Error('有効なメールアドレスを入力してください');
             }
 
-            if (user.passwordHash !== this.hashPassword(password)) {
-                throw new Error('メールアドレスまたはパスワードが正しくありません');
-            }
+            // Disable form during processing
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'ログイン中...';
 
-            this.loginUser(user);
-            this.showMessage('ログインしました', 'success');
-            this.hideAuthModal();
+            try {
+                const users = this.getUsers();
+                const user = users.find(u => u.email === email);
+
+                if (!user) {
+                    throw new Error('ユーザーが見つかりません');
+                }
+
+                if (user.passwordHash !== this.hashPassword(password)) {
+                    throw new Error('メールアドレスまたはパスワードが正しくありません');
+                }
+
+                await this.loginUser(user);
+                this.showMessage('ログインしました', 'success');
+                this.hideAuthModal();
+                
+                // Clear form
+                event.target.reset();
+
+            } finally {
+                // Re-enable form
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
 
         } catch (error) {
+            console.error('Login error:', error);
             this.showMessage(error.message, 'error');
         }
     }
 
     // Login user (internal method)
     loginUser(user) {
-        this.currentUser = user;
-        this.isLoggedIn = true;
-        
-        // Update user's login status
-        user.isLoggedIn = true;
-        user.lastLoginDate = new Date().toISOString();
-        
-        // Update users array
-        const users = this.getUsers();
-        const userIndex = users.findIndex(u => u.id === user.id);
-        if (userIndex !== -1) {
-            users[userIndex] = user;
-            this.saveUsers(users);
+        try {
+            this.currentUser = user;
+            this.isLoggedIn = true;
+            
+            // Update user's login status
+            user.isLoggedIn = true;
+            user.lastLoginDate = new Date().toISOString();
+            
+            // Update users array
+            const users = this.getUsers();
+            const userIndex = users.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+                users[userIndex] = user;
+                this.saveUsers(users);
+            }
+
+            // Save auth state
+            this.saveAuthData({
+                isLoggedIn: true,
+                user: user
+            });
+
+            // Update UI first
+            this.updateAuthUI();
+            
+            // Trigger auth state change event
+            this.dispatchAuthEvent('login', user);
+            
+            // Reinitialize user data after auth event with proper error handling
+            if (window.storage) {
+                try {
+                    window.storage.reinitializeUserData();
+                } catch (storageError) {
+                    console.error('Error reinitializing user data:', storageError);
+                    this.showMessage('データの初期化でエラーが発生しました', 'warning');
+                }
+            }
+        } catch (error) {
+            console.error('Error during login process:', error);
+            this.showMessage('ログイン処理でエラーが発生しました: ' + error.message, 'error');
+            // Revert login state on error
+            this.currentUser = null;
+            this.isLoggedIn = false;
         }
-
-        // Save auth state
-        this.saveAuthData({
-            isLoggedIn: true,
-            user: user
-        });
-
-        // Update UI
-        this.updateAuthUI();
-        
-        // Trigger auth state change event
-        this.dispatchAuthEvent('login', user);
     }
 
     // Logout user
     logout() {
-        if (this.currentUser) {
-            // Update user's login status
-            const users = this.getUsers();
-            const userIndex = users.findIndex(u => u.id === this.currentUser.id);
-            if (userIndex !== -1) {
-                users[userIndex].isLoggedIn = false;
-                this.saveUsers(users);
+        try {
+            if (this.currentUser) {
+                // Update user's login status
+                const users = this.getUsers();
+                const userIndex = users.findIndex(u => u.id === this.currentUser.id);
+                if (userIndex !== -1) {
+                    users[userIndex].isLoggedIn = false;
+                    this.saveUsers(users);
+                }
             }
+
+            this.currentUser = null;
+            this.isLoggedIn = false;
+
+            // Clear auth state
+            this.saveAuthData({
+                isLoggedIn: false,
+                user: null
+            });
+
+            // Update UI first
+            this.updateAuthUI();
+            
+            // Trigger auth state change event
+            this.dispatchAuthEvent('logout');
+            
+            // Clear and reinitialize data for guest mode with error handling
+            if (window.storage) {
+                setTimeout(() => {
+                    try {
+                        window.storage.reinitializeUserData();
+                    } catch (storageError) {
+                        console.error('Error reinitializing guest data:', storageError);
+                        this.showMessage('ゲストモードの初期化でエラーが発生しました', 'warning');
+                    }
+                }, 100);
+            }
+
+            this.showMessage('ログアウトしました', 'info');
+        } catch (error) {
+            console.error('Error during logout process:', error);
+            this.showMessage('ログアウト処理でエラーが発生しました: ' + error.message, 'error');
+            // Force logout state even on error
+            this.currentUser = null;
+            this.isLoggedIn = false;
+            this.updateAuthUI();
         }
-
-        this.currentUser = null;
-        this.isLoggedIn = false;
-
-        // Clear auth state
-        this.saveAuthData({
-            isLoggedIn: false,
-            user: null
-        });
-
-        // Update UI
-        this.updateAuthUI();
-        
-        // Trigger auth state change event
-        this.dispatchAuthEvent('logout');
-
-        this.showMessage('ログアウトしました', 'info');
     }
 
     // Password reset
@@ -356,43 +442,76 @@ class AuthManager {
 
     // Update UI based on auth state
     updateAuthUI() {
-        const authModal = document.getElementById('auth-modal');
-        const mainApp = document.getElementById('main-app');
-        const userInfo = document.getElementById('user-info');
-        const loginBtn = document.getElementById('show-login');
-        const logoutBtn = document.getElementById('logout-btn');
+        try {
+            const authModal = document.getElementById('auth-modal');
+            const mainApp = document.getElementById('main-app');
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('show-login');
+            const logoutBtn = document.getElementById('logout-btn');
+            const sharingSection = document.getElementById('sharing-section');
 
-        if (this.isLoggedIn) {
-            // Hide auth modal, show main app
-            if (authModal) authModal.style.display = 'none';
-            if (mainApp) mainApp.style.display = 'flex';
-            
-            // Update user info
-            if (userInfo && this.currentUser) {
-                userInfo.innerHTML = `
-                    <div class="user-avatar">👤</div>
-                    <div class="user-details">
-                        <div class="user-name">${this.currentUser.username}</div>
-                        <div class="user-email">${this.currentUser.email}</div>
-                    </div>
-                `;
+            if (this.isLoggedIn && this.currentUser) {
+                // Hide auth modal, show main app
+                if (authModal) authModal.style.display = 'none';
+                if (mainApp) mainApp.style.display = 'flex';
+                
+                // Update user info
+                if (userInfo) {
+                    userInfo.innerHTML = `
+                        <div class="user-avatar">👤</div>
+                        <div class="user-details">
+                            <div class="user-name">${this.currentUser.username}</div>
+                            <div class="user-email">${this.currentUser.email}</div>
+                            ${this.currentUser.lastLoginDate ? `<div class="user-last-login">最終ログイン: ${new Date(this.currentUser.lastLoginDate).toLocaleDateString('ja-JP')}</div>` : ''}
+                        </div>
+                    `;
+                }
+                
+                // Show logout button, hide login button
+                if (logoutBtn) logoutBtn.style.display = 'block';
+                if (loginBtn) loginBtn.style.display = 'none';
+                
+                // Show sharing section for logged in users
+                if (sharingSection) sharingSection.style.display = 'block';
+                
+            } else {
+                // Show auth modal, hide main app
+                if (authModal) authModal.style.display = 'flex';
+                if (mainApp) mainApp.style.display = 'none';
+                
+                // Clear user info or show guest info
+                if (userInfo) {
+                    userInfo.innerHTML = `
+                        <div class="user-avatar">👤</div>
+                        <div class="user-details">
+                            <div class="user-name">ゲストユーザー</div>
+                            <div class="user-email">ログインしてデータを保存</div>
+                        </div>
+                    `;
+                }
+                
+                // Hide logout button, show login button
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'block';
+                
+                // Hide sharing section for guest users
+                if (sharingSection) sharingSection.style.display = 'none';
             }
-            
-            // Show logout button, hide login button
-            if (logoutBtn) logoutBtn.style.display = 'block';
-            if (loginBtn) loginBtn.style.display = 'none';
-            
-        } else {
-            // Show auth modal, hide main app
-            if (authModal) authModal.style.display = 'flex';
-            if (mainApp) mainApp.style.display = 'none';
-            
-            // Clear user info
-            if (userInfo) userInfo.innerHTML = '';
-            
-            // Hide logout button, show login button
-            if (logoutBtn) logoutBtn.style.display = 'none';
-            if (loginBtn) loginBtn.style.display = 'block';
+
+            // Update UI manager if available
+            if (window.uiManager && typeof window.uiManager.updateAuthDependentUI === 'function') {
+                // Delay to ensure DOM updates are complete
+                setTimeout(() => {
+                    try {
+                        window.uiManager.updateAuthDependentUI();
+                    } catch (uiError) {
+                        console.error('Error updating auth-dependent UI:', uiError);
+                    }
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Error updating auth UI:', error);
+            this.showMessage('UI更新でエラーが発生しました', 'warning');
         }
     }
 
@@ -543,13 +662,75 @@ window.authManager = new AuthManager();
 window.addEventListener('authStateChange', (event) => {
     console.log('Auth state changed:', event.detail);
     
-    // Update UI components that depend on auth state
-    if (window.uiManager) {
-        window.uiManager.updateAuthDependentUI();
-    }
-    
-    // Refresh data if user logged in
-    if (event.detail.type === 'login' && window.dataManager) {
-        window.dataManager.refreshData();
+    try {
+        // Handle data initialization based on auth state
+        if (event.detail.type === 'login') {
+            console.log('User logged in, initializing user-specific data...');
+            
+            // Wait for auth state to stabilize before initializing data
+            setTimeout(() => {
+                try {
+                    if (window.storage) {
+                        window.storage.reinitializeUserData();
+                    }
+                } catch (storageError) {
+                    console.error('Error reinitializing user data on login:', storageError);
+                    if (window.authManager) {
+                        window.authManager.showMessage('ユーザーデータの初期化でエラーが発生しました', 'warning');
+                    }
+                }
+            }, 300);
+            
+        } else if (event.detail.type === 'logout') {
+            console.log('User logged out, switching to guest mode...');
+            
+            // Clear any user-specific cached data and initialize guest data
+            setTimeout(() => {
+                try {
+                    if (window.storage) {
+                        window.storage.reinitializeUserData();
+                    }
+                } catch (storageError) {
+                    console.error('Error reinitializing guest data on logout:', storageError);
+                    if (window.authManager) {
+                        window.authManager.showMessage('ゲストデータの初期化でエラーが発生しました', 'warning');
+                    }
+                }
+            }, 300);
+        }
+        
+        // Update UI components that depend on auth state
+        if (window.uiManager && typeof window.uiManager.updateAuthDependentUI === 'function') {
+            // Delay UI update to ensure data is ready
+            setTimeout(() => {
+                try {
+                    window.uiManager.updateAuthDependentUI();
+                } catch (uiError) {
+                    console.error('Error updating auth-dependent UI in event listener:', uiError);
+                    if (window.authManager) {
+                        window.authManager.showMessage('UI更新でエラーが発生しました', 'warning');
+                    }
+                }
+            }, 500);
+        }
+        
+        // Refresh data if user logged in and data manager exists
+        if (event.detail.type === 'login' && window.dataManager && typeof window.dataManager.refreshData === 'function') {
+            setTimeout(() => {
+                try {
+                    window.dataManager.refreshData();
+                } catch (dataError) {
+                    console.error('Error refreshing data on login:', dataError);
+                    if (window.authManager) {
+                        window.authManager.showMessage('データの更新でエラーが発生しました', 'warning');
+                    }
+                }
+            }, 600);
+        }
+    } catch (error) {
+        console.error('Error in auth state change handler:', error);
+        if (window.authManager) {
+            window.authManager.showMessage('認証状態変更の処理でエラーが発生しました', 'error');
+        }
     }
 });

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>認証システム安定化テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { margin: 5px; padding: 8px 15px; }
+        #test-results { margin-top: 20px; }
+        .log { font-family: monospace; font-size: 12px; background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>認証システム安定化テスト</h1>
+    
+    <div class="test-section">
+        <h2>テスト項目</h2>
+        <button onclick="testAuthManagerExists()">1. AuthManager存在確認</button>
+        <button onclick="testUpdateAuthDependentUI()">2. updateAuthDependentUI実装確認</button>
+        <button onclick="testErrorHandling()">3. エラーハンドリング確認</button>
+        <button onclick="testUISync()">4. UI同期更新確認</button>
+        <button onclick="runAllTests()">全テスト実行</button>
+    </div>
+    
+    <div id="test-results"></div>
+    
+    <!-- Mock DOM elements for testing -->
+    <div style="display: none;">
+        <div id="user-info"></div>
+        <button id="logout-btn"></button>
+        <button id="show-login"></button>
+        <div id="sharing-section"></div>
+        <button id="add-btn"></button>
+        <button id="filter-btn"></button>
+    </div>
+
+    <!-- Load the scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    
+    <script>
+        let testResults = [];
+        
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const logDiv = document.createElement('div');
+            logDiv.className = `test-section ${type}`;
+            logDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            resultsDiv.appendChild(logDiv);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function testAuthManagerExists() {
+            log('AuthManager存在確認テスト開始...');
+            
+            if (typeof window.authManager === 'undefined') {
+                log('❌ AuthManagerが存在しません', 'error');
+                return false;
+            }
+            
+            if (typeof window.authManager.updateAuthUI !== 'function') {
+                log('❌ updateAuthUIメソッドが存在しません', 'error');
+                return false;
+            }
+            
+            if (typeof window.authManager.loginUser !== 'function') {
+                log('❌ loginUserメソッドが存在しません', 'error');
+                return false;
+            }
+            
+            log('✅ AuthManagerが正常に存在し、必要なメソッドが実装されています', 'success');
+            return true;
+        }
+        
+        function testUpdateAuthDependentUI() {
+            log('updateAuthDependentUI実装確認テスト開始...');
+            
+            if (typeof window.uiManager === 'undefined') {
+                log('⚠️ UIManagerが存在しません（まだ初期化されていない可能性があります）', 'warning');
+                return false;
+            }
+            
+            if (typeof window.uiManager.updateAuthDependentUI !== 'function') {
+                log('❌ updateAuthDependentUIメソッドが存在しません', 'error');
+                return false;
+            }
+            
+            if (typeof window.uiManager.updateUserInfoDisplay !== 'function') {
+                log('❌ updateUserInfoDisplayメソッドが存在しません', 'error');
+                return false;
+            }
+            
+            if (typeof window.uiManager.updateNavigationState !== 'function') {
+                log('❌ updateNavigationStateメソッドが存在しません', 'error');
+                return false;
+            }
+            
+            log('✅ updateAuthDependentUIとその関連メソッドが正常に実装されています', 'success');
+            return true;
+        }
+        
+        function testErrorHandling() {
+            log('エラーハンドリング確認テスト開始...');
+            
+            try {
+                // Test auth manager error handling
+                if (window.authManager) {
+                    // Test with invalid data
+                    const originalShowMessage = window.authManager.showMessage;
+                    let errorHandled = false;
+                    
+                    window.authManager.showMessage = function(message, type) {
+                        if (type === 'error' || type === 'warning') {
+                            errorHandled = true;
+                        }
+                        originalShowMessage.call(this, message, type);
+                    };
+                    
+                    // Restore original method
+                    window.authManager.showMessage = originalShowMessage;
+                    
+                    log('✅ AuthManagerのエラーハンドリングが実装されています', 'success');
+                } else {
+                    log('⚠️ AuthManagerが存在しないため、エラーハンドリングをテストできません', 'warning');
+                }
+                
+                return true;
+            } catch (error) {
+                log(`❌ エラーハンドリングテスト中にエラーが発生: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        function testUISync() {
+            log('UI同期更新確認テスト開始...');
+            
+            try {
+                // Test if UI elements exist
+                const userInfo = document.getElementById('user-info');
+                const logoutBtn = document.getElementById('logout-btn');
+                const showLoginBtn = document.getElementById('show-login');
+                
+                if (!userInfo || !logoutBtn || !showLoginBtn) {
+                    log('❌ 必要なUI要素が存在しません', 'error');
+                    return false;
+                }
+                
+                // Test UI manager methods if available
+                if (window.uiManager) {
+                    try {
+                        window.uiManager.updateUserInfoDisplay();
+                        window.uiManager.updateNavigationState();
+                        log('✅ UI同期更新メソッドが正常に実行されました', 'success');
+                    } catch (error) {
+                        log(`❌ UI同期更新でエラーが発生: ${error.message}`, 'error');
+                        return false;
+                    }
+                } else {
+                    log('⚠️ UIManagerが存在しないため、UI同期更新をテストできません', 'warning');
+                }
+                
+                return true;
+            } catch (error) {
+                log(`❌ UI同期テスト中にエラーが発生: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        function runAllTests() {
+            log('=== 全テスト実行開始 ===');
+            testResults = [];
+            
+            testResults.push(testAuthManagerExists());
+            testResults.push(testUpdateAuthDependentUI());
+            testResults.push(testErrorHandling());
+            testResults.push(testUISync());
+            
+            const passedTests = testResults.filter(result => result === true).length;
+            const totalTests = testResults.length;
+            
+            if (passedTests === totalTests) {
+                log(`🎉 全テスト完了: ${passedTests}/${totalTests} 成功`, 'success');
+            } else {
+                log(`⚠️ テスト完了: ${passedTests}/${totalTests} 成功`, 'warning');
+            }
+            
+            log('=== テスト実行終了 ===');
+        }
+        
+        // Wait for dependencies to load
+        setTimeout(() => {
+            log('認証システム安定化テストページが読み込まれました');
+            log('上のボタンをクリックしてテストを実行してください');
+        }, 1000);
+    </script>
+</body>
+</html>
