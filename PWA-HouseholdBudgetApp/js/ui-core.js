@@ -9,7 +9,10 @@ class UIManager {
         this.selectedCategoryForSubcategory = null;
 
         // Initialize components
+        console.log('Initializing ModalManager...');
         this.modalManager = new ModalManager();
+        console.log('ModalManager initialized:', this.modalManager);
+        console.log('showModal method:', typeof this.modalManager.showModal);
         this.formValidator = new FormValidator();
         this.renderer = new UIRenderer();
 
@@ -47,6 +50,7 @@ class UIManager {
 
         // Header buttons
         const addBtn = document.getElementById('add-btn');
+        console.log('Addbtn:', addBtn);
         if (addBtn) {
             addBtn.addEventListener('click', () => this.openTransactionModal());
         }
@@ -90,6 +94,27 @@ class UIManager {
             fundSourceForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.handleFundSourceSubmit(e);
+            });
+        }
+
+        // Category change handler for subcategory updates
+        const categorySelect = document.getElementById('category');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (e) => {
+                this.updateSubcategoryOptions(e.target.value);
+            });
+        }
+
+        // Subcategory management button
+        const manageSubcategoriesBtn = document.getElementById('manage-subcategories');
+        if (manageSubcategoriesBtn) {
+            manageSubcategoriesBtn.addEventListener('click', () => {
+                const selectedCategory = document.getElementById('category').value;
+                if (selectedCategory) {
+                    this.openSubcategoryModal(selectedCategory);
+                } else {
+                    UIUtils.showNotification('先にカテゴリを選択してください', 'warning');
+                }
             });
         }
 
@@ -248,12 +273,23 @@ class UIManager {
                 note: formData.get('note') || ''
             };
 
+            let result;
             if (this.editingTransaction) {
-                window.dataManager.updateTransaction(this.editingTransaction, transactionData);
-                UIUtils.showNotification('取引を更新しました', 'success');
+                result = window.dataManager.updateTransaction(this.editingTransaction, transactionData);
+                if (result) {
+                    UIUtils.showNotification('取引を更新しました', 'success');
+                } else {
+                    UIUtils.showNotification('取引の更新に失敗しました', 'error');
+                    return;
+                }
             } else {
-                window.dataManager.addTransaction(transactionData);
-                UIUtils.showNotification('取引を追加しました', 'success');
+                result = window.dataManager.addTransaction(transactionData);
+                if (result) {
+                    UIUtils.showNotification('取引を追加しました', 'success');
+                } else {
+                    UIUtils.showNotification('取引の追加に失敗しました', 'error');
+                    return;
+                }
             }
 
             this.modalManager.closeModal('transaction-modal');
@@ -309,10 +345,24 @@ class UIManager {
             }
 
             const formData = new FormData(e.target);
+            const name = formData.get('name')?.trim();
+            const balance = formData.get('balance');
+
+            // Validation
+            if (!name) {
+                UIUtils.showNotification('資金元名を入力してください', 'error');
+                return;
+            }
+
+            if (!balance || isNaN(parseFloat(balance))) {
+                UIUtils.showNotification('有効な初期残高を入力してください', 'error');
+                return;
+            }
+
             const fundSourceData = {
-                name: formData.get('fs-name').trim(),
-                initialBalance: parseFloat(formData.get('fs-balance')),
-                type: formData.get('fs-type') || 'bank'
+                name: name,
+                initialBalance: parseFloat(balance),
+                type: formData.get('type') || 'bank'
             };
 
             if (this.editingFundSource) {
@@ -339,8 +389,10 @@ class UIManager {
 
     // Modal opening methods
     openTransactionModal(transactionId = null) {
+        console.log('openTransactionModal start.');
         try {
             // Check authentication first
+            console.log('認証：', this.checkAuthForAction('add_transaction'));
             if (!this.checkAuthForAction('add_transaction')) {
                 return;
             }
@@ -354,6 +406,7 @@ class UIManager {
                 UIUtils.showNotification('モーダル要素が見つかりません', 'error');
                 return;
             }
+            console.log('ここまで', transactionId);
 
             if (transactionId) {
                 const transaction = window.storage.getTransactions().find(t => t.id === transactionId);
@@ -362,9 +415,9 @@ class UIManager {
                         UIUtils.showNotification('この取引は編集できません', 'warning');
                         return;
                     }
-                    
+
                     title.textContent = '取引を編集';
-                    
+
                     // Populate form with transaction data
                     document.getElementById('amount').value = Math.abs(transaction.amount);
                     document.querySelector(`input[name="type"][value="${transaction.amount < 0 ? 'expense' : 'income'}"]`).checked = true;
@@ -373,22 +426,26 @@ class UIManager {
                     document.getElementById('fundSource').value = transaction.fundSourceId;
                     document.getElementById('date').value = transaction.date.toISOString().split('T')[0];
                     document.getElementById('note').value = transaction.note || '';
-                    
                     // Update subcategory options
                     this.updateSubcategoryOptions(transaction.categoryId);
                 }
             } else {
                 title.textContent = '取引を追加';
                 form.reset();
-                
+
                 // Set default date to today
                 document.getElementById('date').value = new Date().toISOString().split('T')[0];
-                
+
                 // Clear subcategory options
+                console.log('ここはOK');
                 this.updateSubcategoryOptions('');
             }
 
+            console.log('About to call showModal');
+            console.log('this.modalManager:', this.modalManager);
+            console.log('showModal method exists:', typeof this.modalManager.showModal);
             this.modalManager.showModal('transaction-modal');
+            console.log('showModal called');
         } catch (error) {
             console.error('Error opening transaction modal:', error);
             UIUtils.showNotification('取引モーダルを開けませんでした', 'error');
@@ -439,7 +496,7 @@ class UIManager {
 
             // Populate current filter values
             const filters = window.dataManager.filters;
-            
+
             if (filters.startDate) {
                 document.getElementById('filter-start-date').value = filters.startDate;
             }
@@ -488,6 +545,14 @@ class UIManager {
 
     checkAuthForAction(action) {
         try {
+            // Allow basic actions for guest users
+            const guestAllowedActions = ['add_transaction', 'filter_transactions', 'view_data', 'manage_subcategories'];
+
+            if (guestAllowedActions.includes(action)) {
+                return true;
+            }
+
+            // For other actions, require authentication
             if (!window.authManager || !window.authManager.getIsLoggedIn()) {
                 UIUtils.showNotification('この機能を使用するにはログインが必要です', 'warning');
                 if (window.authManager) {
@@ -495,6 +560,7 @@ class UIManager {
                 }
                 return false;
             }
+
             return true;
         } catch (error) {
             console.error('Error checking auth for action:', error);
@@ -511,13 +577,17 @@ class UIManager {
     confirmDeleteTransaction(id) {
         if (confirm('この取引を削除しますか？')) {
             try {
-                window.dataManager.deleteTransaction(id);
-                this.renderTransactions();
-                this.renderFundSources();
-                UIUtils.showNotification('取引を削除しました', 'success');
+                const result = window.dataManager.deleteTransaction(id);
+                if (result) {
+                    this.renderTransactions();
+                    this.renderFundSources();
+                    UIUtils.showNotification('取引を削除しました', 'success');
+                } else {
+                    UIUtils.showNotification('取引の削除に失敗しました', 'error');
+                }
             } catch (error) {
                 console.error('Error deleting transaction:', error);
-                UIUtils.showNotification('削除に失敗しました', 'error');
+                UIUtils.showNotification(error.message || '削除に失敗しました', 'error');
             }
         }
     }
@@ -525,14 +595,201 @@ class UIManager {
     confirmDeleteFundSource(id) {
         if (confirm('この資金元を削除しますか？')) {
             try {
-                window.dataManager.deleteFundSource(id);
-                this.renderFundSources();
-                this.populateSelects();
-                UIUtils.showNotification('資金元を削除しました', 'success');
+                const result = window.dataManager.deleteFundSource(id);
+                if (result) {
+                    this.renderFundSources();
+                    this.populateSelects();
+                    UIUtils.showNotification('資金元を削除しました', 'success');
+                } else {
+                    UIUtils.showNotification('資金元の削除に失敗しました', 'error');
+                }
             } catch (error) {
                 console.error('Error deleting fund source:', error);
-                UIUtils.showNotification('削除に失敗しました', 'error');
+                UIUtils.showNotification(error.message || '削除に失敗しました', 'error');
             }
+        }
+    }
+
+    // Subcategory management methods
+    openSubcategoryModal(categoryId) {
+        try {
+            if (!this.checkAuthForAction('manage_subcategories')) {
+                return;
+            }
+
+            const categories = window.storage.getCategories();
+            const category = categories.find(c => c.id === categoryId);
+            const subcategories = window.dataManager.getSubcategories(categoryId);
+
+            if (!category) {
+                UIUtils.showNotification('カテゴリが見つかりません', 'error');
+                return;
+            }
+
+            this.selectedCategoryForSubcategory = categoryId;
+
+            const content = `
+                <div class="subcategory-management">
+                    <div class="category-info">
+                        <h4>${category.icon} ${UIUtils.escapeHtml(category.name)}</h4>
+                        <p>このカテゴリのサブカテゴリを管理できます。</p>
+                    </div>
+                    
+                    <div class="add-subcategory-section">
+                        <div class="form-group">
+                            <input type="text" id="new-subcategory-name" placeholder="サブカテゴリ名を入力" class="form-control" maxlength="30">
+                            <button id="add-subcategory-btn" class="btn primary">追加</button>
+                        </div>
+                    </div>
+                    
+                    <div class="subcategory-list">
+                        ${subcategories.length === 0 ?
+                    '<div class="empty-state"><p>サブカテゴリはありません</p></div>' :
+                    subcategories.map(sc => `
+                                <div class="subcategory-item" data-id="${sc.id}">
+                                    <div class="subcategory-info">
+                                        <div class="subcategory-name">${UIUtils.escapeHtml(sc.name)}</div>
+                                    </div>
+                                    <div class="subcategory-actions">
+                                        <button class="btn secondary small edit-subcategory" data-id="${sc.id}">編集</button>
+                                        <button class="btn secondary small delete-subcategory" data-id="${sc.id}" 
+                                                ${window.dataManager.canDeleteSubcategory(sc.id) ? '' : 'disabled'}>削除</button>
+                                    </div>
+                                </div>
+                            `).join('')
+                }
+                    </div>
+                </div>
+            `;
+
+            this.modalManager.showInfoModal('サブカテゴリ管理', content);
+
+            // Add event listeners
+            setTimeout(() => {
+                const addBtn = document.getElementById('add-subcategory-btn');
+                const nameInput = document.getElementById('new-subcategory-name');
+
+                if (addBtn && nameInput) {
+                    const addSubcategory = () => {
+                        const name = nameInput.value.trim();
+                        if (name) {
+                            this.addSubcategory(categoryId, name);
+                        } else {
+                            UIUtils.showNotification('サブカテゴリ名を入力してください', 'warning');
+                        }
+                    };
+
+                    addBtn.addEventListener('click', addSubcategory);
+                    nameInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            addSubcategory();
+                        }
+                    });
+                }
+
+                document.querySelectorAll('.edit-subcategory').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const subcategoryId = e.target.dataset.id;
+                        this.editSubcategory(subcategoryId);
+                    });
+                });
+
+                document.querySelectorAll('.delete-subcategory').forEach(btn => {
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', (e) => {
+                            const subcategoryId = e.target.dataset.id;
+                            this.deleteSubcategory(subcategoryId);
+                        });
+                    }
+                });
+            }, 100);
+
+        } catch (error) {
+            console.error('Error opening subcategory modal:', error);
+            UIUtils.showNotification('サブカテゴリモーダルを開けませんでした', 'error');
+        }
+    }
+
+    addSubcategory(categoryId, name) {
+        try {
+            window.dataManager.addSubcategory({
+                name: name,
+                categoryId: categoryId
+            });
+
+            UIUtils.showNotification('サブカテゴリを追加しました', 'success');
+
+            // Refresh the modal and update selects
+            this.modalManager.closeModal('info-modal');
+            setTimeout(() => {
+                this.openSubcategoryModal(categoryId);
+                this.populateSelects();
+            }, 100);
+
+        } catch (error) {
+            console.error('Error adding subcategory:', error);
+            UIUtils.showNotification('サブカテゴリの追加に失敗しました: ' + error.message, 'error');
+        }
+    }
+
+    editSubcategory(subcategoryId) {
+        try {
+            const subcategories = window.storage.getSubcategories();
+            const subcategory = subcategories.find(sc => sc.id === subcategoryId);
+
+            if (!subcategory) {
+                UIUtils.showNotification('サブカテゴリが見つかりません', 'error');
+                return;
+            }
+
+            const newName = prompt('新しいサブカテゴリ名を入力してください:', subcategory.name);
+
+            if (newName && newName.trim() !== subcategory.name) {
+                window.dataManager.updateSubcategory(subcategoryId, {
+                    name: newName.trim()
+                });
+
+                UIUtils.showNotification('サブカテゴリを更新しました', 'success');
+
+                // Refresh the modal and update selects
+                this.modalManager.closeModal('info-modal');
+                setTimeout(() => {
+                    this.openSubcategoryModal(subcategory.categoryId);
+                    this.populateSelects();
+                }, 100);
+            }
+
+        } catch (error) {
+            console.error('Error editing subcategory:', error);
+            UIUtils.showNotification('サブカテゴリの編集に失敗しました: ' + error.message, 'error');
+        }
+    }
+
+    deleteSubcategory(subcategoryId) {
+        try {
+            const subcategories = window.storage.getSubcategories();
+            const subcategory = subcategories.find(sc => sc.id === subcategoryId);
+
+            if (!subcategory) {
+                UIUtils.showNotification('サブカテゴリが見つかりません', 'error');
+                return;
+            }
+
+            if (confirm(`「${subcategory.name}」を削除しますか？`)) {
+                window.dataManager.deleteSubcategory(subcategoryId);
+                UIUtils.showNotification('サブカテゴリを削除しました', 'success');
+
+                // Refresh the modal and update selects
+                this.modalManager.closeModal('info-modal');
+                setTimeout(() => {
+                    this.openSubcategoryModal(subcategory.categoryId);
+                    this.populateSelects();
+                }, 100);
+            }
+
+        } catch (error) {
+            console.error('Error deleting subcategory:', error);
+            UIUtils.showNotification('サブカテゴリの削除に失敗しました: ' + error.message, 'error');
         }
     }
 }

@@ -1,21 +1,27 @@
 // Modal Management System
 class ModalManager {
     constructor() {
+        console.log('ModalManager constructor called');
         this.currentModalEscapeHandler = null;
         this.activeModals = new Set();
+        console.log('ModalManager constructor completed');
     }
 
     showModal(modalId) {
+        console.log('ModalManager.showModal called with:', modalId);
         const modal = document.getElementById(modalId);
+        console.log('Modal element:', modal);
         if (!modal) {
             console.error(`Modal with ID '${modalId}' not found`);
             return;
         }
 
+        console.log('Setting modal styles and classes');
         modal.style.display = 'flex';
-        modal.classList.add('show');
+        modal.classList.add('active');
         document.body.classList.add('modal-open');
         this.activeModals.add(modalId);
+        console.log('Modal should be visible now');
 
         // Set up escape key handler
         this.currentModalEscapeHandler = (e) => {
@@ -36,7 +42,7 @@ class ModalManager {
         const modal = document.getElementById(modalId);
         if (!modal) return;
 
-        modal.classList.remove('show');
+        modal.classList.remove('active');
         document.body.classList.remove('modal-open');
         this.activeModals.delete(modalId);
 

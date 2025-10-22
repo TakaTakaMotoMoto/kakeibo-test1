@@ -28,22 +28,7 @@ class DataManager {
             throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
         }
 
-        // Use transaction-like operation for data consistency
-        if (window.dataIntegrityManager) {
-            try {
-                const result = window.dataIntegrityManager.executeTransaction([{
-                    type: 'transaction',
-                    action: 'create',
-                    data: transactionData
-                }]);
-                return result.results[0];
-            } catch (error) {
-                console.error('Transaction creation failed:', error);
-                throw error;
-            }
-        }
-
-        // Fallback to direct storage operation
+        // Direct storage operation
         const transaction = this.storage.addTransaction(transactionData);
         return transaction;
     }
@@ -61,23 +46,7 @@ class DataManager {
             throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
         }
 
-        // Use transaction-like operation for data consistency
-        if (window.dataIntegrityManager) {
-            try {
-                const result = window.dataIntegrityManager.executeTransaction([{
-                    type: 'transaction',
-                    action: 'update',
-                    id: id,
-                    data: updates
-                }]);
-                return result.results[0];
-            } catch (error) {
-                console.error('Transaction update failed:', error);
-                throw error;
-            }
-        }
-
-        // Fallback to direct storage operation
+        // Direct storage operation
         return this.storage.updateTransaction(id, updates);
     }
 
@@ -87,22 +56,7 @@ class DataManager {
             throw new Error('Transaction not found');
         }
 
-        // Use transaction-like operation for data consistency
-        if (window.dataIntegrityManager) {
-            try {
-                const result = window.dataIntegrityManager.executeTransaction([{
-                    type: 'transaction',
-                    action: 'delete',
-                    id: id
-                }]);
-                return result.results[0];
-            } catch (error) {
-                console.error('Transaction deletion failed:', error);
-                throw error;
-            }
-        }
-
-        // Fallback to direct storage operation
+        // Direct storage operation
         return this.storage.deleteTransaction(id);
     }
 
@@ -113,22 +67,7 @@ class DataManager {
             throw new Error('この資金元は取引で使用されているため削除できません');
         }
 
-        // Use transaction-like operation for data consistency
-        if (window.dataIntegrityManager) {
-            try {
-                const result = window.dataIntegrityManager.executeTransaction([{
-                    type: 'fundSource',
-                    action: 'delete',
-                    id: id
-                }]);
-                return result.results[0];
-            } catch (error) {
-                console.error('Fund source deletion failed:', error);
-                throw error;
-            }
-        }
-
-        // Fallback to direct storage operation
+        // Direct storage operation
         return this.storage.deleteFundSource(id);
     }
 
