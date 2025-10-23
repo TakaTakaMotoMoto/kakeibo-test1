@@ -5,14 +5,14 @@ class SharingUIManager {
         this.sharingManager = sharingManager;
         this.invitationManager = invitationManager;
         this.permissionManager = permissionManager;
-        
+
         this.currentFundSourceId = null;
         this.currentInvitationToken = null;
-        
+
         // Enhanced UI responsiveness (Task 12.2)
         this.uiEnhancer = window.UIResponsivenessEnhancer ? new UIResponsivenessEnhancer() : null;
         this.loadingStates = new Map();
-        
+
         this.initializeEventListeners();
         this.initializeEnhancedUI();
     }
@@ -23,10 +23,10 @@ class SharingUIManager {
 
         // Create optimistic UI updater for sharing operations
         this.optimisticUpdater = this.uiEnhancer.optimisticUI;
-        
+
         // Set up performance monitoring for sharing UI
         this.performanceTracker = new PerformanceTracker();
-        
+
         // Initialize async operation helpers
         this.asyncHelper = this.uiEnhancer.asyncOptimizer;
     }
@@ -68,7 +68,7 @@ class SharingUIManager {
 
             // Get owned fund sources
             const fundSources = window.storage.getFundSources();
-            const ownedFundSources = fundSources.filter(fs => 
+            const ownedFundSources = fundSources.filter(fs =>
                 !fs.ownerId || fs.ownerId === currentUser.id
             );
 
@@ -100,12 +100,12 @@ class SharingUIManager {
                 
                 <div class="fund-sources-list">
                     ${fundSources.map(fs => {
-                        const sharingStatus = this.sharingManager.getFundSourceSharingStatus(fs.id);
-                        const sharedUsers = sharingStatus ? sharingStatus.sharedWith : [];
-                        const pendingInvitations = this.invitationManager.getInvitationsByFundSource(fs.id)
-                            .filter(inv => inv.status === 'pending');
-                        
-                        return `
+            const sharingStatus = this.sharingManager.getFundSourceSharingStatus(fs.id);
+            const sharedUsers = sharingStatus ? sharingStatus.sharedWith : [];
+            const pendingInvitations = this.invitationManager.getInvitationsByFundSource(fs.id)
+                .filter(inv => inv.status === 'pending');
+
+            return `
                             <div class="fund-source-item" data-fund-source-id="${fs.id}">
                                 <div class="fund-source-header">
                                     <div class="fund-source-info">
@@ -113,13 +113,13 @@ class SharingUIManager {
                                             ${UIUtils.getFundSourceIcon(fs.type)} ${UIUtils.escapeHtml(fs.name)}
                                         </div>
                                         <div class="fund-source-status">
-                                            ${sharingStatus && sharingStatus.isShared ? 
-                                                `<span class="sharing-badge shared">共有中 (${sharedUsers.length}人)</span>` :
-                                                '<span class="sharing-badge not-shared">未共有</span>'
-                                            }
-                                            ${pendingInvitations.length > 0 ? 
-                                                `<span class="invitation-badge">${pendingInvitations.length}件の招待中</span>` : ''
-                                            }
+                                            ${sharingStatus && sharingStatus.isShared ?
+                    `<span class="sharing-badge shared">共有中 (${sharedUsers.length}人)</span>` :
+                    '<span class="sharing-badge not-shared">未共有</span>'
+                }
+                                            ${pendingInvitations.length > 0 ?
+                    `<span class="invitation-badge">${pendingInvitations.length}件の招待中</span>` : ''
+                }
                                         </div>
                                     </div>
                                     <div class="fund-source-actions">
@@ -146,7 +146,7 @@ class SharingUIManager {
                                 ` : ''}
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -164,10 +164,10 @@ class SharingUIManager {
     openFundSourceSharingModal(fundSourceId) {
         try {
             this.currentFundSourceId = fundSourceId;
-            
+
             const fundSources = window.storage.getFundSources();
             const fundSource = fundSources.find(fs => fs.id === fundSourceId);
-            
+
             if (!fundSource) {
                 UIUtils.showNotification('資金元が見つかりません', 'error');
                 return;
@@ -377,7 +377,7 @@ class SharingUIManager {
             );
 
             UIUtils.showNotification(`${email} に招待を送信しました`, 'success');
-            
+
             // Clear form
             emailInput.value = '';
             document.getElementById('perm-edit').checked = true;
@@ -398,7 +398,7 @@ class SharingUIManager {
         try {
             const sharedUsers = this.sharingManager.getSharedUsers(this.currentFundSourceId);
             const user = sharedUsers.find(u => u.userId === userId);
-            
+
             if (!user) {
                 UIUtils.showNotification('ユーザーが見つかりません', 'error');
                 return;
@@ -482,7 +482,7 @@ class SharingUIManager {
         try {
             const sharedUsers = this.sharingManager.getSharedUsers(this.currentFundSourceId);
             const user = sharedUsers.find(u => u.userId === userId);
-            
+
             if (!user) {
                 UIUtils.showNotification('ユーザーが見つかりません', 'error');
                 return;
@@ -544,7 +544,7 @@ class SharingUIManager {
         try {
             const fundSources = window.storage.getFundSources();
             const fundSource = fundSources.find(fs => fs.id === this.currentFundSourceId);
-            
+
             if (!fundSource) {
                 UIUtils.showNotification('資金元が見つかりません', 'error');
                 return;
@@ -553,10 +553,10 @@ class SharingUIManager {
             if (confirm(`${fundSource.name} の共有を完全に停止しますか？\n\n・すべての共有ユーザーのアクセスが削除されます\n・未処理の招待がすべて取り消されます`)) {
                 // Cancel all pending invitations
                 this.sharingManager.cancelAllInvitations(this.currentFundSourceId);
-                
+
                 // Remove all shared users
                 this.sharingManager.unshareFundSource(this.currentFundSourceId);
-                
+
                 UIUtils.showNotification('共有を停止しました', 'success');
 
                 // Close modal and refresh sharing management
@@ -591,7 +591,7 @@ class SharingUIManager {
 
             // Get shared fund sources (where current user is a shared user)
             const sharedFundSources = this.sharingManager.getSharedFundSources();
-            
+
             // Get received invitations
             const receivedInvitations = this.sharingManager.getReceivedInvitations('pending');
 
@@ -618,8 +618,8 @@ class SharingUIManager {
                         <h5>受信した招待 (${receivedInvitations.length}件)</h5>
                         <div class="received-invitations-list">
                             ${receivedInvitations.map(invitation => {
-                                const details = this.sharingManager.getInvitationDetails(invitation.token);
-                                return `
+            const details = this.sharingManager.getInvitationDetails(invitation.token);
+            return `
                                     <div class="received-invitation-item" data-invitation-token="${invitation.token}">
                                         <div class="invitation-info">
                                             <div class="invitation-from">
@@ -645,7 +645,7 @@ class SharingUIManager {
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -656,12 +656,12 @@ class SharingUIManager {
                         <h5>共有中の資金元 (${sharedFundSources.length}件)</h5>
                         <div class="shared-fund-sources-list">
                             ${sharedFundSources.map(fs => {
-                                const currentUser = window.authManager.getCurrentUser();
-                                const userInfo = fs.sharedWith.find(user => user.userId === currentUser.id);
-                                const owner = fs.sharedWith.find(user => user.userId === fs.ownerId) || 
-                                             { username: '所有者', email: '' };
-                                
-                                return `
+            const currentUser = window.authManager.getCurrentUser();
+            const userInfo = fs.sharedWith.find(user => user.userId === currentUser.id);
+            const owner = fs.sharedWith.find(user => user.userId === fs.ownerId) ||
+                { username: '所有者', email: '' };
+
+            return `
                                     <div class="shared-fund-source-item" data-fund-source-id="${fs.id}">
                                         <div class="fund-source-info">
                                             <div class="fund-source-name">
@@ -689,7 +689,7 @@ class SharingUIManager {
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -774,7 +774,7 @@ class SharingUIManager {
         try {
             const fundSources = window.storage.getFundSources();
             const fundSource = fundSources.find(fs => fs.id === fundSourceId);
-            
+
             if (!fundSource) {
                 UIUtils.showNotification('資金元が見つかりません', 'error');
                 return;
@@ -800,12 +800,8 @@ class SharingUIManager {
             UIUtils.showNotification(error.message || '共有の退出に失敗しました', 'error');
         }
     }
-}
 
-// Export for use in other modules
-window.SharingUIManager = SharingUIManager;
-    // 
-6.2 招待受諾UIの実装
+    // 6.2 招待受諾UIの実装
     openInvitationAcceptanceModal(invitationToken = null) {
         try {
             const content = this.generateInvitationAcceptanceContent(invitationToken);
@@ -1067,15 +1063,15 @@ window.SharingUIManager = SharingUIManager;
 
             if (confirm(confirmMessage)) {
                 const result = this.sharingManager.acceptInvitation(this.currentInvitationToken);
-                
+
                 UIUtils.showNotification(
-                    `${result.fundSource.name} の共有に参加しました！`, 
+                    `${result.fundSource.name} の共有に参加しました！`,
                     'success'
                 );
 
                 // Close modal and refresh UI
                 this.uiManager.modalManager.closeModal('info-modal');
-                
+
                 // Refresh fund sources display
                 setTimeout(() => {
                     if (this.uiManager.renderFundSources) {
@@ -1110,7 +1106,7 @@ window.SharingUIManager = SharingUIManager;
 
             if (confirm('この招待を拒否しますか？\n\n拒否した招待は元に戻せません。')) {
                 this.sharingManager.declineInvitation(this.currentInvitationToken);
-                
+
                 UIUtils.showNotification('招待を拒否しました', 'success');
 
                 // Close modal
@@ -1158,7 +1154,7 @@ window.SharingUIManager = SharingUIManager;
             const pendingToken = sessionStorage.getItem('pendingInvitationToken');
             if (pendingToken) {
                 sessionStorage.removeItem('pendingInvitationToken');
-                
+
                 // Small delay to ensure UI is ready
                 setTimeout(() => {
                     this.processInvitationToken(pendingToken);
@@ -1214,19 +1210,19 @@ window.SharingUIManager = SharingUIManager;
         }
 
         const startTime = performance.now();
-        
+
         try {
             const result = await this.sharingManager.shareFundSourceEnhanced(fundSourceId, userEmails, permissions);
-            
+
             // Track performance
             const duration = performance.now() - startTime;
             this.performanceTracker.recordOperation('shareFundSource', duration);
-            
+
             // Update UI with enhanced responsiveness
             this.updateSharingUIWithAnimation();
-            
+
             return result;
-            
+
         } catch (error) {
             console.error('Enhanced share fund source failed:', error);
             throw error;
@@ -1240,18 +1236,18 @@ window.SharingUIManager = SharingUIManager;
         }
 
         const startTime = performance.now();
-        
+
         try {
             const result = await this.sharingManager.sendInvitationEnhanced(fundSourceId, userEmail, permissions);
-            
+
             const duration = performance.now() - startTime;
             this.performanceTracker.recordOperation('sendInvitation', duration);
-            
+
             // Show success animation
             this.showInvitationSentAnimation(userEmail);
-            
+
             return result;
-            
+
         } catch (error) {
             console.error('Enhanced send invitation failed:', error);
             throw error;
@@ -1265,18 +1261,18 @@ window.SharingUIManager = SharingUIManager;
         }
 
         const startTime = performance.now();
-        
+
         try {
             const result = await this.sharingManager.acceptInvitationEnhanced(invitationToken);
-            
+
             const duration = performance.now() - startTime;
             this.performanceTracker.recordOperation('acceptInvitation', duration);
-            
+
             // Update UI with smooth transitions
             this.updateFundSourcesWithTransition();
-            
+
             return result;
-            
+
         } catch (error) {
             console.error('Enhanced accept invitation failed:', error);
             throw error;
@@ -1306,7 +1302,7 @@ window.SharingUIManager = SharingUIManager;
                 if (this.uiManager.renderFundSources) {
                     this.uiManager.renderFundSources();
                 }
-                
+
                 // Add fade-in animation to new elements
                 setTimeout(() => {
                     const newItems = document.querySelectorAll('.fund-source-item');
@@ -1357,14 +1353,14 @@ window.SharingUIManager = SharingUIManager;
             <div class="success-icon">✓</div>
             <div class="success-message">招待を送信しました<br>${userEmail}</div>
         `;
-        
+
         document.body.appendChild(indicator);
-        
+
         // Animate in
         requestAnimationFrame(() => {
             indicator.classList.add('visible');
         });
-        
+
         // Remove after delay
         setTimeout(() => {
             indicator.classList.add('removing');
@@ -1383,7 +1379,7 @@ window.SharingUIManager = SharingUIManager;
         }
 
         const loadingId = 'sharing-modal-load';
-        
+
         // Show loading indicator
         this.uiEnhancer.progressSystem.create(loadingId, {
             type: 'spinner',
@@ -1443,7 +1439,7 @@ window.SharingUIManager = SharingUIManager;
 
             element.classList.add('processing');
             element.disabled = true;
-            
+
             if (element.tagName === 'BUTTON') {
                 element.textContent = message;
             }
@@ -1461,7 +1457,7 @@ window.SharingUIManager = SharingUIManager;
     // Enhanced error handling with better UX
     handleSharingError(error, operation = 'operation') {
         console.error(`Sharing ${operation} error:`, error);
-        
+
         if (this.uiEnhancer) {
             // Show error with retry option for certain errors
             if (error.message.includes('ネットワーク') || error.message.includes('タイムアウト')) {
@@ -1472,7 +1468,7 @@ window.SharingUIManager = SharingUIManager;
                 }
             }
         }
-        
+
         UIUtils.showNotification(error.message || `${operation}でエラーが発生しました`, 'error');
         return false;
     }
@@ -1494,14 +1490,45 @@ window.SharingUIManager = SharingUIManager;
         return baseMetrics;
     }
 
+    // Update auth-dependent UI elements
+    updateAuthDependentUI() {
+        try {
+            const isLoggedIn = window.authManager && window.authManager.getIsLoggedIn();
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+
+            // Update sharing section visibility and state
+            const sharingSection = document.getElementById('sharing-section');
+            if (sharingSection) {
+                if (isLoggedIn && currentUser) {
+                    sharingSection.style.display = 'block';
+
+                    // Ensure invitation acceptance button is present
+                    this.addInvitationAcceptanceButton();
+                } else {
+                    sharingSection.style.display = 'none';
+                }
+            }
+
+            // Check for pending invitation tokens if user just logged in
+            if (isLoggedIn && currentUser) {
+                setTimeout(() => {
+                    this.checkPendingInvitationToken();
+                }, 500);
+            }
+
+        } catch (error) {
+            console.error('Error updating sharing auth-dependent UI:', error);
+        }
+    }
+
     // Cleanup enhanced UI resources
     cleanupEnhancedUI() {
         if (this.uiEnhancer) {
             this.uiEnhancer.cleanup();
         }
-        
+
         this.loadingStates.clear();
-        
+
         // Remove any temporary UI elements
         const tempElements = document.querySelectorAll('.invitation-sent-indicator, .optimistic-update');
         tempElements.forEach(element => {
@@ -1511,3 +1538,28 @@ window.SharingUIManager = SharingUIManager;
         });
     }
 }
+
+// Export for use in other modules
+window.SharingUIManager = SharingUIManager;
+
+// Debug function to check initialization status
+window.checkSharingUIStatus = function () {
+    console.log('Sharing UI Status:', {
+        SharingUIManager: !!window.SharingUIManager,
+        sharingUIManager: !!window.sharingUIManager,
+        uiManager: !!window.uiManager,
+        sharingManager: !!window.sharingManager,
+        invitationManager: !!window.invitationManager,
+        permissionManager: !!window.permissionManager,
+        authManager: !!window.authManager,
+        isLoggedIn: window.authManager ? window.authManager.getIsLoggedIn() : false
+    });
+
+    if (window.sharingUIManager) {
+        console.log('SharingUIManager methods:', {
+            openSharingManagementModal: typeof window.sharingUIManager.openSharingManagementModal,
+            openSharedUsersModal: typeof window.sharingUIManager.openSharedUsersModal,
+            updateAuthDependentUI: typeof window.sharingUIManager.updateAuthDependentUI
+        });
+    }
+};

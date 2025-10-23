@@ -1062,10 +1062,38 @@ class UIManager {
                 return;
             }
 
-            if (window.uiSharing && typeof window.uiSharing.openSharingManagementModal === 'function') {
-                window.uiSharing.openSharingManagementModal();
+            // Try to initialize sharing UI if not available
+            if (!window.sharingUIManager && window.initializeSharingUI) {
+                console.log('Attempting to initialize sharing UI...');
+                window.initializeSharingUI();
+                
+                // Wait a moment and try again
+                setTimeout(() => {
+                    if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
+                        window.sharingUIManager.openSharingManagementModal();
+                    } else {
+                        UIUtils.showNotification('共有管理機能の初期化に失敗しました。ページを再読み込みしてください。', 'error');
+                    }
+                }, 500);
+                return;
+            }
+
+            if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
+                window.sharingUIManager.openSharingManagementModal();
             } else {
-                UIUtils.showNotification('共有管理機能が利用できません', 'error');
+                // Call debug function if available
+                if (window.checkSharingUIStatus) {
+                    window.checkSharingUIStatus();
+                }
+                
+                console.log('Sharing UI Manager status:', {
+                    exists: !!window.sharingUIManager,
+                    hasMethod: window.sharingUIManager ? typeof window.sharingUIManager.openSharingManagementModal : 'N/A',
+                    sharingManager: !!window.sharingManager,
+                    invitationManager: !!window.invitationManager,
+                    permissionManager: !!window.permissionManager
+                });
+                UIUtils.showNotification('共有管理機能が利用できません。コンソールを確認してください。', 'error');
             }
         } catch (error) {
             console.error('Error opening sharing management modal:', error);
@@ -1080,10 +1108,38 @@ class UIManager {
                 return;
             }
 
-            if (window.uiSharing && typeof window.uiSharing.openSharedUsersModal === 'function') {
-                window.uiSharing.openSharedUsersModal();
+            // Try to initialize sharing UI if not available
+            if (!window.sharingUIManager && window.initializeSharingUI) {
+                console.log('Attempting to initialize sharing UI...');
+                window.initializeSharingUI();
+                
+                // Wait a moment and try again
+                setTimeout(() => {
+                    if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
+                        window.sharingUIManager.openSharedUsersModal();
+                    } else {
+                        UIUtils.showNotification('共有ユーザー管理機能の初期化に失敗しました。ページを再読み込みしてください。', 'error');
+                    }
+                }, 500);
+                return;
+            }
+
+            if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
+                window.sharingUIManager.openSharedUsersModal();
             } else {
-                UIUtils.showNotification('共有ユーザー管理機能が利用できません', 'error');
+                // Call debug function if available
+                if (window.checkSharingUIStatus) {
+                    window.checkSharingUIStatus();
+                }
+                
+                console.log('Sharing UI Manager status:', {
+                    exists: !!window.sharingUIManager,
+                    hasMethod: window.sharingUIManager ? typeof window.sharingUIManager.openSharedUsersModal : 'N/A',
+                    sharingManager: !!window.sharingManager,
+                    invitationManager: !!window.invitationManager,
+                    permissionManager: !!window.permissionManager
+                });
+                UIUtils.showNotification('共有ユーザー管理機能が利用できません。コンソールを確認してください。', 'error');
             }
         } catch (error) {
             console.error('Error opening shared users modal:', error);
@@ -1271,8 +1327,8 @@ class UIManager {
             this.updatePageTitleWithAuthState();
 
             // Update sharing-related UI elements
-            if (window.uiSharing && typeof window.uiSharing.updateAuthDependentUI === 'function') {
-                window.uiSharing.updateAuthDependentUI();
+            if (window.sharingUIManager && typeof window.sharingUIManager.updateAuthDependentUI === 'function') {
+                window.sharingUIManager.updateAuthDependentUI();
             }
 
             // Update fund sources display to show sharing indicators

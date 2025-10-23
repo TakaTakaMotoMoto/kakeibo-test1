@@ -401,8 +401,17 @@ function initializeSharingUI() {
     try {
         console.log('Initializing sharing UI...');
         
+        // Check if SharingUIManager class is available
+        if (!window.SharingUIManager) {
+            console.log('SharingUIManager class not available, retrying...');
+            setTimeout(initializeSharingUI, 200);
+            return;
+        }
+        
         // Wait for UI manager to be available
         if (window.uiManager && window.sharingManager && window.invitationManager && window.permissionManager) {
+            console.log('Creating SharingUIManager instance...');
+            
             window.sharingUIManager = new SharingUIManager(
                 window.uiManager,
                 window.sharingManager,
@@ -410,12 +419,23 @@ function initializeSharingUI() {
                 window.permissionManager
             );
             
+            // Verify the instance was created correctly
+            console.log('SharingUIManager created:', {
+                instance: !!window.sharingUIManager,
+                hasOpenSharingManagementModal: typeof window.sharingUIManager.openSharingManagementModal,
+                hasOpenSharedUsersModal: typeof window.sharingUIManager.openSharedUsersModal
+            });
+            
             // Add invitation acceptance button to settings
-            window.sharingUIManager.addInvitationAcceptanceButton();
+            if (typeof window.sharingUIManager.addInvitationAcceptanceButton === 'function') {
+                window.sharingUIManager.addInvitationAcceptanceButton();
+            }
             
             // Check for pending invitation tokens after login
             if (window.authManager && window.authManager.getIsLoggedIn()) {
-                window.sharingUIManager.checkPendingInvitationToken();
+                if (typeof window.sharingUIManager.checkPendingInvitationToken === 'function') {
+                    window.sharingUIManager.checkPendingInvitationToken();
+                }
             }
             
             console.log('Sharing UI initialized successfully');
@@ -427,12 +447,20 @@ function initializeSharingUI() {
                 }));
             }
         } else {
+            console.log('Dependencies not ready:', {
+                uiManager: !!window.uiManager,
+                sharingManager: !!window.sharingManager,
+                invitationManager: !!window.invitationManager,
+                permissionManager: !!window.permissionManager
+            });
             // Retry after a short delay
             setTimeout(initializeSharingUI, 500);
         }
         
     } catch (error) {
         console.error('Error initializing sharing UI:', error);
+        // Retry on error
+        setTimeout(initializeSharingUI, 1000);
     }
 }
 
@@ -450,3 +478,21 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initializeSharingUI, 1000);
 }
+
+// Additional initialization attempts for robustness
+setTimeout(() => {
+    if (!window.sharingUIManager) {
+        console.log('Sharing UI not initialized yet, attempting additional initialization...');
+        initializeSharingUI();
+    }
+}, 2000);
+
+setTimeout(() => {
+    if (!window.sharingUIManager) {
+        console.log('Final attempt to initialize sharing UI...');
+        initializeSharingUI();
+    }
+}, 5000);
+
+// Export initialization function for manual triggering
+window.initializeSharingUI = initializeSharingUI;
