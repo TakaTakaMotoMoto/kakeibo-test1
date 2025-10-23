@@ -355,7 +355,7 @@ class SharingUIManager {
         }
     }
 
-    handleSendInvitation() {
+    async handleSendInvitation() {
         try {
             const emailInput = document.getElementById('invite-email');
             const email = emailInput.value.trim();
@@ -377,12 +377,27 @@ class SharingUIManager {
                 canDelete: document.getElementById('perm-delete').checked
             };
 
+            console.log('Sending invitation...', { 
+                fundSourceId: this.currentFundSourceId, 
+                email, 
+                permissions 
+            });
+
+            // Check if invitationTokenDisplay is available
+            if (!this.invitationTokenDisplay) {
+                console.error('InvitationTokenDisplayManager not initialized');
+                UIUtils.showNotification('招待システムが初期化されていません', 'error');
+                return;
+            }
+
             // Generate and display invitation token
-            const invitation = this.invitationTokenDisplay.generateAndDisplayInvitation(
+            const invitation = await this.invitationTokenDisplay.generateAndDisplayInvitation(
                 this.currentFundSourceId,
                 email,
                 permissions
             );
+
+            console.log('Invitation generated:', invitation);
 
             // Clear form
             emailInput.value = '';

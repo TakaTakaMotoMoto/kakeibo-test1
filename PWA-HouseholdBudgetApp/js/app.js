@@ -45,10 +45,32 @@ class BudgetApp {
         // Initialize keyboard shortcuts
         this.initializeKeyboardShortcuts();
         
+        // Initialize sharing system
+        this.initializeSharingSystem();
+        
         // Initialize authentication UI
         this.initializeAuth();
         
         console.log('Budget App initialized successfully');
+    }
+
+    initializeSharingSystem() {
+        try {
+            console.log('Initializing sharing system...');
+            
+            // Initialize sharing system if available
+            if (window.SharingSystem) {
+                const sharingSystem = new SharingSystem();
+                sharingSystem.initialize();
+                console.log('Sharing system initialized successfully');
+            } else {
+                console.warn('SharingSystem class not available');
+            }
+            
+        } catch (error) {
+            console.error('Error initializing sharing system:', error);
+            this.showNotification('共有システムの初期化でエラーが発生しました', 'warning');
+        }
     }
 
     initializeAuth() {

@@ -24,10 +24,45 @@ class UIManager {
         this.initialize();
     }
 
+    // Wait for essential dependencies to be available
+    async waitForDependencies() {
+        const maxWaitTime = 5000; // 5 seconds
+        const checkInterval = 100; // 100ms
+        let waitTime = 0;
+
+        return new Promise((resolve, reject) => {
+            const checkDependencies = () => {
+                if (window.storage && window.dataManager &&
+                    typeof window.storage.getCategories === 'function' &&
+                    typeof window.dataManager.getSubcategories === 'function') {
+                    console.log('UI dependencies are ready');
+                    resolve();
+                    return;
+                }
+
+                waitTime += checkInterval;
+                if (waitTime >= maxWaitTime) {
+                    console.warn('UI dependencies not ready after timeout, proceeding anyway');
+                    resolve(); // Don't reject, just proceed
+                    return;
+                }
+
+                setTimeout(checkDependencies, checkInterval);
+            };
+
+            checkDependencies();
+        });
+    }
+
     initialize() {
         try {
-            this.initializeEventListeners();
-            this.initializeAuthStateListener();
+            // Wait for essential objects to be available
+            this.waitForDependencies().then(() => {
+                this.initializeEventListeners();
+                this.initializeAuthStateListener();
+            }).catch(error => {
+                console.error('Failed to initialize UI dependencies:', error);
+            });
             this.formValidator.initializeFormValidation();
             this.loadInitialData();
             console.log('UI Manager initialized successfully');
@@ -150,6 +185,14 @@ class UIManager {
             });
         }
 
+        // Transaction type change handler for category filtering
+        const typeRadios = document.querySelectorAll('input[name="type"]');
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.updateCategoryOptions(e.target.value);
+            });
+        });
+
         // Category change handler for subcategory updates
         const categorySelect = document.getElementById('category');
         if (categorySelect) {
@@ -186,14 +229,14 @@ class UIManager {
         window.addEventListener('authStateChange', (event) => {
             try {
                 console.log('UI Manager received auth state change:', event.detail);
-                
+
                 // Update auth-dependent UI elements
                 setTimeout(() => {
                     this.updateAuthDependentUI();
-                    
+
                     // Refresh data display
                     this.loadInitialData();
-                    
+
                     // Show appropriate notification
                     if (event.detail.type === 'login') {
                         UIUtils.showNotification(`${event.detail.user.username}さん、おかえりなさい！`, 'success');
@@ -201,7 +244,7 @@ class UIManager {
                         UIUtils.showNotification('ログアウトしました', 'info');
                     }
                 }, 100);
-                
+
             } catch (error) {
                 console.error('Error handling auth state change in UI Manager:', error);
                 UIUtils.showNotification('認証状態の更新でエラーが発生しました', 'warning');
@@ -216,7 +259,7 @@ class UIManager {
             if (filtersLoaded) {
                 this.updateFilterButtonState();
             }
-            
+
             this.renderer.renderTransactions();
             this.renderer.renderFundSources();
             this.renderer.populateSelects();
@@ -380,9 +423,16 @@ class UIManager {
             }
 
             this.modalManager.closeModal('transaction-modal');
-            
-            // UI updates are now handled automatically by the update system
-            // No need to manually call render methods
+
+            // Force immediate UI update
+            if (window.uiUpdateManager) {
+                window.uiUpdateManager.immediateUpdate('transactions');
+                window.uiUpdateManager.immediateUpdate('fundSources');
+            } else {
+                // Fallback: manual UI update
+                this.renderer.renderTransactions();
+                this.renderer.renderFundSources();
+            }
 
             if (this.currentTransactionView === 'calendar' && window.calendarManager) {
                 window.calendarManager.renderCalendar();
@@ -473,7 +523,7 @@ class UIManager {
             }
 
             this.modalManager.closeModal('fundsource-modal');
-            
+
             // UI updates are now handled automatically by the update system
             // No need to manually call render methods
         } catch (error) {
@@ -514,15 +564,25 @@ class UIManager {
                     title.textContent = '取引を編集';
 
                     // Populate form with transaction data
+                    const transactionType = transaction.amount < 0 ? 'expense' : 'income';
                     document.getElementById('amount').value = Math.abs(transaction.amount);
-                    document.querySelector(`input[name="type"][value="${transaction.amount < 0 ? 'expense' : 'income'}"]`).checked = true;
-                    document.getElementById('category').value = transaction.categoryId;
-                    document.getElementById('subcategory').value = transaction.subcategoryId || '';
+                    document.querySelector(`input[name="type"][value="${transactionType}"]`).checked = true;
+
                     document.getElementById('fundSource').value = transaction.fundSourceId;
                     document.getElementById('date').value = transaction.date.toISOString().split('T')[0];
                     document.getElementById('note').value = transaction.note || '';
-                    // Update subcategory options
-                    this.updateSubcategoryOptions(transaction.categoryId);
+
+                    // Update category options and selections with delay to ensure initialization
+                    setTimeout(() => {
+                        this.updateCategoryOptions(transactionType);
+
+                        // Set category and subcategory after options are updated
+                        setTimeout(() => {
+                            document.getElementById('category').value = transaction.categoryId;
+                            document.getElementById('subcategory').value = transaction.subcategoryId || '';
+                            this.updateSubcategoryOptions(transaction.categoryId);
+                        }, 50);
+                    }, 100);
                 }
             } else {
                 title.textContent = '取引を追加';
@@ -531,9 +591,17 @@ class UIManager {
                 // Set default date to today
                 document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
-                // Clear subcategory options
-                console.log('ここはOK');
-                this.updateSubcategoryOptions('');
+                // Set default transaction type to expense
+                const expenseRadio = document.querySelector('input[name="type"][value="expense"]');
+                if (expenseRadio) {
+                    expenseRadio.checked = true;
+                }
+
+                // Update category options based on default type (with delay to ensure initialization)
+                setTimeout(() => {
+                    this.updateCategoryOptions('expense');
+                    this.updateSubcategoryOptions('');
+                }, 100);
             }
 
             console.log('About to call showModal');
@@ -635,6 +703,41 @@ class UIManager {
     }
 
     // Helper methods
+    updateCategoryOptions(transactionType) {
+        const categorySelect = document.getElementById('category');
+        if (!categorySelect) return;
+
+        try {
+            // Check if storage is available
+            if (!window.storage || typeof window.storage.getCategories !== 'function') {
+                console.warn('Storage not available for category update');
+                categorySelect.innerHTML = '<option value="">ストレージが利用できません</option>';
+                return;
+            }
+
+            const categories = window.storage.getCategories();
+            const filteredCategories = categories.filter(cat => {
+                // 新しいカテゴリにtypeプロパティがある場合はそれを使用
+                if (cat.type) {
+                    return cat.type === transactionType;
+                }
+                // 既存のカテゴリ（typeプロパティがない）は支出として扱う
+                return transactionType === 'expense';
+            });
+
+            categorySelect.innerHTML = '<option value="">選択してください</option>' +
+                filteredCategories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${UIUtils.escapeHtml(cat.name)}</option>`
+                ).join('');
+
+            // カテゴリが変更されたらサブカテゴリもクリア
+            this.updateSubcategoryOptions('');
+        } catch (error) {
+            console.error('Error updating category options:', error);
+            categorySelect.innerHTML = '<option value="">エラーが発生しました</option>';
+        }
+    }
+
     updateSubcategoryOptions(categoryId) {
         const subcategorySelect = document.getElementById('subcategory');
         if (!subcategorySelect) return;
@@ -646,6 +749,14 @@ class UIManager {
         }
 
         try {
+            // Check if dataManager is available
+            if (!window.dataManager || typeof window.dataManager.getSubcategories !== 'function') {
+                console.warn('DataManager not available for subcategory update');
+                subcategorySelect.innerHTML = '<option value="">データマネージャーが利用できません</option>';
+                subcategorySelect.disabled = true;
+                return;
+            }
+
             const subcategories = window.dataManager.getSubcategories(categoryId);
             subcategorySelect.innerHTML = '<option value="">選択してください（任意）</option>' +
                 subcategories.map(sc => `<option value="${sc.id}">${UIUtils.escapeHtml(sc.name)}</option>`).join('');
@@ -920,7 +1031,7 @@ class UIManager {
 
             // Get available creators
             const creators = window.dataManager.getAvailableCreators();
-            
+
             creators.forEach(creator => {
                 const option = document.createElement('option');
                 option.value = creator.id;
@@ -953,7 +1064,7 @@ class UIManager {
 
             window.dataManager.setAdvancedFilters(filters);
             this.updateFilterButtonState();
-            
+
             // Trigger immediate update for filter changes
             if (window.uiUpdateManager) {
                 window.uiUpdateManager.immediateUpdate('transactions');
@@ -988,7 +1099,7 @@ class UIManager {
             // Clear filters in data manager
             window.dataManager.clearFilters();
             this.updateFilterButtonState();
-            
+
             // Trigger immediate update for filter changes
             if (window.uiUpdateManager) {
                 window.uiUpdateManager.immediateUpdate('transactions');
@@ -1009,17 +1120,17 @@ class UIManager {
             if (!filterBtn) return;
 
             const hasActiveFilters = window.dataManager.hasActiveFilters();
-            
+
             if (hasActiveFilters) {
                 filterBtn.classList.add('filter-active');
                 filterBtn.title = 'フィルター適用中 - クリックして編集';
-                
+
                 // Add filter summary to header if not already present
                 this.showFilterSummary();
             } else {
                 filterBtn.classList.remove('filter-active');
                 filterBtn.title = 'フィルター';
-                
+
                 // Remove filter summary
                 this.hideFilterSummary();
             }
@@ -1033,7 +1144,7 @@ class UIManager {
         try {
             // Remove existing summary
             this.hideFilterSummary();
-            
+
             const filterSummary = window.dataManager.getFilterSummary();
             if (filterSummary.length === 0) return;
 
@@ -1078,10 +1189,10 @@ class UIManager {
             // Try to initialize sharing UI if not available
             if (!window.sharingUIManager) {
                 console.log('SharingUIManager not available, attempting automatic initialization...');
-                
+
                 // Show loading message
                 UIUtils.showNotification('共有管理機能を初期化中...', 'info');
-                
+
                 // Attempt multiple initialization strategies
                 this.attemptSharingInitialization(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
@@ -1103,7 +1214,7 @@ class UIManager {
                     invitationManager: !!window.invitationManager,
                     permissionManager: !!window.permissionManager
                 });
-                
+
                 // Show helpful message with alternative
                 this.showSharingUnavailableMessage('共有管理');
             }
@@ -1123,10 +1234,10 @@ class UIManager {
             // Try to initialize sharing UI if not available
             if (!window.sharingUIManager) {
                 console.log('SharingUIManager not available, attempting automatic initialization...');
-                
+
                 // Show loading message
                 UIUtils.showNotification('共有ユーザー管理機能を初期化中...', 'info');
-                
+
                 // Attempt multiple initialization strategies
                 this.attemptSharingInitialization(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
@@ -1148,7 +1259,7 @@ class UIManager {
                     invitationManager: !!window.invitationManager,
                     permissionManager: !!window.permissionManager
                 });
-                
+
                 // Show helpful message with alternative
                 this.showSharingUnavailableMessage('共有ユーザー管理');
             }
@@ -1175,7 +1286,7 @@ class UIManager {
 
             const dataStr = JSON.stringify(data, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            
+
             const link = document.createElement('a');
             link.href = URL.createObjectURL(dataBlob);
             link.download = `budget-data-${new Date().toISOString().split('T')[0]}.json`;
@@ -1198,7 +1309,7 @@ class UIManager {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
-            
+
             input.onchange = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -1207,7 +1318,7 @@ class UIManager {
                 reader.onload = (event) => {
                     try {
                         const data = JSON.parse(event.target.result);
-                        
+
                         // Validate data structure
                         if (!data.transactions || !data.fundSources) {
                             throw new Error('無効なデータ形式です');
@@ -1230,7 +1341,7 @@ class UIManager {
                 };
                 reader.readAsText(file);
             };
-            
+
             input.click();
         } catch (error) {
             console.error('Error importing data:', error);
@@ -1246,12 +1357,12 @@ class UIManager {
             }
 
             const confirmMessage = 'すべてのデータを削除しますか？この操作は元に戻せません。\n\n削除されるデータ:\n- すべての取引\n- すべての資金元\n- すべてのサブカテゴリ\n- 共有設定';
-            
+
             if (confirm(confirmMessage)) {
                 if (confirm('本当にすべてのデータを削除しますか？')) {
                     // Clear all data
                     window.storage.clearAllData();
-                    
+
                     // Refresh UI
                     this.loadInitialData();
                     UIUtils.showNotification('すべてのデータを削除しました', 'info');
@@ -1280,21 +1391,21 @@ class UIManager {
                 // Show sharing section for logged in users
                 if (sharingSection) {
                     sharingSection.style.display = 'block';
-                    
+
                     // Update sharing buttons state
                     if (manageSharingBtn) {
                         manageSharingBtn.style.opacity = '1';
                         manageSharingBtn.style.pointerEvents = 'auto';
                         manageSharingBtn.title = '資金元の共有設定を管理';
                     }
-                    
+
                     if (sharedUsersBtn) {
                         sharedUsersBtn.style.opacity = '1';
                         sharedUsersBtn.style.pointerEvents = 'auto';
                         sharedUsersBtn.title = '共有ユーザーを管理';
                     }
                 }
-                
+
                 // Update user info
                 if (userInfo) {
                     userInfo.innerHTML = `
@@ -1306,17 +1417,17 @@ class UIManager {
                         </div>
                     `;
                 }
-                
+
                 // Show logout button, hide login button
                 if (logoutBtn) logoutBtn.style.display = 'block';
                 if (loginBtn) loginBtn.style.display = 'none';
-                
+
             } else {
                 // Hide sharing section for guest users
                 if (sharingSection) {
                     sharingSection.style.display = 'none';
                 }
-                
+
                 // Show guest user info
                 if (userInfo) {
                     userInfo.innerHTML = `
@@ -1328,7 +1439,7 @@ class UIManager {
                         </div>
                     `;
                 }
-                
+
                 // Hide logout button, show login button
                 if (logoutBtn) logoutBtn.style.display = 'none';
                 if (loginBtn) loginBtn.style.display = 'block';
@@ -1377,11 +1488,11 @@ class UIManager {
     attemptSharingInitialization(callback) {
         let attempts = 0;
         const maxAttempts = 5;
-        
+
         const tryInitialization = () => {
             attempts++;
             console.log(`Sharing initialization attempt ${attempts}/${maxAttempts}`);
-            
+
             // Strategy 1: Try normal initialization
             if (window.initializeSharingUI) {
                 const success = window.initializeSharingUI();
@@ -1391,18 +1502,18 @@ class UIManager {
                     return;
                 }
             }
-            
+
             // Strategy 2: Try force reinitialization
             if (window.reinitializeSharing) {
                 console.log('Attempting force reinitialization...');
                 window.reinitializeSharing();
             }
-            
+
             // Strategy 3: Manual initialization
-            if (!window.sharingUIManager && window.SharingUIManager && 
-                window.uiManager && window.sharingManager && 
+            if (!window.sharingUIManager && window.SharingUIManager &&
+                window.uiManager && window.sharingManager &&
                 window.invitationManager && window.permissionManager) {
-                
+
                 try {
                     console.log('Attempting manual SharingUIManager creation...');
                     window.sharingUIManager = new SharingUIManager(
@@ -1411,7 +1522,7 @@ class UIManager {
                         window.invitationManager,
                         window.permissionManager
                     );
-                    
+
                     if (window.sharingUIManager) {
                         console.log('Manual SharingUIManager creation successful');
                         callback();
@@ -1421,7 +1532,7 @@ class UIManager {
                     console.error('Manual initialization failed:', error);
                 }
             }
-            
+
             // If still not successful and we have attempts left, try again
             if (attempts < maxAttempts) {
                 setTimeout(tryInitialization, 500 * attempts); // Increasing delay
@@ -1430,14 +1541,14 @@ class UIManager {
                 callback(); // Call callback anyway to show error message
             }
         };
-        
+
         tryInitialization();
     }
 
     // Show user-friendly message when sharing is unavailable
     showSharingUnavailableMessage(featureName) {
         const message = `${featureName}機能が一時的に利用できません。\n\n以下をお試しください：\n• ページを再読み込み\n• ログアウト後に再ログイン\n• しばらく時間をおいて再試行`;
-        
+
         if (confirm(message + '\n\n今すぐページを再読み込みしますか？')) {
             window.location.reload();
         }

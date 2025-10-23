@@ -71,20 +71,51 @@ class StorageManager {
                 fundSources: userFundSources.length
             });
 
-            // Initialize categories if empty
+            // Initialize categories if empty or migrate existing categories
             if (userCategories.length === 0) {
                 console.log('Creating default categories...');
                 const defaultCategories = this.getDefaultCategories();
                 this.setCategories(defaultCategories);
                 console.log('Default categories created:', defaultCategories.length);
+            } else {
+                // Check if income categories exist, if not add them
+                const hasIncomeCategories = userCategories.some(cat => cat.type === 'income');
+                if (!hasIncomeCategories) {
+                    console.log('Adding income categories to existing data...');
+                    const defaultCategories = this.getDefaultCategories();
+                    const incomeCategories = defaultCategories.filter(cat => cat.type === 'income');
+                    
+                    // Add type property to existing categories (mark as expense)
+                    const updatedCategories = userCategories.map(cat => ({
+                        ...cat,
+                        type: cat.type || 'expense'
+                    }));
+                    
+                    // Add new income categories
+                    const allCategories = [...updatedCategories, ...incomeCategories];
+                    this.setCategories(allCategories);
+                    console.log('Income categories added:', incomeCategories.length);
+                }
             }
             
-            // Initialize subcategories if empty
+            // Initialize subcategories if empty or add income subcategories
             if (userSubcategories.length === 0) {
                 console.log('Creating default subcategories...');
                 const defaultSubcategories = this.getDefaultSubcategories();
                 this.setSubcategories(defaultSubcategories);
                 console.log('Default subcategories created:', defaultSubcategories.length);
+            } else {
+                // Check if income subcategories exist, if not add them
+                const hasIncomeSubcategories = userSubcategories.some(sub => sub.id.startsWith('inc_'));
+                if (!hasIncomeSubcategories) {
+                    console.log('Adding income subcategories to existing data...');
+                    const defaultSubcategories = this.getDefaultSubcategories();
+                    const incomeSubcategories = defaultSubcategories.filter(sub => sub.id.startsWith('inc_'));
+                    
+                    const allSubcategories = [...userSubcategories, ...incomeSubcategories];
+                    this.setSubcategories(allSubcategories);
+                    console.log('Income subcategories added:', incomeSubcategories.length);
+                }
             }
             
             // Initialize fund sources if empty
@@ -943,21 +974,36 @@ class StorageManager {
     // Default data
     getDefaultCategories() {
         return [
-            { id: 'cat1', name: '食費', icon: '🍽️', color: '#FF6B6B' },
-            { id: 'cat2', name: '交通費', icon: '🚃', color: '#4ECDC4' },
-            { id: 'cat3', name: '娯楽', icon: '🎮', color: '#45B7D1' },
-            { id: 'cat4', name: '日用品', icon: '🛒', color: '#96CEB4' },
-            { id: 'cat5', name: '医療費', icon: '🏥', color: '#FFEAA7' },
-            { id: 'cat6', name: '光熱費', icon: '💡', color: '#DDA0DD' },
-            { id: 'cat7', name: '通信費', icon: '📱', color: '#98D8C8' },
-            { id: 'cat8', name: 'その他', icon: '📦', color: '#A8A8A8' }
+            // 支出カテゴリ
+            { id: 'cat1', name: '食費', icon: '🍽️', color: '#FF6B6B', type: 'expense' },
+            { id: 'cat2', name: '交通費', icon: '🚃', color: '#4ECDC4', type: 'expense' },
+            { id: 'cat3', name: '娯楽', icon: '🎮', color: '#45B7D1', type: 'expense' },
+            { id: 'cat4', name: '日用品', icon: '🛒', color: '#96CEB4', type: 'expense' },
+            { id: 'cat5', name: '医療費', icon: '🏥', color: '#FFEAA7', type: 'expense' },
+            { id: 'cat6', name: '光熱費', icon: '💡', color: '#DDA0DD', type: 'expense' },
+            { id: 'cat7', name: '通信費', icon: '📱', color: '#98D8C8', type: 'expense' },
+            { id: 'cat8', name: 'その他', icon: '📦', color: '#A8A8A8', type: 'expense' },
+            // 収入カテゴリ
+            { id: 'inc1', name: '給与', icon: '💰', color: '#2ECC71', type: 'income' },
+            { id: 'inc2', name: 'ボーナス', icon: '🎁', color: '#27AE60', type: 'income' },
+            { id: 'inc3', name: '副業', icon: '💼', color: '#16A085', type: 'income' },
+            { id: 'inc4', name: '投資収益', icon: '📈', color: '#1ABC9C', type: 'income' },
+            { id: 'inc5', name: 'その他収入', icon: '💵', color: '#52C41A', type: 'income' }
         ];
     }
 
     getDefaultSubcategories() {
         return [
+            // 支出サブカテゴリ
             { id: 'sub1', name: '食材', categoryId: 'cat1' },
             { id: 'sub2', name: '外食', categoryId: 'cat1' },
+            // 収入サブカテゴリ
+            { id: 'inc_sub1', name: '基本給', categoryId: 'inc1' },
+            { id: 'inc_sub2', name: '残業代', categoryId: 'inc1' },
+            { id: 'inc_sub3', name: '手当', categoryId: 'inc1' },
+            { id: 'inc_sub4', name: '年末賞与', categoryId: 'inc2' },
+            { id: 'inc_sub5', name: '夏季賞与', categoryId: 'inc2' },
+            { id: 'inc_sub6', name: '成果賞与', categoryId: 'inc2' },
             { id: 'sub3', name: '電車', categoryId: 'cat2' },
             { id: 'sub4', name: 'バス', categoryId: 'cat2' },
             { id: 'sub5', name: 'タクシー', categoryId: 'cat2' }

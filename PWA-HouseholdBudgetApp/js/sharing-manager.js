@@ -6,23 +6,33 @@ class SharingManager {
         this.invitationManager = null;
         this.permissionManager = null;
         
-        // Performance optimizations
-        this.cache = new PerformanceCache();
-        this.dataOptimizer = new DataAccessOptimizer(storage, this.cache);
-        this.uiOptimizer = new UIResponsivenessOptimizer();
-        
-        // Enhanced UI responsiveness (Task 12.2)
-        this.uiEnhancer = new UIResponsivenessEnhancer();
-        this.enhancedOperations = this.uiEnhancer.createSharingOperationWrappers();
-        
-        // Error handling
-        this.errorHandler = new SharingErrorHandler(storage);
+        // Initialize optional performance optimizations
+        try {
+            this.cache = window.PerformanceCache ? new PerformanceCache() : null;
+            this.dataOptimizer = (window.DataAccessOptimizer && this.cache) ? 
+                new DataAccessOptimizer(storage, this.cache) : null;
+            this.uiOptimizer = window.UIResponsivenessOptimizer ? 
+                new UIResponsivenessOptimizer() : null;
+            this.uiEnhancer = window.UIResponsivenessEnhancer ? 
+                new UIResponsivenessEnhancer() : null;
+            this.errorHandler = window.SharingErrorHandler ? 
+                new SharingErrorHandler(storage) : null;
+        } catch (error) {
+            console.warn('Some performance optimizations not available:', error);
+            this.cache = null;
+            this.dataOptimizer = null;
+            this.uiOptimizer = null;
+            this.uiEnhancer = null;
+            this.errorHandler = null;
+        }
         
         // Performance monitoring
         this.performanceMonitor = window.performanceMonitor || null;
         
-        // Preload common data
-        this.preloadCommonData();
+        // Preload common data if optimizer is available
+        if (this.dataOptimizer) {
+            this.preloadCommonData();
+        }
     }
 
     // Initialize with other managers
@@ -36,30 +46,44 @@ class SharingManager {
 
     // Initialize performance optimizations
     initializePerformanceOptimizations() {
-        // Preload frequently accessed data
-        this.preloadCommonData();
-        
-        // Set up cache invalidation patterns
-        this.setupCacheInvalidation();
-        
-        // Initialize UI optimizations
-        this.initializeUIOptimizations();
-        
-        // Warm cache with intelligent preloading
-        if (this.dataOptimizer) {
-            this.dataOptimizer.warmCache();
+        try {
+            // Preload frequently accessed data
+            this.preloadCommonData();
+            
+            // Set up cache invalidation patterns
+            if (typeof this.setupCacheInvalidation === 'function') {
+                this.setupCacheInvalidation();
+            }
+            
+            // Initialize UI optimizations
+            if (typeof this.initializeUIOptimizations === 'function') {
+                this.initializeUIOptimizations();
+            }
+            
+            // Warm cache with intelligent preloading
+            if (this.dataOptimizer && typeof this.dataOptimizer.warmCache === 'function') {
+                this.dataOptimizer.warmCache();
+            }
+            
+            // Set up periodic performance cleanup
+            if (typeof this.performPerformanceCleanup === 'function') {
+                setInterval(() => {
+                    this.performPerformanceCleanup();
+                }, 5 * 60 * 1000); // Every 5 minutes
+            }
+        } catch (error) {
+            console.warn('Error initializing performance optimizations:', error);
         }
-        
-        // Set up periodic performance cleanup
-        setInterval(() => {
-            this.performPerformanceCleanup();
-        }, 5 * 60 * 1000); // Every 5 minutes
     }
 
     // Preload commonly accessed data
     preloadCommonData() {
-        if (this.dataOptimizer) {
-            this.dataOptimizer.preloadCommonData();
+        try {
+            if (this.dataOptimizer && typeof this.dataOptimizer.preloadCommonData === 'function') {
+                this.dataOptimizer.preloadCommonData();
+            }
+        } catch (error) {
+            console.warn('Error preloading common data:', error);
         }
     }
 

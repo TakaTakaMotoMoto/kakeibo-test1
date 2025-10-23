@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>収入カテゴリテスト</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        select, input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .category-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .income-category { border-left: 4px solid #28a745; }
+        .expense-category { border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>収入カテゴリ機能テスト</h1>
+
+    <div class="test-section">
+        <h2>システム状態</h2>
+        <button onclick="checkSystemStatus()">システム状態確認</button>
+        <button onclick="reinitializeSystem()">再初期化</button>
+        <div id="log-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>1. カテゴリ一覧確認</h2>
+        <button onclick="testCategories()">カテゴリをテスト</button>
+        <div id="category-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 取引タイプ別カテゴリフィルタリング</h2>
+        <label>
+            取引タイプ:
+            <select id="transaction-type" onchange="testCategoryFiltering()">
+                <option value="">選択してください</option>
+                <option value="expense">支出</option>
+                <option value="income">収入</option>
+            </select>
+        </label>
+        <div id="filtering-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. サブカテゴリテスト</h2>
+        <label>
+            カテゴリ:
+            <select id="category-select" onchange="testSubcategories()">
+                <option value="">選択してください</option>
+            </select>
+        </label>
+        <div id="subcategory-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 取引追加テスト</h2>
+        <form id="test-transaction-form">
+            <div>
+                <label>
+                    <input type="radio" name="type" value="expense" onchange="updateTestCategories()"> 支出
+                </label>
+                <label>
+                    <input type="radio" name="type" value="income" onchange="updateTestCategories()"> 収入
+                </label>
+            </div>
+            <div>
+                <label>
+                    金額: <input type="number" id="test-amount" value="1000" min="1">
+                </label>
+            </div>
+            <div>
+                <label>
+                    カテゴリ: <select id="test-category"></select>
+                </label>
+            </div>
+            <div>
+                <label>
+                    サブカテゴリ: <select id="test-subcategory"></select>
+                </label>
+            </div>
+            <div>
+                <label>
+                    資金元: <select id="test-fundsource"></select>
+                </label>
+            </div>
+            <div>
+                <label>
+                    日付: <input type="date" id="test-date">
+                </label>
+            </div>
+            <button type="button" onclick="testAddTransaction()">取引を追加</button>
+        </form>
+        <div id="transaction-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. 最近の取引</h2>
+        <button onclick="showRecentTransactions()">最近の取引を表示</button>
+        <button onclick="debugTransactionData()">取引データをデバッグ</button>
+        <button onclick="clearAllTransactions()">全取引を削除</button>
+        <div id="recent-transactions"></div>
+    </div>
+
+    <!-- Include necessary scripts in correct order -->
+    <script src="js/performance-cache.js"></script>
+    <script src="js/performance-monitor.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/transaction-manager.js"></script>
+    <script src="js/subcategory-manager.js"></script>
+    <script src="js/fund-source-manager.js"></script>
+    <script src="js/data.js"></script>
+
+    <script>
+        let storage, dataManager;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for all scripts to load
+            setTimeout(initializeSystem, 200);
+        });
+
+        async function initializeSystem() {
+            try {
+                log('システム初期化開始...', 'info');
+                
+                // Check if required classes are available
+                log(`StorageManager: ${typeof StorageManager}`, 'info');
+                log(`DataManager: ${typeof DataManager}`, 'info');
+                log(`window.storage: ${typeof window.storage}`, 'info');
+                
+                if (typeof StorageManager === 'undefined') {
+                    throw new Error('StorageManagerクラスが読み込まれていません');
+                }
+                
+                // Use global storage instance
+                storage = window.storage;
+                if (!storage) {
+                    log('グローバルStorageインスタンスが見つかりません、新しく作成します', 'info');
+                    storage = new StorageManager();
+                    window.storage = storage;
+                }
+                log('Storage初期化完了', 'success');
+                
+                // Wait for storage to be fully initialized
+                await waitForStorageReady();
+                
+                // Initialize data manager
+                if (typeof DataManager === 'undefined') {
+                    throw new Error('DataManagerクラスが読み込まれていません');
+                }
+                
+                dataManager = new DataManager(storage);
+                log('DataManager初期化完了', 'success');
+                
+                // Set default date
+                document.getElementById('test-date').value = new Date().toISOString().split('T')[0];
+                
+                // Load initial data
+                loadFundSources();
+                loadCategories();
+                
+                log('システム初期化完了', 'success');
+                
+            } catch (error) {
+                log('初期化エラー: ' + error.message, 'error');
+                console.error('Initialization error:', error);
+            }
+        }
+
+        function waitForStorageReady() {
+            return new Promise((resolve, reject) => {
+                let attempts = 0;
+                const maxAttempts = 50; // 5 seconds max
+                
+                const checkStorage = () => {
+                    attempts++;
+                    
+                    if (storage && typeof storage.getCategories === 'function') {
+                        try {
+                            // Test if storage is actually working
+                            const categories = storage.getCategories();
+                            log(`Storage準備完了 (カテゴリ数: ${categories.length})`, 'success');
+                            resolve();
+                            return;
+                        } catch (error) {
+                            // Storage exists but not ready yet
+                        }
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        reject(new Error('Storage初期化タイムアウト'));
+                        return;
+                    }
+                    
+                    setTimeout(checkStorage, 100);
+                };
+                
+                checkStorage();
+            });
+        }
+
+        function log(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            
+            // Also display in UI if there's a log container
+            const logContainer = document.getElementById('log-container');
+            if (logContainer) {
+                const logEntry = document.createElement('div');
+                logEntry.className = `test-result ${type}`;
+                logEntry.textContent = message;
+                logContainer.appendChild(logEntry);
+            }
+        }
+
+        function testCategories() {
+            try {
+                log('カテゴリテスト開始', 'info');
+                
+                // Detailed storage check
+                if (!storage) {
+                    throw new Error('storageオブジェクトが存在しません');
+                }
+                
+                if (typeof storage.getCategories !== 'function') {
+                    throw new Error('storage.getCategoriesメソッドが存在しません');
+                }
+                
+                log('Storage確認完了', 'success');
+                
+                const categories = storage.getCategories();
+                log(`カテゴリ取得完了: ${categories.length}件`, 'success');
+                const results = document.getElementById('category-results');
+                
+                let html = `<div class="test-result success">カテゴリ数: ${categories.length}</div>`;
+                
+                const expenseCategories = categories.filter(cat => cat.type === 'expense' || !cat.type);
+                const incomeCategories = categories.filter(cat => cat.type === 'income');
+                
+                html += `<div class="test-result info">支出カテゴリ: ${expenseCategories.length}個</div>`;
+                html += `<div class="test-result info">収入カテゴリ: ${incomeCategories.length}個</div>`;
+                
+                html += '<div class="category-list">';
+                categories.forEach(cat => {
+                    const typeClass = cat.type === 'income' ? 'income-category' : 'expense-category';
+                    html += `<div class="category-item ${typeClass}">
+                        ${cat.icon} ${cat.name} (${cat.type || 'expense'})
+                    </div>`;
+                });
+                html += '</div>';
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('category-results').innerHTML = 
+                    `<div class="test-result error">エラー: ${error.message}</div>`;
+            }
+        }
+
+        function testCategoryFiltering() {
+            try {
+                const type = document.getElementById('transaction-type').value;
+                if (!type) {
+                    log('取引タイプが選択されていません', 'info');
+                    return;
+                }
+                
+                if (!storage || typeof storage.getCategories !== 'function') {
+                    throw new Error('Storageが利用できません');
+                }
+                
+                const categories = storage.getCategories();
+                log(`フィルタリングテスト開始: ${type}`, 'info');
+                const filtered = categories.filter(cat => {
+                    if (cat.type) {
+                        return cat.type === type;
+                    }
+                    return type === 'expense';
+                });
+                
+                const results = document.getElementById('filtering-results');
+                let html = `<div class="test-result success">${type === 'income' ? '収入' : '支出'}カテゴリ: ${filtered.length}個</div>`;
+                
+                html += '<div class="category-list">';
+                filtered.forEach(cat => {
+                    const typeClass = cat.type === 'income' ? 'income-category' : 'expense-category';
+                    html += `<div class="category-item ${typeClass}">
+                        ${cat.icon} ${cat.name}
+                    </div>`;
+                });
+                html += '</div>';
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('filtering-results').innerHTML = 
+                    `<div class="test-result error">エラー: ${error.message}</div>`;
+            }
+        }
+
+        function testSubcategories() {
+            try {
+                const categoryId = document.getElementById('category-select').value;
+                if (!categoryId) return;
+                
+                const subcategories = dataManager.getSubcategories(categoryId);
+                const results = document.getElementById('subcategory-results');
+                
+                let html = `<div class="test-result success">サブカテゴリ数: ${subcategories.length}</div>`;
+                
+                if (subcategories.length > 0) {
+                    html += '<ul>';
+                    subcategories.forEach(sub => {
+                        html += `<li>${sub.name}</li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<div class="test-result info">サブカテゴリはありません</div>';
+                }
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('subcategory-results').innerHTML = 
+                    `<div class="test-result error">エラー: ${error.message}</div>`;
+            }
+        }
+
+        function updateTestCategories() {
+            try {
+                const type = document.querySelector('input[name="type"]:checked')?.value;
+                if (!type) return;
+                
+                if (!storage || typeof storage.getCategories !== 'function') {
+                    console.error('Storageが初期化されていません');
+                    return;
+                }
+                
+                const categories = storage.getCategories();
+                const filtered = categories.filter(cat => {
+                    if (cat.type) {
+                        return cat.type === type;
+                    }
+                    return type === 'expense';
+                });
+                
+                const categorySelect = document.getElementById('test-category');
+                categorySelect.innerHTML = '<option value="">選択してください</option>' +
+                    filtered.map(cat => `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`).join('');
+                
+                // Clear subcategory
+                document.getElementById('test-subcategory').innerHTML = '<option value="">カテゴリを先に選択</option>';
+                
+            } catch (error) {
+                console.error('カテゴリ更新エラー:', error);
+            }
+        }
+
+        function testAddTransaction() {
+            try {
+                log('取引追加テスト開始', 'info');
+                
+                if (!dataManager || typeof dataManager.addTransaction !== 'function') {
+                    throw new Error('DataManagerが初期化されていません');
+                }
+                
+                const form = document.getElementById('test-transaction-form');
+                const formData = new FormData(form);
+                
+                const type = formData.get('type');
+                const amount = parseFloat(formData.get('amount') || document.getElementById('test-amount').value);
+                const categoryId = document.getElementById('test-category').value;
+                const subcategoryId = document.getElementById('test-subcategory').value;
+                const fundSourceId = document.getElementById('test-fundsource').value;
+                const date = document.getElementById('test-date').value;
+                
+                log(`入力値: type=${type}, amount=${amount}, categoryId=${categoryId}, fundSourceId=${fundSourceId}, date=${date}`, 'info');
+                
+                if (!type || !amount || !categoryId || !fundSourceId || !date) {
+                    throw new Error('必須項目を入力してください');
+                }
+                
+                const transactionData = {
+                    amount: type === 'expense' ? -amount : amount,
+                    categoryId: categoryId,
+                    subcategoryId: subcategoryId || null,
+                    fundSourceId: fundSourceId,
+                    date: date,
+                    note: `テスト取引 (${type === 'income' ? '収入' : '支出'})`
+                };
+                
+                log('取引データ作成完了', 'success');
+                log(`取引データ: ${JSON.stringify(transactionData)}`, 'info');
+                
+                const result = dataManager.addTransaction(transactionData);
+                
+                if (result) {
+                    log(`取引追加成功: ID=${result.id}`, 'success');
+                    document.getElementById('transaction-results').innerHTML = 
+                        `<div class="test-result success">取引を追加しました: ${result.id}</div>`;
+                    
+                    // Show recent transactions immediately and after a delay
+                    showRecentTransactions();
+                    setTimeout(showRecentTransactions, 500);
+                } else {
+                    throw new Error('取引の追加に失敗しました（結果がnull）');
+                }
+                
+            } catch (error) {
+                log(`取引追加エラー: ${error.message}`, 'error');
+                console.error('testAddTransaction error:', error);
+                document.getElementById('transaction-results').innerHTML = 
+                    `<div class="test-result error">エラー: ${error.message}</div>`;
+            }
+        }
+
+        function showRecentTransactions() {
+            try {
+                log('最近の取引表示開始', 'info');
+                
+                // Check if dataManager is available
+                if (!dataManager || typeof dataManager.getTransactions !== 'function') {
+                    throw new Error('DataManagerが初期化されていません');
+                }
+                
+                if (!storage || typeof storage.getCategories !== 'function') {
+                    throw new Error('Storageが初期化されていません');
+                }
+                
+                log('DataManagerとStorage確認完了', 'success');
+                
+                const transactions = dataManager.getTransactions();
+                log(`全取引数: ${transactions.length}`, 'info');
+                
+                const recentTransactions = transactions.slice(0, 5);
+                const categories = storage.getCategories();
+                const fundSources = storage.getFundSources();
+                
+                log(`表示対象取引数: ${recentTransactions.length}`, 'info');
+                log(`カテゴリ数: ${categories.length}`, 'info');
+                log(`資金元数: ${fundSources.length}`, 'info');
+                
+                let html = `<div class="test-result success">最近の取引: ${recentTransactions.length}件 (全${transactions.length}件)</div>`;
+                
+                if (recentTransactions.length > 0) {
+                    html += '<ul>';
+                    recentTransactions.forEach((t, index) => {
+                        log(`取引${index + 1}: ID=${t.id}, amount=${t.amount}, categoryId=${t.categoryId}`, 'info');
+                        
+                        const category = categories.find(c => c.id === t.categoryId);
+                        const fundSource = fundSources.find(fs => fs.id === t.fundSourceId);
+                        const type = t.amount > 0 ? '収入' : '支出';
+                        const typeClass = t.amount > 0 ? 'income-category' : 'expense-category';
+                        
+                        html += `<li class="category-item ${typeClass}">
+                            ${category?.icon || '📦'} ${category?.name || 'Unknown'} - 
+                            ¥${Math.abs(t.amount).toLocaleString()} (${type}) - 
+                            ${fundSource?.name || 'Unknown'} - 
+                            ${t.date}
+                            <small> [ID: ${t.id}]</small>
+                        </li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<div class="test-result info">取引がありません</div>';
+                    
+                    // Debug: Show raw transaction data
+                    if (transactions.length === 0) {
+                        html += '<div class="test-result info">ストレージに取引データが存在しません</div>';
+                        
+                        // Try to get raw data from localStorage
+                        try {
+                            const rawData = localStorage.getItem('budget_transactions');
+                            html += `<div class="test-result info">Raw localStorage data: ${rawData ? rawData.length + ' chars' : 'null'}</div>`;
+                        } catch (e) {
+                            html += `<div class="test-result error">localStorage access error: ${e.message}</div>`;
+                        }
+                    }
+                }
+                
+                document.getElementById('recent-transactions').innerHTML = html;
+                log('最近の取引表示完了', 'success');
+                
+            } catch (error) {
+                log(`最近の取引表示エラー: ${error.message}`, 'error');
+                console.error('showRecentTransactions error:', error);
+                document.getElementById('recent-transactions').innerHTML = 
+                    `<div class="test-result error">エラー: ${error.message}</div>`;
+            }
+        }
+
+        function loadFundSources() {
+            try {
+                if (!storage || typeof storage.getFundSources !== 'function') {
+                    throw new Error('Storageが利用できません');
+                }
+                
+                const fundSources = storage.getFundSources();
+                const select = document.getElementById('test-fundsource');
+                
+                if (!select) {
+                    throw new Error('資金元選択要素が見つかりません');
+                }
+                
+                select.innerHTML = '<option value="">選択してください</option>' +
+                    fundSources.map(fs => `<option value="${fs.id}">${fs.name}</option>`).join('');
+                
+                log(`資金元読み込み完了: ${fundSources.length}件`, 'success');
+                    
+            } catch (error) {
+                log('資金元読み込みエラー: ' + error.message, 'error');
+                console.error('資金元読み込みエラー:', error);
+            }
+        }
+
+        function loadCategories() {
+            try {
+                if (!storage || typeof storage.getCategories !== 'function') {
+                    throw new Error('Storageが利用できません');
+                }
+                
+                const categories = storage.getCategories();
+                const select = document.getElementById('category-select');
+                
+                if (!select) {
+                    throw new Error('カテゴリ選択要素が見つかりません');
+                }
+                
+                select.innerHTML = '<option value="">選択してください</option>' +
+                    categories.map(cat => `<option value="${cat.id}">${cat.icon} ${cat.name} (${cat.type || 'expense'})</option>`).join('');
+                
+                log(`カテゴリ読み込み完了: ${categories.length}件`, 'success');
+                    
+            } catch (error) {
+                log('カテゴリ読み込みエラー: ' + error.message, 'error');
+                console.error('カテゴリ読み込みエラー:', error);
+            }
+        }
+
+        function checkSystemStatus() {
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerHTML = ''; // Clear previous logs
+            
+            log('=== システム状態確認 ===', 'info');
+            
+            // Check global objects
+            log(`StorageManager: ${typeof StorageManager}`, storage ? 'success' : 'error');
+            log(`DataManager: ${typeof DataManager}`, dataManager ? 'success' : 'error');
+            log(`storage instance: ${typeof storage}`, storage ? 'success' : 'error');
+            log(`dataManager instance: ${typeof dataManager}`, dataManager ? 'success' : 'error');
+            
+            if (storage) {
+                try {
+                    const categories = storage.getCategories();
+                    log(`カテゴリ数: ${categories.length}`, 'success');
+                    
+                    const fundSources = storage.getFundSources();
+                    log(`資金元数: ${fundSources.length}`, 'success');
+                } catch (error) {
+                    log(`Storage操作エラー: ${error.message}`, 'error');
+                }
+            }
+            
+            if (dataManager) {
+                try {
+                    const transactions = dataManager.getTransactions();
+                    log(`取引数: ${transactions.length}`, 'success');
+                } catch (error) {
+                    log(`DataManager操作エラー: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function reinitializeSystem() {
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerHTML = ''; // Clear previous logs
+            
+            log('システム再初期化開始...', 'info');
+            
+            // Reset variables
+            storage = null;
+            dataManager = null;
+            
+            // Reinitialize
+            initializeSystem();
+        }
+
+        function debugTransactionData() {
+            try {
+                log('=== 取引データデバッグ ===', 'info');
+                
+                // Check localStorage directly
+                const rawTransactions = localStorage.getItem('budget_transactions');
+                log(`localStorage取引データ: ${rawTransactions ? rawTransactions.length + ' chars' : 'null'}`, 'info');
+                
+                if (rawTransactions) {
+                    try {
+                        const parsed = JSON.parse(rawTransactions);
+                        log(`パース済み取引数: ${Array.isArray(parsed) ? parsed.length : 'not array'}`, 'info');
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            log(`最初の取引: ${JSON.stringify(parsed[0])}`, 'info');
+                        }
+                    } catch (parseError) {
+                        log(`JSON解析エラー: ${parseError.message}`, 'error');
+                    }
+                }
+                
+                // Check through storage manager
+                if (storage && typeof storage.getTransactions === 'function') {
+                    const storageTransactions = storage.getTransactions();
+                    log(`Storage経由取引数: ${storageTransactions.length}`, 'info');
+                } else {
+                    log('Storage.getTransactions利用不可', 'error');
+                }
+                
+                // Check through data manager
+                if (dataManager && typeof dataManager.getTransactions === 'function') {
+                    const dataManagerTransactions = dataManager.getTransactions();
+                    log(`DataManager経由取引数: ${dataManagerTransactions.length}`, 'info');
+                } else {
+                    log('DataManager.getTransactions利用不可', 'error');
+                }
+                
+            } catch (error) {
+                log(`デバッグエラー: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllTransactions() {
+            try {
+                if (confirm('全ての取引を削除しますか？')) {
+                    localStorage.removeItem('budget_transactions');
+                    log('全取引を削除しました', 'success');
+                    showRecentTransactions();
+                }
+            } catch (error) {
+                log(`削除エラー: ${error.message}`, 'error');
+            }
+        }
+
+        // Category change handler for subcategories
+        document.getElementById('test-category').addEventListener('change', function(e) {
+            try {
+                const categoryId = e.target.value;
+                const subcategorySelect = document.getElementById('test-subcategory');
+                
+                if (!categoryId) {
+                    subcategorySelect.innerHTML = '<option value="">カテゴリを先に選択</option>';
+                    return;
+                }
+                
+                const subcategories = dataManager.getSubcategories(categoryId);
+                subcategorySelect.innerHTML = '<option value="">選択してください（任意）</option>' +
+                    subcategories.map(sub => `<option value="${sub.id}">${sub.name}</option>`).join('');
+                    
+            } catch (error) {
+                console.error('サブカテゴリ更新エラー:', error);
+            }
+        });
+    </script>
+</body>
+</html>

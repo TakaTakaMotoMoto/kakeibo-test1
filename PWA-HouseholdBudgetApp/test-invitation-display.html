@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招待トークン表示テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .test-btn.primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .test-btn.success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .test-btn.danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .status {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>招待トークン表示テスト</h1>
+
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="status">初期化中...</div>
+        <button class="test-btn primary" onclick="checkSystemStatus()">システム状態確認</button>
+    </div>
+
+    <div class="test-container">
+        <h2>招待トークン生成テスト</h2>
+        <div class="form-group">
+            <label for="test-email">招待先メールアドレス:</label>
+            <input type="email" id="test-email" value="test@example.com" placeholder="メールアドレスを入力">
+        </div>
+
+        <button class="test-btn success" onclick="testInvitationGeneration()">招待トークン生成</button>
+        <button class="test-btn primary" onclick="testDirectTokenDisplay()">直接トークン表示</button>
+        <button class="test-btn danger" onclick="testFallbackModal()">フォールバックモーダル</button>
+
+        <div id="test-status" class="status">テスト未実行</div>
+    </div>
+
+    <div class="test-container">
+        <h2>デバッグ情報</h2>
+        <div id="debug-info" class="status">デバッグ情報なし</div>
+        <button class="test-btn primary" onclick="showDebugInfo()">デバッグ情報表示</button>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+
+    <!-- Performance and optimization scripts -->
+    <script src="js/performance-cache.js"></script>
+    <script src="js/performance-monitor.js"></script>
+    <script src="js/ui-responsiveness-enhancer.js"></script>
+
+    <!-- Sharing system scripts -->
+    <script src="js/sharing-error-handler.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/sharing-init.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+
+    <!-- UI scripts -->
+    <script src="js/ui-utils.js"></script>
+    <script src="js/ui-modals.js"></script>
+
+    <script>
+        let invitationTokenDisplay;
+
+        function initializeTest() {
+            console.log('Initializing test environment...');
+
+            try {
+                // Initialize basic managers
+                if (!window.storage) {
+                    window.storage = new StorageManager();
+                    console.log('StorageManager initialized');
+                }
+
+                if (!window.authManager) {
+                    window.authManager = new AuthManager();
+                    console.log('AuthManager initialized');
+                }
+
+                // Initialize sharing system components manually
+                console.log('Initializing sharing system components...');
+
+                // Initialize permission manager
+                if (!window.permissionManager) {
+                    if (window.PermissionManager) {
+                        window.permissionManager = new PermissionManager();
+                        console.log('PermissionManager initialized');
+                    } else {
+                        console.error('PermissionManager class not found');
+                    }
+                }
+
+                // Initialize invitation manager
+                if (!window.invitationManager) {
+                    if (window.InvitationManager) {
+                        window.invitationManager = new InvitationManager(window.storage);
+                        console.log('InvitationManager initialized');
+                    } else {
+                        console.error('InvitationManager class not found');
+                    }
+                }
+
+                // Initialize sharing manager
+                if (!window.sharingManager) {
+                    if (window.SharingManager) {
+                        window.sharingManager = new SharingManager(window.storage, window.authManager);
+                        if (window.invitationManager && window.permissionManager) {
+                            window.sharingManager.initialize(window.invitationManager, window.permissionManager);
+                        }
+                        console.log('SharingManager initialized');
+                    } else {
+                        console.error('SharingManager class not found');
+                    }
+                }
+
+                // Initialize invitation token display
+                if (window.InvitationTokenDisplayManager) {
+                    invitationTokenDisplay = new InvitationTokenDisplayManager();
+                    console.log('InvitationTokenDisplayManager initialized');
+                } else {
+                    console.error('InvitationTokenDisplayManager class not found');
+                }
+
+                checkSystemStatus();
+
+            } catch (error) {
+                console.error('Error initializing test:', error);
+                document.getElementById('system-status').innerHTML = `
+                    <strong>初期化エラー:</strong><br>
+                    ${error.message}<br>
+                    <small>詳細はコンソールを確認してください</small>
+                `;
+            }
+        }
+
+        function checkSystemStatus() {
+            const status = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                permissionManager: !!window.permissionManager,
+                invitationManager: !!window.invitationManager,
+                sharingManager: !!window.sharingManager,
+                invitationTokenDisplay: !!invitationTokenDisplay,
+                fundSources: window.storage ? window.storage.getFundSources().length : 0,
+                categories: window.storage ? window.storage.getCategories().length : 0
+            };
+
+            document.getElementById('system-status').innerHTML = `
+                <strong>システム状態:</strong><br>
+                Storage: ${status.storage ? '✓' : '✗'}<br>
+                AuthManager: ${status.authManager ? '✓' : '✗'}<br>
+                PermissionManager: ${status.permissionManager ? '✓' : '✗'}<br>
+                InvitationManager: ${status.invitationManager ? '✓' : '✗'}<br>
+                SharingManager: ${status.sharingManager ? '✓' : '✗'}<br>
+                InvitationTokenDisplay: ${status.invitationTokenDisplay ? '✓' : '✗'}<br>
+                資金元数: ${status.fundSources}<br>
+                カテゴリ数: ${status.categories}
+            `;
+        }
+
+        async function testInvitationGeneration() {
+            try {
+                const email = document.getElementById('test-email').value.trim();
+                if (!email) {
+                    alert('メールアドレスを入力してください');
+                    return;
+                }
+
+                console.log('Testing invitation generation...');
+
+                // Get first fund source
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+
+                const fundSourceId = fundSources[0].id;
+                const permissions = {
+                    canView: true,
+                    canEdit: true,
+                    canDelete: false
+                };
+
+                console.log('Generating invitation...', { fundSourceId, email, permissions });
+
+                const invitation = await invitationTokenDisplay.generateAndDisplayInvitation(
+                    fundSourceId,
+                    email,
+                    permissions
+                );
+
+                document.getElementById('test-status').innerHTML = `
+                    <strong>招待生成成功:</strong><br>
+                    ID: ${invitation.id}<br>
+                    Token: ${invitation.token}<br>
+                    Email: ${invitation.inviteeEmail}<br>
+                    Status: ${invitation.status}
+                `;
+
+            } catch (error) {
+                console.error('Error testing invitation generation:', error);
+                document.getElementById('test-status').innerHTML = `
+                    <strong>招待生成エラー:</strong><br>
+                    ${error.message}
+                `;
+            }
+        }
+
+        function testDirectTokenDisplay() {
+            try {
+                console.log('Testing direct token display...');
+
+                // Create a mock invitation
+                const mockInvitation = {
+                    id: 'test-' + Date.now(),
+                    token: 'inv_test_' + Date.now() + '_mock',
+                    fundSourceId: 'test-fund-source',
+                    inviterUserId: 'test-user',
+                    inviterUsername: 'テストユーザー',
+                    inviteeEmail: document.getElementById('test-email').value || 'test@example.com',
+                    permissions: {
+                        canView: true,
+                        canEdit: true,
+                        canDelete: false
+                    },
+                    status: 'pending',
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+                };
+
+                console.log('Displaying mock invitation:', mockInvitation);
+
+                invitationTokenDisplay.displayInvitationToken(mockInvitation);
+
+                document.getElementById('test-status').innerHTML = `
+                    <strong>直接表示テスト実行:</strong><br>
+                    Mock Token: ${mockInvitation.token}
+                `;
+
+            } catch (error) {
+                console.error('Error testing direct token display:', error);
+                document.getElementById('test-status').innerHTML = `
+                    <strong>直接表示エラー:</strong><br>
+                    ${error.message}
+                `;
+            }
+        }
+
+        function testFallbackModal() {
+            try {
+                console.log('Testing fallback modal...');
+
+                const testContent = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h3>フォールバックモーダルテスト</h3>
+                        <p>これはフォールバック用のモーダル表示です。</p>
+                        <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace;">
+                            テストトークン: inv_fallback_test_${Date.now()}
+                        </div>
+                        <button onclick="document.getElementById('invitation-token-modal').style.display='none'">
+                            閉じる
+                        </button>
+                    </div>
+                `;
+
+                invitationTokenDisplay.showFallbackModal('フォールバックテスト', testContent);
+
+                document.getElementById('test-status').innerHTML = `
+                    <strong>フォールバックモーダルテスト実行</strong><br>
+                    モーダルが表示されているはずです
+                `;
+
+            } catch (error) {
+                console.error('Error testing fallback modal:', error);
+                document.getElementById('test-status').innerHTML = `
+                    <strong>フォールバックモーダルエラー:</strong><br>
+                    ${error.message}
+                `;
+            }
+        }
+
+        function showDebugInfo() {
+            const debugInfo = {
+                windowObjects: {
+                    storage: typeof window.storage,
+                    authManager: typeof window.authManager,
+                    sharingManager: typeof window.sharingManager,
+                    invitationManager: typeof window.invitationManager,
+                    permissionManager: typeof window.permissionManager,
+                    uiManager: typeof window.uiManager,
+                    modalManager: typeof window.modalManager
+                },
+                invitationTokenDisplay: {
+                    exists: !!invitationTokenDisplay,
+                    methods: invitationTokenDisplay ? Object.getOwnPropertyNames(Object.getPrototypeOf(invitationTokenDisplay)) : []
+                },
+                currentInvitations: invitationTokenDisplay ? invitationTokenDisplay.currentInvitations.size : 0
+            };
+
+            document.getElementById('debug-info').innerHTML = `
+                <strong>デバッグ情報:</strong><br>
+                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+            `;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTest, 100);
+        });
+    </script>
+</body>
+
+</html>
