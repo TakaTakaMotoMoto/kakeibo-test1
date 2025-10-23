@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Enhanced Data Validation Test</h1>
+    
+    <div id="test-results"></div>
+
+    <!-- Include required scripts -->
+    <script src="js/sharing-models.js"></script>
+    <script src="js/sharing-security-validator.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+
+    <script>
+        // Mock storage for testing
+        window.storage = {
+            getItem: (key, defaultValue) => {
+                const mockData = {
+                    'budget_invitations': [
+                        {
+                            id: 'test1',
+                            inviterUserId: 'user1',
+                            inviteeEmail: 'test@example.com',
+                            status: 'pending',
+                            createdAt: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
+                        }
+                    ]
+                };
+                return mockData[key] || defaultValue;
+            },
+            getFundSources: () => [
+                {
+                    id: 'fund1',
+                    name: 'Test Fund',
+                    ownerId: 'user1',
+                    isShared: true,
+                    sharedWith: [
+                        {
+                            userId: 'user2',
+                            email: 'user2@example.com',
+                            username: 'User2',
+                            permissions: { canView: true, canEdit: true, canDelete: false }
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Mock auth manager
+        window.authManager = {
+            getCurrentUser: () => ({
+                id: 'user1',
+                email: 'user1@example.com',
+                username: 'User1'
+            })
+        };
+
+        function runTests() {
+            const results = [];
+
+            // Test 1: Enhanced Email Validation
+            console.log('Running Test 1: Enhanced Email Validation');
+            try {
+                const validEmail = SharingValidation.validateEmailDetailed('test@example.com');
+                const invalidEmail = SharingValidation.validateEmailDetailed('invalid-email');
+                const suspiciousEmail = SharingValidation.validateEmailDetailed('test<script>@example.com');
+                
+                results.push({
+                    name: 'Enhanced Email Validation',
+                    success: validEmail.isValid && !invalidEmail.isValid && !suspiciousEmail.isValid,
+                    details: {
+                        validEmail: validEmail,
+                        invalidEmail: invalidEmail,
+                        suspiciousEmail: suspiciousEmail
+                    }
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Enhanced Email Validation',
+                    success: false,
+                    error: error.message
+                });
+            }
+
+            // Test 2: Enhanced Invitation Validation
+            console.log('Running Test 2: Enhanced Invitation Validation');
+            try {
+                const validInvitation = {
+                    fundSourceId: 'fund1',
+                    inviterUserId: 'user1',
+                    inviteeEmail: 'newuser@example.com',
+                    permissions: { canView: true, canEdit: false, canDelete: false }
+                };
+
+                const invalidInvitation = {
+                    fundSourceId: '',
+                    inviterUserId: 'user1',
+                    inviteeEmail: 'invalid-email',
+                    permissions: { canView: 'not-boolean', canEdit: false }
+                };
+
+                const validResult = SharingValidation.validateInvitation(validInvitation);
+                const invalidResult = SharingValidation.validateInvitation(invalidInvitation);
+
+                results.push({
+                    name: 'Enhanced Invitation Validation',
+                    success: validResult.isValid && !invalidResult.isValid,
+                    details: {
+                        validResult: validResult,
+                        invalidResult: invalidResult
+                    }
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Enhanced Invitation Validation',
+                    success: false,
+                    error: error.message
+                });
+            }
+
+            // Test 3: Security Validation
+            console.log('Running Test 3: Security Validation');
+            try {
+                const securityValidator = new SharingSecurityValidator();
+                
+                const secureInvitation = {
+                    fundSourceId: 'fund1',
+                    inviterUserId: 'user1',
+                    inviteeEmail: 'secure@example.com',
+                    permissions: { canView: true, canEdit: false, canDelete: false }
+                };
+
+                const insecureInvitation = {
+                    fundSourceId: 'fund1',
+                    inviterUserId: 'user1',
+                    inviteeEmail: 'admin<script>@example.com',
+                    permissions: { canView: true, canEdit: true, canDelete: true, canManage: true, canInvite: true }
+                };
+
+                const secureResult = securityValidator.validateInvitationSecurity(secureInvitation);
+                const insecureResult = securityValidator.validateInvitationSecurity(insecureInvitation);
+
+                results.push({
+                    name: 'Security Validation',
+                    success: secureResult.isSecure && !insecureResult.isSecure,
+                    details: {
+                        secureResult: secureResult,
+                        insecureResult: insecureResult
+                    }
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Security Validation',
+                    success: false,
+                    error: error.message
+                });
+            }
+
+            // Test 4: Sharing Settings Validation
+            console.log('Running Test 4: Sharing Settings Validation');
+            try {
+                const validSettings = {
+                    fundSourceId: 'fund1',
+                    ownerId: 'user1',
+                    isShared: true,
+                    sharedWith: [
+                        {
+                            userId: 'user2',
+                            email: 'user2@example.com',
+                            username: 'User2',
+                            permissions: { canView: true, canEdit: false, canDelete: false }
+                        }
+                    ]
+                };
+
+                const invalidSettings = {
+                    fundSourceId: '',
+                    ownerId: 'user1',
+                    isShared: 'not-boolean',
+                    sharedWith: [
+                        {
+                            userId: 'user1', // Same as owner - should be invalid
+                            email: 'invalid-email',
+                            username: 'User<script>',
+                            permissions: { canView: 'not-boolean' }
+                        }
+                    ]
+                };
+
+                const validResult = SharingValidation.validateSharingSettings(validSettings);
+                const invalidResult = SharingValidation.validateSharingSettings(invalidSettings);
+
+                results.push({
+                    name: 'Sharing Settings Validation',
+                    success: validResult.isValid && !invalidResult.isValid,
+                    details: {
+                        validResult: validResult,
+                        invalidResult: invalidResult
+                    }
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Sharing Settings Validation',
+                    success: false,
+                    error: error.message
+                });
+            }
+
+            // Test 5: Permission Manager Enhanced Validation
+            console.log('Running Test 5: Permission Manager Enhanced Validation');
+            try {
+                const permissionManager = new PermissionManager();
+                
+                const validPermissions = { canView: true, canEdit: false, canDelete: false };
+                const invalidPermissions = { canView: 'not-boolean', canEdit: true, canDelete: true, canManage: false }; // Logic error
+
+                const validResult = permissionManager.validatePermissionsDetailed(validPermissions);
+                const invalidResult = permissionManager.validatePermissionsDetailed(invalidPermissions);
+
+                results.push({
+                    name: 'Permission Manager Enhanced Validation',
+                    success: validResult.errors.length === 0 && invalidResult.errors.length > 0,
+                    details: {
+                        validResult: validResult,
+                        invalidResult: invalidResult
+                    }
+                });
+            } catch (error) {
+                results.push({
+                    name: 'Permission Manager Enhanced Validation',
+                    success: false,
+                    error: error.message
+                });
+            }
+
+            return results;
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('test-results');
+            
+            results.forEach(result => {
+                const section = document.createElement('div');
+                section.className = 'test-section';
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `test-result ${result.success ? 'success' : 'error'}`;
+                
+                resultDiv.innerHTML = `
+                    <h3>${result.name}: ${result.success ? '✅ PASS' : '❌ FAIL'}</h3>
+                    ${result.error ? `<p><strong>Error:</strong> ${result.error}</p>` : ''}
+                    ${result.details ? `<pre>${JSON.stringify(result.details, null, 2)}</pre>` : ''}
+                `;
+                
+                section.appendChild(resultDiv);
+                container.appendChild(section);
+            });
+
+            // Summary
+            const passed = results.filter(r => r.success).length;
+            const total = results.length;
+            const summary = document.createElement('div');
+            summary.className = `test-section ${passed === total ? 'success' : 'warning'}`;
+            summary.innerHTML = `
+                <h2>Test Summary</h2>
+                <p><strong>Passed:</strong> ${passed}/${total}</p>
+                <p><strong>Success Rate:</strong> ${Math.round((passed/total) * 100)}%</p>
+            `;
+            container.insertBefore(summary, container.firstChild);
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Starting Enhanced Validation Tests...');
+            const results = runTests();
+            displayResults(results);
+            console.log('Tests completed:', results);
+        });
+    </script>
+</body>
+</html>

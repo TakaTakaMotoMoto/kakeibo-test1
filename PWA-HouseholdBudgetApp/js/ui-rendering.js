@@ -33,21 +33,30 @@ class UIRenderer {
                 const creatorDisplay = window.dataManager.getTransactionCreatorDisplay(transaction);
                 const canEdit = window.dataManager.canEditTransaction(transaction);
                 const isShared = window.dataManager.isTransactionShared(transaction);
+                const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+                const isOwnTransaction = currentUser && transaction.createdBy === currentUser.id;
+
+                // Enhanced sharing indicator for transactions
+                const sharingIndicator = isShared ? 
+                    `<span class="shared-indicator" title="共有取引">🔗 共有</span>` : '';
+
+                // Enhanced creator display with badge
+                const creatorBadge = this.generateCreatorBadge(transaction, creatorDisplay, isOwnTransaction);
 
                 return `
-                    <div class="transaction-item ${!canEdit ? 'readonly' : ''}" data-id="${transaction.id}">
+                    <div class="transaction-item ${!canEdit ? 'readonly' : ''} ${isShared ? 'shared-transaction' : ''}" data-id="${transaction.id}">
                         <div class="transaction-info">
                             <div class="transaction-category">
                                 ${category ? category.icon : '📦'} ${category ? category.name : 'カテゴリなし'}
                                 ${subcategory ? ` > ${subcategory.name}` : ''}
-                                ${isShared ? '<span class="shared-indicator">🔗</span>' : ''}
+                                ${sharingIndicator}
                             </div>
                             <div class="transaction-date">
                                 ${UIUtils.formatDate(transaction.date)}
                                 ${fundSource ? `・${fundSource.name}` : ''}
                             </div>
                             <div class="transaction-creator">
-                                👤 ${creatorDisplay}
+                                ${creatorBadge}
                             </div>
                             ${transaction.note ? `<div class="transaction-note">${UIUtils.escapeHtml(transaction.note)}</div>` : ''}
                         </div>
@@ -103,23 +112,52 @@ class UIRenderer {
                 `;
             } else {
                 html += fundSources.map(fundSource => {
+                    // Check permissions for fund source management
                     const canDelete = window.dataManager ? 
                         window.dataManager.canDeleteFundSource(fundSource.id) : true;
+                    const canManage = window.dataManager ?
+                        window.dataManager.canManageFundSource(fundSource.id) : true;
+                    const canView = window.dataManager ?
+                        window.dataManager.canViewFundSource(fundSource.id) : true;
+
+                    // Skip fund sources user cannot view
+                    if (!canView) {
+                        return '';
+                    }
 
                     const sharingSettings = window.dataManager ?
                         window.dataManager.getFundSourceSharingSettings(fundSource.id) :
                         { isShared: fundSource.isShared || false, sharedWith: fundSource.sharedWith || [] };
 
                     const sharedCount = sharingSettings.sharedWith.length;
-                    const sharingIndicator = sharingSettings.isShared ?
-                        `<span class="sharing-indicator" title="${sharedCount}人と共有中">🔗 ${sharedCount}</span>` : '';
+                    
+                    // Enhanced sharing indicator with tooltip
+                    let sharingIndicator = '';
+                    if (sharingSettings.isShared) {
+                        const tooltipContent = this.generateSharingTooltip(sharingSettings);
+                        sharingIndicator = `
+                            <span class="sharing-indicator-enhanced" 
+                                  data-tooltip="${tooltipContent}"
+                                  title="${sharedCount}人と共有中">
+                                <span class="sharing-icon">🔗</span>
+                                <span class="sharing-count">${sharedCount}</span>
+                            </span>
+                        `;
+                    }
+
+                    // Get user permission level for display
+                    const permissionLevel = window.dataManager ?
+                        window.dataManager.getUserPermissionLevel(fundSource.id) : null;
+                    const permissionDisplay = permissionLevel && permissionLevel !== 'owner' ?
+                        `<span class="permission-level">${window.permissionManager.getPermissionLevelDisplayName(permissionLevel)}</span>` : '';
 
                     return `
-                        <div class="fundsource-item" data-id="${fundSource.id}">
+                        <div class="fundsource-item ${!canManage ? 'readonly' : ''}" data-id="${fundSource.id}">
                             <div class="fundsource-info">
                                 <div class="fundsource-name">
                                     ${UIUtils.getFundSourceIcon(fundSource.type)} ${UIUtils.escapeHtml(fundSource.name)}
                                     ${sharingIndicator}
+                                    ${permissionDisplay}
                                 </div>
                                 <div class="fundsource-type">
                                     ${UIUtils.getFundSourceTypeName(fundSource.type)}
@@ -130,12 +168,18 @@ class UIRenderer {
                                 <div class="fundsource-balance">
                                     ${UIUtils.formatCurrency(fundSource.currentBalance)}
                                 </div>
-                                <button class="delete-btn ${canDelete ? '' : 'disabled'}" 
-                                        data-id="${fundSource.id}" 
-                                        title="${canDelete ? '削除' : '使用中のため削除できません'}"
-                                        ${canDelete ? '' : 'disabled'}>
-                                    🗑️
-                                </button>
+                                ${canManage ? `
+                                    <button class="delete-btn ${canDelete ? '' : 'disabled'}" 
+                                            data-id="${fundSource.id}" 
+                                            title="${canDelete ? '削除' : '使用中のため削除できません'}"
+                                            ${canDelete ? '' : 'disabled'}>
+                                        🗑️
+                                    </button>
+                                ` : `
+                                    <div class="readonly-indicator" title="管理権限がありません">
+                                        🔒
+                                    </div>
+                                `}
                             </div>
                         </div>
                     `;
@@ -154,7 +198,12 @@ class UIRenderer {
     populateSelects() {
         try {
             const categories = window.storage.getCategories();
-            const fundSources = window.storage.getFundSources();
+            let fundSources = window.storage.getFundSources();
+
+            // Filter fund sources based on user permissions - only show fund sources user can view
+            if (window.dataManager) {
+                fundSources = fundSources.filter(fs => window.dataManager.canViewFundSource(fs.id));
+            }
 
             // Transaction form selects
             const categorySelect = document.getElementById('category');
@@ -166,11 +215,27 @@ class UIRenderer {
             }
 
             if (fundSourceSelect) {
+                // For transaction form, only show fund sources where user can create transactions
+                const editableFundSources = fundSources.filter(fs => {
+                    if (!window.dataManager) return true;
+                    
+                    // Check if user has edit permission for this fund source
+                    const permissions = window.dataManager.getUserPermissions(fs.id);
+                    return permissions && permissions.canEdit;
+                });
+
                 fundSourceSelect.innerHTML = '<option value="">選択してください</option>' +
-                    fundSources.map(fs => `<option value="${fs.id}">${UIUtils.getFundSourceIcon(fs.type)} ${UIUtils.escapeHtml(fs.name)}</option>`).join('');
+                    editableFundSources.map(fs => {
+                        const permissionLevel = window.dataManager ? 
+                            window.dataManager.getUserPermissionLevel(fs.id) : null;
+                        const permissionIndicator = permissionLevel && permissionLevel !== 'owner' ? 
+                            ` (${window.permissionManager.getPermissionLevelDisplayName(permissionLevel)})` : '';
+                        
+                        return `<option value="${fs.id}">${UIUtils.getFundSourceIcon(fs.type)} ${UIUtils.escapeHtml(fs.name)}${permissionIndicator}</option>`;
+                    }).join('');
             }
 
-            // Filter form selects
+            // Filter form selects - show all viewable fund sources for filtering
             const filterCategorySelect = document.getElementById('filter-category');
             const filterFundSourceSelect = document.getElementById('filter-fund-source');
 
@@ -181,7 +246,14 @@ class UIRenderer {
 
             if (filterFundSourceSelect) {
                 filterFundSourceSelect.innerHTML = '<option value="">すべて</option>' +
-                    fundSources.map(fs => `<option value="${fs.id}">${UIUtils.getFundSourceIcon(fs.type)} ${UIUtils.escapeHtml(fs.name)}</option>`).join('');
+                    fundSources.map(fs => {
+                        const permissionLevel = window.dataManager ? 
+                            window.dataManager.getUserPermissionLevel(fs.id) : null;
+                        const permissionIndicator = permissionLevel && permissionLevel !== 'owner' ? 
+                            ` (${window.permissionManager.getPermissionLevelDisplayName(permissionLevel)})` : '';
+                        
+                        return `<option value="${fs.id}">${UIUtils.getFundSourceIcon(fs.type)} ${UIUtils.escapeHtml(fs.name)}${permissionIndicator}</option>`;
+                    }).join('');
             }
 
         } catch (error) {
@@ -200,17 +272,45 @@ class UIRenderer {
                     if (transaction && window.dataManager.canEditTransaction(transaction)) {
                         window.uiManager.editTransaction(id);
                     } else {
-                        UIUtils.showNotification('この取引は編集できません', 'warning');
+                        // Enhanced error message for shared transactions
+                        const isShared = window.dataManager.isTransactionShared(transaction);
+                        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+                        const isOwnTransaction = currentUser && transaction.createdBy === currentUser.id;
+                        
+                        let message = 'この取引は編集できません';
+                        if (isShared && !isOwnTransaction) {
+                            message = '他のユーザーが作成した共有取引は編集できません';
+                        } else if (isShared && !currentUser) {
+                            message = '共有取引を編集するにはログインが必要です';
+                        }
+                        
+                        UIUtils.showNotification(message, 'warning');
                     }
                 }
             });
         });
 
-        // Add delete handlers
+        // Add delete handlers with enhanced permission checking
         container.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const id = btn.dataset.id;
+                const transaction = window.storage.getTransactions().find(t => t.id === id);
+                
+                if (transaction && window.dataManager.canDeleteTransaction && !window.dataManager.canDeleteTransaction(transaction)) {
+                    const isShared = window.dataManager.isTransactionShared(transaction);
+                    const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+                    const isOwnTransaction = currentUser && transaction.createdBy === currentUser.id;
+                    
+                    let message = 'この取引は削除できません';
+                    if (isShared && !isOwnTransaction) {
+                        message = '他のユーザーが作成した共有取引は削除できません';
+                    }
+                    
+                    UIUtils.showNotification(message, 'warning');
+                    return;
+                }
+                
                 window.uiManager.confirmDeleteTransaction(id);
             });
         });
@@ -235,6 +335,120 @@ class UIRenderer {
                 });
             }
         });
+
+        // Add tooltip functionality for sharing indicators
+        this.attachSharingTooltips(container);
+    }
+
+    attachSharingTooltips(container) {
+        const sharingIndicators = container.querySelectorAll('.sharing-indicator-enhanced');
+        
+        sharingIndicators.forEach(indicator => {
+            let tooltip = null;
+            
+            indicator.addEventListener('mouseenter', (e) => {
+                const tooltipContent = e.target.dataset.tooltip;
+                if (tooltipContent && !tooltip) {
+                    tooltip = this.createTooltip(tooltipContent, e.target);
+                    document.body.appendChild(tooltip);
+                    this.positionTooltip(tooltip, e.target);
+                }
+            });
+            
+            indicator.addEventListener('mouseleave', () => {
+                if (tooltip) {
+                    document.body.removeChild(tooltip);
+                    tooltip = null;
+                }
+            });
+        });
+    }
+
+    createTooltip(content, target) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'sharing-tooltip';
+        tooltip.innerHTML = content;
+        return tooltip;
+    }
+
+    positionTooltip(tooltip, target) {
+        const rect = target.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Position above the target element
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = `${rect.left + (rect.width / 2) - (tooltipRect.width / 2)}px`;
+        tooltip.style.top = `${rect.top - tooltipRect.height - 8}px`;
+        tooltip.style.zIndex = '1000';
+        
+        // Adjust if tooltip goes off screen
+        if (tooltip.offsetLeft < 0) {
+            tooltip.style.left = '8px';
+        }
+        if (tooltip.offsetLeft + tooltipRect.width > window.innerWidth) {
+            tooltip.style.left = `${window.innerWidth - tooltipRect.width - 8}px`;
+        }
+    }
+
+    generateSharingTooltip(sharingSettings) {
+        if (!sharingSettings.isShared || !sharingSettings.sharedWith.length) {
+            return '';
+        }
+
+        const users = sharingSettings.sharedWith.slice(0, 3); // Show max 3 users
+        const remainingCount = Math.max(0, sharingSettings.sharedWith.length - 3);
+        
+        let content = '<div class="tooltip-content">';
+        content += '<div class="tooltip-title">共有ユーザー</div>';
+        
+        users.forEach(user => {
+            const username = user.username || user.email || 'ユーザー';
+            const permissions = this.formatPermissions(user.permissions);
+            content += `
+                <div class="tooltip-user">
+                    <div class="tooltip-user-name">${UIUtils.escapeHtml(username)}</div>
+                    <div class="tooltip-user-permissions">${permissions}</div>
+                </div>
+            `;
+        });
+        
+        if (remainingCount > 0) {
+            content += `<div class="tooltip-more">他 ${remainingCount}人</div>`;
+        }
+        
+        content += '</div>';
+        return content;
+    }
+
+    formatPermissions(permissions) {
+        if (!permissions) return '権限なし';
+        
+        const perms = [];
+        if (permissions.canView) perms.push('閲覧');
+        if (permissions.canEdit) perms.push('編集');
+        if (permissions.canDelete) perms.push('削除');
+        
+        return perms.length > 0 ? perms.join('・') : '権限なし';
+    }
+
+    generateCreatorBadge(transaction, creatorDisplay, isOwnTransaction) {
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        
+        if (!transaction.createdBy) {
+            return `<span class="creator-badge guest">👤 ${creatorDisplay}</span>`;
+        }
+        
+        if (isOwnTransaction) {
+            return `<span class="creator-badge self">👤 ${creatorDisplay}</span>`;
+        }
+        
+        // For shared transactions created by others
+        const isShared = window.dataManager.isTransactionShared(transaction);
+        if (isShared) {
+            return `<span class="creator-badge other">👤 ${creatorDisplay}</span>`;
+        }
+        
+        return `<span class="creator-badge">👤 ${creatorDisplay}</span>`;
     }
 
     updatePageTitle() {

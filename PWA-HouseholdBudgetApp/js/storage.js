@@ -7,7 +7,9 @@ class StorageManager {
             subcategories: 'budget_subcategories',
             fundSources: 'budget_fund_sources',
             settings: 'budget_settings',
-            sharingUsers: 'budget_sharing_users'
+            sharingUsers: 'budget_sharing_users',
+            invitations: 'budget_invitations',
+            sharingSettings: 'budget_sharing_settings'
         };
         
         // Initialize default data after a short delay to ensure auth manager is ready
@@ -972,7 +974,15 @@ class StorageManager {
     getSharingUsers() {
         if (!this.hasDataAccess()) return [];
         
-        return this.getItem(this.getUserKey(this.keys.sharingUsers), []);
+        return this.getItem(this.getUserKey(this.keys.sharingUsers), []).map(user => ({
+            ...user,
+            createdAt: new Date(user.createdAt),
+            updatedAt: new Date(user.updatedAt),
+            sharedFundSources: user.sharedFundSources ? user.sharedFundSources.map(fs => ({
+                ...fs,
+                joinedAt: new Date(fs.joinedAt)
+            })) : []
+        }));
     }
 
     setSharingUsers(sharingUsers) {
@@ -981,17 +991,524 @@ class StorageManager {
         return this.setItem(this.getUserKey(this.keys.sharingUsers), sharingUsers);
     }
 
-    // Sharing users management
-    getSharingUsers() {
+    addSharingUser(user) {
+        // Validate shared user data
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateSharedUser(user);
+            if (!validation.isValid) {
+                throw new Error(`Shared user validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        const sharingUsers = this.getSharingUsers();
+        
+        // Check for duplicate email
+        const existingUser = sharingUsers.find(u => u.email === user.email);
+        if (existingUser) {
+            throw new Error('このメールアドレスのユーザーは既に存在します');
+        }
+
+        const newUser = {
+            id: this.generateId(),
+            ...user,
+            sharedFundSources: user.sharedFundSources || [],
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        sharingUsers.push(newUser);
+        this.setSharingUsers(sharingUsers);
+        
+        return newUser;
+    }
+
+    updateSharingUser(id, updates) {
+        const sharingUsers = this.getSharingUsers();
+        const index = sharingUsers.findIndex(user => user.id === id);
+        
+        if (index === -1) return null;
+
+        const updatedUser = {
+            ...sharingUsers[index],
+            ...updates,
+            updatedAt: new Date()
+        };
+
+        // Validate updated user
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateSharedUser(updatedUser);
+            if (!validation.isValid) {
+                throw new Error(`Shared user validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        sharingUsers[index] = updatedUser;
+        this.setSharingUsers(sharingUsers);
+        
+        return sharingUsers[index];
+    }
+
+    deleteSharingUser(id) {
+        const sharingUsers = this.getSharingUsers();
+        const filtered = sharingUsers.filter(user => user.id !== id);
+        
+        if (filtered.length < sharingUsers.length) {
+            this.setSharingUsers(filtered);
+            return true;
+        }
+        
+        return false;
+    }
+
+    getSharingUserByEmail(email) {
+        const sharingUsers = this.getSharingUsers();
+        return sharingUsers.find(user => user.email === email) || null;
+    }
+
+    getSharingUserById(id) {
+        const sharingUsers = this.getSharingUsers();
+        return sharingUsers.find(user => user.id === id) || null;
+    }
+
+    addFundSourceToUser(userId, fundSourceData) {
+        const sharingUsers = this.getSharingUsers();
+        const userIndex = sharingUsers.findIndex(user => user.id === userId);
+        
+        if (userIndex === -1) {
+            throw new Error('ユーザーが見つかりません');
+        }
+
+        const user = sharingUsers[userIndex];
+        
+        // Check if fund source already exists for this user
+        const existingFundSource = user.sharedFundSources.find(fs => fs.fundSourceId === fundSourceData.fundSourceId);
+        if (existingFundSource) {
+            throw new Error('このユーザーは既にこの資金元を共有しています');
+        }
+
+        const newFundSourceEntry = {
+            ...fundSourceData,
+            joinedAt: new Date()
+        };
+
+        user.sharedFundSources.push(newFundSourceEntry);
+        user.updatedAt = new Date();
+
+        sharingUsers[userIndex] = user;
+        this.setSharingUsers(sharingUsers);
+        
+        return user;
+    }
+
+    removeFundSourceFromUser(userId, fundSourceId) {
+        const sharingUsers = this.getSharingUsers();
+        const userIndex = sharingUsers.findIndex(user => user.id === userId);
+        
+        if (userIndex === -1) return false;
+
+        const user = sharingUsers[userIndex];
+        const originalLength = user.sharedFundSources.length;
+        
+        user.sharedFundSources = user.sharedFundSources.filter(fs => fs.fundSourceId !== fundSourceId);
+        
+        if (user.sharedFundSources.length < originalLength) {
+            user.updatedAt = new Date();
+            sharingUsers[userIndex] = user;
+            this.setSharingUsers(sharingUsers);
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Invitations management
+    getInvitations() {
         if (!this.hasDataAccess()) return [];
         
-        return this.getItem(this.getUserKey(this.keys.sharingUsers), []);
+        return this.getItem(this.getUserKey(this.keys.invitations), []).map(invitation => ({
+            ...invitation,
+            createdAt: new Date(invitation.createdAt),
+            expiresAt: new Date(invitation.expiresAt),
+            acceptedAt: invitation.acceptedAt ? new Date(invitation.acceptedAt) : null,
+            updatedAt: new Date(invitation.updatedAt)
+        }));
     }
 
-    setSharingUsers(sharingUsers) {
+    setInvitations(invitations) {
         if (!this.hasDataAccess()) return false;
         
-        return this.setItem(this.getUserKey(this.keys.sharingUsers), sharingUsers);
+        return this.setItem(this.getUserKey(this.keys.invitations), invitations);
+    }
+
+    addInvitation(invitation) {
+        // Validate invitation data
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateInvitation(invitation);
+            if (!validation.isValid) {
+                throw new Error(`Invitation validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        const invitations = this.getInvitations();
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        
+        const newInvitation = {
+            id: this.generateId(),
+            token: window.SharingUtils ? window.SharingUtils.generateInvitationToken() : `inv_${this.generateId()}`,
+            ...invitation,
+            inviterUserId: currentUser ? currentUser.id : null,
+            inviterUsername: currentUser ? currentUser.username : 'ユーザー',
+            status: 'pending',
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+            updatedAt: new Date()
+        };
+
+        invitations.push(newInvitation);
+        this.setInvitations(invitations);
+        
+        return newInvitation;
+    }
+
+    updateInvitation(id, updates) {
+        const invitations = this.getInvitations();
+        const index = invitations.findIndex(inv => inv.id === id);
+        
+        if (index === -1) return null;
+
+        const updatedInvitation = {
+            ...invitations[index],
+            ...updates,
+            updatedAt: new Date()
+        };
+
+        // Validate updated invitation
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateInvitation(updatedInvitation);
+            if (!validation.isValid) {
+                throw new Error(`Invitation validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        invitations[index] = updatedInvitation;
+        this.setInvitations(invitations);
+        
+        return invitations[index];
+    }
+
+    deleteInvitation(id) {
+        const invitations = this.getInvitations();
+        const filtered = invitations.filter(inv => inv.id !== id);
+        
+        if (filtered.length < invitations.length) {
+            this.setInvitations(filtered);
+            return true;
+        }
+        
+        return false;
+    }
+
+    getInvitationByToken(token) {
+        const invitations = this.getInvitations();
+        return invitations.find(inv => inv.token === token) || null;
+    }
+
+    getInvitationsByStatus(status) {
+        const invitations = this.getInvitations();
+        return invitations.filter(inv => inv.status === status);
+    }
+
+    getInvitationsByFundSource(fundSourceId) {
+        const invitations = this.getInvitations();
+        return invitations.filter(inv => inv.fundSourceId === fundSourceId);
+    }
+
+    cleanupExpiredInvitations() {
+        const invitations = this.getInvitations();
+        const now = new Date();
+        let cleaned = 0;
+
+        const validInvitations = invitations.filter(invitation => {
+            const isExpired = new Date(invitation.expiresAt) <= now;
+            if (isExpired && invitation.status === 'pending') {
+                invitation.status = 'expired';
+                cleaned++;
+            }
+            return true; // Keep all invitations, just update status
+        });
+
+        if (cleaned > 0) {
+            this.setInvitations(validInvitations);
+        }
+
+        return cleaned;
+    }
+
+    // Sharing settings management
+    getSharingSettings() {
+        if (!this.hasDataAccess()) return [];
+        
+        return this.getItem(this.getUserKey(this.keys.sharingSettings), []).map(setting => ({
+            ...setting,
+            createdAt: new Date(setting.createdAt),
+            updatedAt: new Date(setting.updatedAt)
+        }));
+    }
+
+    setSharingSettings(settings) {
+        if (!this.hasDataAccess()) return false;
+        
+        return this.setItem(this.getUserKey(this.keys.sharingSettings), settings);
+    }
+
+    addSharingSettings(settings) {
+        // Validate sharing settings data
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateSharingSettings(settings);
+            if (!validation.isValid) {
+                throw new Error(`Sharing settings validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        const allSettings = this.getSharingSettings();
+        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        
+        const newSettings = {
+            ...settings,
+            ownerId: currentUser ? currentUser.id : null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        allSettings.push(newSettings);
+        this.setSharingSettings(allSettings);
+        
+        return newSettings;
+    }
+
+    updateSharingSettings(fundSourceId, updates) {
+        const allSettings = this.getSharingSettings();
+        const index = allSettings.findIndex(setting => setting.fundSourceId === fundSourceId);
+        
+        if (index === -1) {
+            // Create new settings if not found
+            return this.addSharingSettings({ fundSourceId, ...updates });
+        }
+
+        const updatedSettings = {
+            ...allSettings[index],
+            ...updates,
+            updatedAt: new Date()
+        };
+
+        // Validate updated settings
+        if (window.SharingValidation) {
+            const validation = window.SharingValidation.validateSharingSettings(updatedSettings);
+            if (!validation.isValid) {
+                throw new Error(`Sharing settings validation failed: ${validation.errors.join(', ')}`);
+            }
+        }
+
+        allSettings[index] = updatedSettings;
+        this.setSharingSettings(allSettings);
+        
+        return allSettings[index];
+    }
+
+    deleteSharingSettings(fundSourceId) {
+        const allSettings = this.getSharingSettings();
+        const filtered = allSettings.filter(setting => setting.fundSourceId !== fundSourceId);
+        
+        if (filtered.length < allSettings.length) {
+            this.setSharingSettings(filtered);
+            return true;
+        }
+        
+        return false;
+    }
+
+    getSharingSettingsByFundSource(fundSourceId) {
+        const allSettings = this.getSharingSettings();
+        return allSettings.find(setting => setting.fundSourceId === fundSourceId) || null;
+    }
+
+    // Sharing data synchronization methods
+    synchronizeSharingData() {
+        try {
+            console.log('Starting sharing data synchronization...');
+            
+            // Clean up expired invitations
+            const expiredCount = this.cleanupExpiredInvitations();
+            if (expiredCount > 0) {
+                console.log(`Cleaned up ${expiredCount} expired invitations`);
+            }
+            
+            // Synchronize fund source sharing status with transactions
+            this.synchronizeFundSourceSharing();
+            
+            // Clean up orphaned sharing data
+            this.cleanupOrphanedSharingData();
+            
+            console.log('Sharing data synchronization completed');
+            return true;
+            
+        } catch (error) {
+            console.error('Error during sharing data synchronization:', error);
+            return false;
+        }
+    }
+
+    synchronizeFundSourceSharing() {
+        try {
+            const fundSources = this.getFundSources();
+            const transactions = this.getTransactions();
+            let updated = false;
+
+            for (const transaction of transactions) {
+                const fundSource = fundSources.find(fs => fs.id === transaction.fundSourceId);
+                if (fundSource) {
+                    const shouldBeShared = fundSource.isShared || false;
+                    if (transaction.isShared !== shouldBeShared) {
+                        transaction.isShared = shouldBeShared;
+                        transaction.sharedFundSourceId = shouldBeShared ? fundSource.id : null;
+                        transaction.updatedAt = new Date();
+                        updated = true;
+                    }
+                }
+            }
+
+            if (updated) {
+                this.setTransactions(transactions);
+                console.log('Transaction sharing status synchronized');
+            }
+        } catch (error) {
+            console.error('Error synchronizing fund source sharing:', error);
+        }
+    }
+
+    cleanupOrphanedSharingData() {
+        try {
+            const fundSources = this.getFundSources();
+            const fundSourceIds = new Set(fundSources.map(fs => fs.id));
+            
+            // Clean up sharing settings for non-existent fund sources
+            const sharingSettings = this.getSharingSettings();
+            const validSharingSettings = sharingSettings.filter(setting => 
+                fundSourceIds.has(setting.fundSourceId)
+            );
+            
+            if (validSharingSettings.length < sharingSettings.length) {
+                this.setSharingSettings(validSharingSettings);
+                console.log(`Cleaned up ${sharingSettings.length - validSharingSettings.length} orphaned sharing settings`);
+            }
+            
+            // Clean up invitations for non-existent fund sources
+            const invitations = this.getInvitations();
+            const validInvitations = invitations.filter(invitation => 
+                fundSourceIds.has(invitation.fundSourceId)
+            );
+            
+            if (validInvitations.length < invitations.length) {
+                this.setInvitations(validInvitations);
+                console.log(`Cleaned up ${invitations.length - validInvitations.length} orphaned invitations`);
+            }
+            
+            // Clean up shared fund sources from users
+            const sharingUsers = this.getSharingUsers();
+            let usersUpdated = false;
+            
+            for (const user of sharingUsers) {
+                const originalLength = user.sharedFundSources.length;
+                user.sharedFundSources = user.sharedFundSources.filter(fs => 
+                    fundSourceIds.has(fs.fundSourceId)
+                );
+                
+                if (user.sharedFundSources.length < originalLength) {
+                    user.updatedAt = new Date();
+                    usersUpdated = true;
+                }
+            }
+            
+            if (usersUpdated) {
+                this.setSharingUsers(sharingUsers);
+                console.log('Cleaned up orphaned fund sources from shared users');
+            }
+            
+        } catch (error) {
+            console.error('Error cleaning up orphaned sharing data:', error);
+        }
+    }
+
+    // Get sharing statistics
+    getSharingStatistics() {
+        try {
+            const invitations = this.getInvitations();
+            const sharingUsers = this.getSharingUsers();
+            const sharingSettings = this.getSharingSettings();
+            const fundSources = this.getFundSources();
+            const sharedFundSources = fundSources.filter(fs => fs.isShared);
+            
+            return {
+                totalInvitations: invitations.length,
+                pendingInvitations: invitations.filter(inv => inv.status === 'pending').length,
+                acceptedInvitations: invitations.filter(inv => inv.status === 'accepted').length,
+                expiredInvitations: invitations.filter(inv => inv.status === 'expired').length,
+                totalSharedUsers: sharingUsers.length,
+                totalSharingSettings: sharingSettings.length,
+                totalSharedFundSources: sharedFundSources.length,
+                totalFundSources: fundSources.length,
+                sharingPercentage: fundSources.length > 0 ? 
+                    Math.round((sharedFundSources.length / fundSources.length) * 100) : 0
+            };
+        } catch (error) {
+            console.error('Error getting sharing statistics:', error);
+            return null;
+        }
+    }
+
+    // Clear all user data
+    clearAllData() {
+        try {
+            console.log('Clearing all user data...');
+            
+            // Clear all user-specific data
+            this.setTransactions([]);
+            this.setFundSources([]);
+            this.setSubcategories([]);
+            this.setSharingUsers([]);
+            this.setInvitations([]);
+            this.setSharingSettings([]);
+            
+            // Reinitialize default data
+            this.initializeDefaultData();
+            
+            console.log('All user data cleared and defaults restored');
+            return true;
+            
+        } catch (error) {
+            console.error('Error clearing all data:', error);
+            return false;
+        }
+    }
+
+    // Reinitialize user data (called on auth state changes)
+    reinitializeUserData() {
+        try {
+            console.log('Reinitializing user data...');
+            
+            // Initialize default data for current user context
+            this.initializeDefaultData();
+            
+            // Synchronize sharing data
+            this.synchronizeSharingData();
+            
+            console.log('User data reinitialized successfully');
+            return true;
+            
+        } catch (error) {
+            console.error('Error reinitializing user data:', error);
+            return false;
+        }
     }
 }
 

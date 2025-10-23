@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Responsiveness Enhancement Test</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/sharing.css">
+    <link rel="stylesheet" href="styles/ui-responsiveness.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .test-controls {
+            margin: 20px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: 1px solid #007AFF;
+            background: #007AFF;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #0056CC;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        .result-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .result-item.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .result-item.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .result-item.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .demo-fund-source {
+            padding: 16px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .demo-fund-source.optimistic-update {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>UI Responsiveness Enhancement Test</h1>
+        <p>Task 12.2: UI応答性の向上 - Testing enhanced async processing, progress indicators, and optimistic UI</p>
+
+        <!-- Progress Indicators Test -->
+        <div class="test-section">
+            <h2>1. Progress Indicators Test</h2>
+            <p>Test different types of progress indicators with various configurations.</p>
+            <div class="test-controls">
+                <button onclick="testSpinnerProgress()">Test Spinner</button>
+                <button onclick="testProgressBar()">Test Progress Bar</button>
+                <button onclick="testProgressDots()">Test Progress Dots</button>
+                <button onclick="testCancellableProgress()">Test Cancellable</button>
+                <button onclick="testErrorProgress()">Test Error State</button>
+            </div>
+            <div id="progress-results" class="test-results"></div>
+        </div>
+
+        <!-- Optimistic UI Test -->
+        <div class="test-section">
+            <h2>2. Optimistic UI Test</h2>
+            <p>Test optimistic updates with automatic rollback and confirmation.</p>
+            <div class="test-controls">
+                <button onclick="testOptimisticSuccess()">Test Success Flow</button>
+                <button onclick="testOptimisticFailure()">Test Failure Flow</button>
+                <button onclick="testOptimisticTimeout()">Test Timeout</button>
+                <button onclick="testBatchOptimistic()">Test Batch Updates</button>
+            </div>
+            <div id="optimistic-demo">
+                <div class="demo-fund-source" id="demo-fund-1">
+                    <strong>Demo Fund Source 1</strong>
+                    <p>Status: <span id="status-1">Normal</span></p>
+                </div>
+                <div class="demo-fund-source" id="demo-fund-2">
+                    <strong>Demo Fund Source 2</strong>
+                    <p>Status: <span id="status-2">Normal</span></p>
+                </div>
+            </div>
+            <div id="optimistic-results" class="test-results"></div>
+        </div>
+
+        <!-- Async Operations Test -->
+        <div class="test-section">
+            <h2>3. Async Operations Test</h2>
+            <p>Test enhanced async operations with timeout, retry, and parallel execution.</p>
+            <div class="test-controls">
+                <button onclick="testAsyncOperation()">Test Single Operation</button>
+                <button onclick="testAsyncWithRetry()">Test With Retry</button>
+                <button onclick="testParallelOperations()">Test Parallel Operations</button>
+                <button onclick="testAsyncTimeout()">Test Timeout</button>
+            </div>
+            <div id="async-results" class="test-results"></div>
+        </div>
+
+        <!-- Performance Monitoring Test -->
+        <div class="test-section">
+            <h2>4. Performance Monitoring Test</h2>
+            <p>Test performance tracking and metrics collection.</p>
+            <div class="test-controls">
+                <button onclick="testPerformanceTracking()">Test Performance Tracking</button>
+                <button onclick="testMemoryMonitoring()">Test Memory Monitoring</button>
+                <button onclick="testFrameRateMonitoring()">Test Frame Rate</button>
+                <button onclick="showPerformanceMetrics()">Show Metrics</button>
+            </div>
+            <div id="performance-results" class="test-results"></div>
+        </div>
+
+        <!-- Integration Test -->
+        <div class="test-section">
+            <h2>5. Integration Test</h2>
+            <p>Test complete sharing operation flow with all enhancements.</p>
+            <div class="test-controls">
+                <button onclick="testCompleteFlow()">Test Complete Sharing Flow</button>
+                <button onclick="testErrorRecovery()">Test Error Recovery</button>
+                <button onclick="testConcurrentOperations()">Test Concurrent Operations</button>
+            </div>
+            <div id="integration-results" class="test-results"></div>
+        </div>
+    </div>
+
+    <!-- Load Dependencies -->
+    <script src="js/ui-utils.js"></script>
+    <script src="js/performance-cache.js"></script>
+    <script src="js/ui-responsiveness-enhancer.js"></script>
+
+    <script>
+        // Initialize test environment
+        let uiEnhancer;
+        let performanceTracker;
+        let testResults = {};
+
+        // Initialize components
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                uiEnhancer = new UIResponsivenessEnhancer();
+                performanceTracker = new PerformanceTracker();
+                displayResult('progress-results', '✓ UI Responsiveness Enhancer initialized', 'success');
+            } catch (error) {
+                displayResult('progress-results', '✗ Failed to initialize: ' + error.message, 'error');
+            }
+        });
+
+        // Utility function to display results
+        function displayResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const resultItem = document.createElement('div');
+            resultItem.className = `result-item ${type}`;
+            resultItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(resultItem);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearResults(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+        }
+
+        // Progress Indicators Tests
+        function testSpinnerProgress() {
+            clearResults('progress-results');
+            try {
+                const progressId = 'test-spinner';
+                uiEnhancer.progressSystem.create(progressId, {
+                    type: 'spinner',
+                    message: 'Testing spinner progress...',
+                    overlay: true
+                });
+
+                displayResult('progress-results', '✓ Spinner progress created', 'success');
+
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.update(progressId, null, 'Still processing...');
+                    displayResult('progress-results', '✓ Progress message updated', 'success');
+                }, 1500);
+
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.complete(progressId, 'Spinner test completed!');
+                    displayResult('progress-results', '✓ Spinner progress completed', 'success');
+                }, 3000);
+
+            } catch (error) {
+                displayResult('progress-results', '✗ Spinner test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testProgressBar() {
+            clearResults('progress-results');
+            try {
+                const progressId = 'test-bar';
+                uiEnhancer.progressSystem.create(progressId, {
+                    type: 'bar',
+                    message: 'Testing progress bar...',
+                    overlay: false,
+                    position: 'top'
+                });
+
+                displayResult('progress-results', '✓ Progress bar created', 'success');
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 20;
+                    uiEnhancer.progressSystem.update(progressId, progress, `Progress: ${progress}%`);
+                    displayResult('progress-results', `✓ Progress updated to ${progress}%`, 'info');
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        uiEnhancer.progressSystem.complete(progressId, 'Progress bar completed!');
+                        displayResult('progress-results', '✓ Progress bar completed', 'success');
+                    }
+                }, 500);
+
+            } catch (error) {
+                displayResult('progress-results', '✗ Progress bar test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testProgressDots() {
+            clearResults('progress-results');
+            try {
+                const progressId = 'test-dots';
+                uiEnhancer.progressSystem.create(progressId, {
+                    type: 'dots',
+                    message: 'Testing animated dots...',
+                    overlay: false,
+                    position: 'bottom'
+                });
+
+                displayResult('progress-results', '✓ Progress dots created', 'success');
+
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.complete(progressId, 'Dots animation completed!');
+                    displayResult('progress-results', '✓ Progress dots completed', 'success');
+                }, 2500);
+
+            } catch (error) {
+                displayResult('progress-results', '✗ Progress dots test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testCancellableProgress() {
+            clearResults('progress-results');
+            try {
+                const progressId = 'test-cancel';
+                uiEnhancer.progressSystem.create(progressId, {
+                    type: 'spinner',
+                    message: 'Cancellable operation...',
+                    cancellable: true,
+                    onCancel: () => {
+                        displayResult('progress-results', '✓ Operation cancelled by user', 'info');
+                    }
+                });
+
+                displayResult('progress-results', '✓ Cancellable progress created (try clicking cancel)', 'success');
+
+                setTimeout(() => {
+                    if (uiEnhancer.progressIndicators.has(progressId)) {
+                        uiEnhancer.progressSystem.complete(progressId, 'Operation completed without cancellation');
+                        displayResult('progress-results', '✓ Operation completed normally', 'success');
+                    }
+                }, 5000);
+
+            } catch (error) {
+                displayResult('progress-results', '✗ Cancellable progress test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testErrorProgress() {
+            clearResults('progress-results');
+            try {
+                const progressId = 'test-error';
+                uiEnhancer.progressSystem.create(progressId, {
+                    type: 'spinner',
+                    message: 'Testing error state...'
+                });
+
+                displayResult('progress-results', '✓ Progress created', 'success');
+
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.error(progressId, 'Simulated error occurred!');
+                    displayResult('progress-results', '✓ Error state displayed', 'success');
+                }, 2000);
+
+            } catch (error) {
+                displayResult('progress-results', '✗ Error progress test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Optimistic UI Tests
+        function testOptimisticSuccess() {
+            clearResults('optimistic-results');
+            try {
+                const key = 'test-success';
+                const element = document.getElementById('demo-fund-1');
+                const statusElement = document.getElementById('status-1');
+                const originalStatus = statusElement.textContent;
+
+                uiEnhancer.optimisticUI.apply(
+                    key,
+                    () => {
+                        element.classList.add('optimistic-update');
+                        statusElement.textContent = 'Sharing...';
+                        displayResult('optimistic-results', '✓ Optimistic update applied', 'info');
+                        return 'shared';
+                    },
+                    () => {
+                        element.classList.remove('optimistic-update');
+                        statusElement.textContent = originalStatus;
+                        displayResult('optimistic-results', '✓ Rollback executed', 'info');
+                    },
+                    {
+                        progressMessage: 'Sharing fund source...',
+                        timeout: 10000
+                    }
+                );
+
+                // Simulate successful operation
+                setTimeout(() => {
+                    element.classList.remove('optimistic-update');
+                    element.classList.add('optimistic-update', 'confirmed');
+                    statusElement.textContent = 'Shared Successfully';
+                    uiEnhancer.optimisticUI.confirm(key, 'Fund source shared successfully!');
+                    displayResult('optimistic-results', '✓ Optimistic update confirmed', 'success');
+
+                    setTimeout(() => {
+                        element.classList.remove('optimistic-update', 'confirmed');
+                    }, 1000);
+                }, 2000);
+
+            } catch (error) {
+                displayResult('optimistic-results', '✗ Optimistic success test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testOptimisticFailure() {
+            clearResults('optimistic-results');
+            try {
+                const key = 'test-failure';
+                const element = document.getElementById('demo-fund-2');
+                const statusElement = document.getElementById('status-2');
+                const originalStatus = statusElement.textContent;
+
+                uiEnhancer.optimisticUI.apply(
+                    key,
+                    () => {
+                        element.classList.add('optimistic-update');
+                        statusElement.textContent = 'Sharing...';
+                        displayResult('optimistic-results', '✓ Optimistic update applied', 'info');
+                        return 'sharing';
+                    },
+                    () => {
+                        element.classList.remove('optimistic-update');
+                        element.classList.add('optimistic-update', 'failed');
+                        statusElement.textContent = originalStatus;
+                        displayResult('optimistic-results', '✓ Rollback executed due to failure', 'info');
+                        
+                        setTimeout(() => {
+                            element.classList.remove('optimistic-update', 'failed');
+                        }, 1000);
+                    }
+                );
+
+                // Simulate failed operation
+                setTimeout(() => {
+                    uiEnhancer.optimisticUI.rollback(key, 'Sharing operation failed');
+                    displayResult('optimistic-results', '✓ Optimistic update rolled back', 'success');
+                }, 2000);
+
+            } catch (error) {
+                displayResult('optimistic-results', '✗ Optimistic failure test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testOptimisticTimeout() {
+            clearResults('optimistic-results');
+            try {
+                const key = 'test-timeout';
+                const element = document.getElementById('demo-fund-1');
+                const statusElement = document.getElementById('status-1');
+                const originalStatus = statusElement.textContent;
+
+                uiEnhancer.optimisticUI.apply(
+                    key,
+                    () => {
+                        element.classList.add('optimistic-update');
+                        statusElement.textContent = 'Processing...';
+                        displayResult('optimistic-results', '✓ Optimistic update applied with short timeout', 'info');
+                        return 'processing';
+                    },
+                    () => {
+                        element.classList.remove('optimistic-update');
+                        statusElement.textContent = originalStatus;
+                        displayResult('optimistic-results', '✓ Auto-rollback due to timeout', 'info');
+                    },
+                    {
+                        timeout: 3000 // Short timeout for testing
+                    }
+                );
+
+                displayResult('optimistic-results', '⏱ Waiting for timeout (3 seconds)...', 'info');
+
+            } catch (error) {
+                displayResult('optimistic-results', '✗ Optimistic timeout test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testBatchOptimistic() {
+            clearResults('optimistic-results');
+            try {
+                const operations = [
+                    {
+                        key: 'batch-1',
+                        element: document.getElementById('demo-fund-1'),
+                        status: document.getElementById('status-1')
+                    },
+                    {
+                        key: 'batch-2',
+                        element: document.getElementById('demo-fund-2'),
+                        status: document.getElementById('status-2')
+                    }
+                ];
+
+                operations.forEach((op, index) => {
+                    const originalStatus = op.status.textContent;
+                    
+                    uiEnhancer.optimisticUI.apply(
+                        op.key,
+                        () => {
+                            op.element.classList.add('optimistic-update');
+                            op.status.textContent = `Batch ${index + 1}...`;
+                            return `batch-${index + 1}`;
+                        },
+                        () => {
+                            op.element.classList.remove('optimistic-update');
+                            op.status.textContent = originalStatus;
+                        }
+                    );
+                });
+
+                displayResult('optimistic-results', '✓ Batch optimistic updates applied', 'info');
+
+                // Confirm all after delay
+                setTimeout(() => {
+                    operations.forEach(op => {
+                        op.element.classList.remove('optimistic-update');
+                        op.element.classList.add('optimistic-update', 'confirmed');
+                        op.status.textContent = 'Batch Complete';
+                        uiEnhancer.optimisticUI.confirm(op.key);
+                    });
+                    displayResult('optimistic-results', '✓ All batch operations confirmed', 'success');
+
+                    setTimeout(() => {
+                        operations.forEach(op => {
+                            op.element.classList.remove('optimistic-update', 'confirmed');
+                        });
+                    }, 1000);
+                }, 2500);
+
+            } catch (error) {
+                displayResult('optimistic-results', '✗ Batch optimistic test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Async Operations Tests
+        function testAsyncOperation() {
+            clearResults('async-results');
+            try {
+                const operation = () => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve('Operation completed successfully');
+                        }, 2000);
+                    });
+                };
+
+                displayResult('async-results', '⏳ Starting async operation...', 'info');
+
+                uiEnhancer.asyncOptimizer.execute(operation, {
+                    progressMessage: 'Processing async operation...',
+                    successMessage: 'Async operation completed!',
+                    minDuration: 1000
+                }).then(result => {
+                    displayResult('async-results', `✓ ${result}`, 'success');
+                }).catch(error => {
+                    displayResult('async-results', `✗ ${error.message}`, 'error');
+                });
+
+            } catch (error) {
+                displayResult('async-results', '✗ Async operation test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testAsyncWithRetry() {
+            clearResults('async-results');
+            try {
+                let attempts = 0;
+                const operation = () => {
+                    return new Promise((resolve, reject) => {
+                        attempts++;
+                        setTimeout(() => {
+                            if (attempts < 3) {
+                                reject(new Error(`Attempt ${attempts} failed`));
+                            } else {
+                                resolve(`Success on attempt ${attempts}`);
+                            }
+                        }, 1000);
+                    });
+                };
+
+                displayResult('async-results', '⏳ Starting operation with retry...', 'info');
+
+                uiEnhancer.asyncOptimizer.execute(operation, {
+                    progressMessage: 'Attempting operation...',
+                    retries: 3,
+                    retryDelay: 500,
+                    successMessage: 'Operation succeeded with retry!'
+                }).then(result => {
+                    displayResult('async-results', `✓ ${result}`, 'success');
+                }).catch(error => {
+                    displayResult('async-results', `✗ ${error.message}`, 'error');
+                });
+
+            } catch (error) {
+                displayResult('async-results', '✗ Async retry test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testParallelOperations() {
+            clearResults('async-results');
+            try {
+                const operations = [
+                    () => new Promise(resolve => setTimeout(() => resolve('Task 1 complete'), 1000)),
+                    () => new Promise(resolve => setTimeout(() => resolve('Task 2 complete'), 1500)),
+                    () => new Promise(resolve => setTimeout(() => resolve('Task 3 complete'), 800)),
+                    () => new Promise(resolve => setTimeout(() => resolve('Task 4 complete'), 1200)),
+                    () => new Promise(resolve => setTimeout(() => resolve('Task 5 complete'), 900))
+                ];
+
+                displayResult('async-results', '⏳ Starting parallel operations...', 'info');
+
+                uiEnhancer.asyncOptimizer.executeParallel(operations, {
+                    progressMessage: 'Running parallel tasks...',
+                    maxConcurrency: 3
+                }).then(results => {
+                    results.forEach((result, index) => {
+                        displayResult('async-results', `✓ ${result}`, 'success');
+                    });
+                    displayResult('async-results', '✓ All parallel operations completed!', 'success');
+                }).catch(error => {
+                    displayResult('async-results', `✗ ${error.message}`, 'error');
+                });
+
+            } catch (error) {
+                displayResult('async-results', '✗ Parallel operations test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testAsyncTimeout() {
+            clearResults('async-results');
+            try {
+                const operation = () => {
+                    return new Promise((resolve) => {
+                        // This will timeout before resolving
+                        setTimeout(() => {
+                            resolve('This should not complete');
+                        }, 5000);
+                    });
+                };
+
+                displayResult('async-results', '⏳ Starting operation with timeout...', 'info');
+
+                uiEnhancer.asyncOptimizer.execute(operation, {
+                    progressMessage: 'Testing timeout...',
+                    timeout: 2000,
+                    errorMessage: 'Operation timed out as expected'
+                }).then(result => {
+                    displayResult('async-results', `✗ Unexpected success: ${result}`, 'error');
+                }).catch(error => {
+                    displayResult('async-results', `✓ Timeout handled correctly: ${error.message}`, 'success');
+                });
+
+            } catch (error) {
+                displayResult('async-results', '✗ Async timeout test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Performance Monitoring Tests
+        function testPerformanceTracking() {
+            clearResults('performance-results');
+            try {
+                const startTime = performance.now();
+                
+                // Simulate some operations
+                for (let i = 0; i < 1000; i++) {
+                    Math.random() * Math.random();
+                }
+                
+                const duration = performance.now() - startTime;
+                performanceTracker.recordOperation('test-operation', duration);
+                
+                displayResult('performance-results', `✓ Operation recorded: ${duration.toFixed(2)}ms`, 'success');
+                
+                // Record multiple operations
+                for (let i = 0; i < 10; i++) {
+                    const opStart = performance.now();
+                    setTimeout(() => {
+                        const opDuration = performance.now() - opStart;
+                        performanceTracker.recordOperation(`async-op-${i}`, opDuration);
+                    }, i * 10);
+                }
+                
+                displayResult('performance-results', '✓ Multiple operations recorded', 'success');
+                
+            } catch (error) {
+                displayResult('performance-results', '✗ Performance tracking test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testMemoryMonitoring() {
+            clearResults('performance-results');
+            try {
+                if (performance.memory) {
+                    const memory = performance.memory;
+                    displayResult('performance-results', `✓ Used JS Heap: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+                    displayResult('performance-results', `✓ Total JS Heap: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+                    displayResult('performance-results', `✓ JS Heap Limit: ${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`, 'info');
+                } else {
+                    displayResult('performance-results', '⚠ Memory monitoring not supported in this browser', 'info');
+                }
+                
+                // Create some objects to test memory usage
+                const testObjects = [];
+                for (let i = 0; i < 10000; i++) {
+                    testObjects.push({ id: i, data: new Array(100).fill(Math.random()) });
+                }
+                
+                if (performance.memory) {
+                    const newMemory = performance.memory;
+                    displayResult('performance-results', `✓ Memory after allocation: ${(newMemory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'success');
+                }
+                
+                // Clean up
+                testObjects.length = 0;
+                
+            } catch (error) {
+                displayResult('performance-results', '✗ Memory monitoring test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testFrameRateMonitoring() {
+            clearResults('performance-results');
+            try {
+                let frameCount = 0;
+                let startTime = performance.now();
+                
+                function countFrames() {
+                    frameCount++;
+                    if (frameCount < 60) {
+                        requestAnimationFrame(countFrames);
+                    } else {
+                        const endTime = performance.now();
+                        const fps = (frameCount / (endTime - startTime)) * 1000;
+                        displayResult('performance-results', `✓ Estimated FPS: ${fps.toFixed(2)}`, 'success');
+                    }
+                }
+                
+                displayResult('performance-results', '⏳ Measuring frame rate...', 'info');
+                requestAnimationFrame(countFrames);
+                
+            } catch (error) {
+                displayResult('performance-results', '✗ Frame rate monitoring test failed: ' + error.message, 'error');
+            }
+        }
+
+        function showPerformanceMetrics() {
+            clearResults('performance-results');
+            try {
+                const metrics = performanceTracker.getMetrics();
+                
+                displayResult('performance-results', `✓ Frame drops: ${metrics.frameDrops}`, 'info');
+                displayResult('performance-results', `✓ Average operation time: ${metrics.averageOperationTime.toFixed(2)}ms`, 'info');
+                displayResult('performance-results', `✓ Memory trend: ${metrics.memoryTrend}`, 'info');
+                displayResult('performance-results', `✓ Operations recorded: ${metrics.operationTimes.length}`, 'info');
+                
+                if (uiEnhancer) {
+                    const uiMetrics = uiEnhancer.getPerformanceMetrics();
+                    displayResult('performance-results', `✓ Progress indicators: ${uiMetrics.progressIndicators}`, 'info');
+                    displayResult('performance-results', `✓ Optimistic updates: ${uiMetrics.optimisticUpdates}`, 'info');
+                    displayResult('performance-results', `✓ Async operations: ${uiMetrics.asyncOperations}`, 'info');
+                }
+                
+            } catch (error) {
+                displayResult('performance-results', '✗ Performance metrics test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Integration Tests
+        function testCompleteFlow() {
+            clearResults('integration-results');
+            try {
+                displayResult('integration-results', '🚀 Starting complete sharing flow simulation...', 'info');
+                
+                // Step 1: Show progress for fund source sharing
+                const shareProgressId = 'complete-share';
+                uiEnhancer.progressSystem.create(shareProgressId, {
+                    type: 'bar',
+                    message: 'Sharing fund source...'
+                });
+                
+                let progress = 0;
+                const shareInterval = setInterval(() => {
+                    progress += 25;
+                    uiEnhancer.progressSystem.update(shareProgressId, progress, `Step ${progress/25}/4 complete`);
+                    
+                    if (progress >= 100) {
+                        clearInterval(shareInterval);
+                        uiEnhancer.progressSystem.complete(shareProgressId, 'Fund source shared successfully!');
+                        
+                        // Step 2: Simulate invitation sending
+                        setTimeout(() => {
+                            testInvitationFlow();
+                        }, 1000);
+                    }
+                }, 800);
+                
+                displayResult('integration-results', '✓ Fund source sharing initiated', 'success');
+                
+            } catch (error) {
+                displayResult('integration-results', '✗ Complete flow test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testInvitationFlow() {
+            try {
+                const inviteProgressId = 'complete-invite';
+                uiEnhancer.progressSystem.create(inviteProgressId, {
+                    type: 'spinner',
+                    message: 'Sending invitations...'
+                });
+                
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.complete(inviteProgressId, 'Invitations sent successfully!');
+                    displayResult('integration-results', '✓ Invitations sent', 'success');
+                    
+                    // Step 3: Simulate acceptance
+                    setTimeout(() => {
+                        testAcceptanceFlow();
+                    }, 1000);
+                }, 2000);
+                
+            } catch (error) {
+                displayResult('integration-results', '✗ Invitation flow failed: ' + error.message, 'error');
+            }
+        }
+
+        function testAcceptanceFlow() {
+            try {
+                const acceptProgressId = 'complete-accept';
+                
+                // Use optimistic UI for acceptance
+                uiEnhancer.optimisticUI.apply(
+                    'complete-acceptance',
+                    () => {
+                        displayResult('integration-results', '⏳ Optimistically accepting invitation...', 'info');
+                        return 'accepted';
+                    },
+                    () => {
+                        displayResult('integration-results', '↩ Acceptance rolled back', 'info');
+                    }
+                );
+                
+                uiEnhancer.progressSystem.create(acceptProgressId, {
+                    type: 'dots',
+                    message: 'Processing invitation acceptance...'
+                });
+                
+                setTimeout(() => {
+                    uiEnhancer.progressSystem.complete(acceptProgressId, 'Invitation accepted!');
+                    uiEnhancer.optimisticUI.confirm('complete-acceptance', 'Successfully joined shared fund source!');
+                    displayResult('integration-results', '✅ Complete sharing flow finished successfully!', 'success');
+                }, 2500);
+                
+            } catch (error) {
+                displayResult('integration-results', '✗ Acceptance flow failed: ' + error.message, 'error');
+            }
+        }
+
+        function testErrorRecovery() {
+            clearResults('integration-results');
+            try {
+                displayResult('integration-results', '🔧 Testing error recovery mechanisms...', 'info');
+                
+                // Simulate operation that fails and recovers
+                const operation = () => {
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            if (Math.random() > 0.7) {
+                                resolve('Operation succeeded after retry');
+                            } else {
+                                reject(new Error('Simulated network error'));
+                            }
+                        }, 1000);
+                    });
+                };
+                
+                uiEnhancer.asyncOptimizer.execute(operation, {
+                    progressMessage: 'Attempting operation with error recovery...',
+                    retries: 3,
+                    retryDelay: 500,
+                    errorMessage: 'Operation failed after retries'
+                }).then(result => {
+                    displayResult('integration-results', `✓ ${result}`, 'success');
+                }).catch(error => {
+                    displayResult('integration-results', `✓ Error handled gracefully: ${error.message}`, 'success');
+                });
+                
+            } catch (error) {
+                displayResult('integration-results', '✗ Error recovery test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testConcurrentOperations() {
+            clearResults('integration-results');
+            try {
+                displayResult('integration-results', '⚡ Testing concurrent operations...', 'info');
+                
+                const operations = [];
+                for (let i = 0; i < 5; i++) {
+                    operations.push(() => {
+                        return uiEnhancer.asyncOptimizer.execute(
+                            () => new Promise(resolve => 
+                                setTimeout(() => resolve(`Concurrent task ${i + 1} complete`), 
+                                Math.random() * 2000 + 500)
+                            ),
+                            {
+                                progressMessage: `Running task ${i + 1}...`,
+                                showProgress: false // Don't show individual progress for concurrent ops
+                            }
+                        );
+                    });
+                }
+                
+                Promise.all(operations.map(op => op())).then(results => {
+                    results.forEach(result => {
+                        displayResult('integration-results', `✓ ${result}`, 'success');
+                    });
+                    displayResult('integration-results', '✅ All concurrent operations completed!', 'success');
+                }).catch(error => {
+                    displayResult('integration-results', `✗ Concurrent operations failed: ${error.message}`, 'error');
+                });
+                
+            } catch (error) {
+                displayResult('integration-results', '✗ Concurrent operations test failed: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (uiEnhancer) {
+                    displayResult('progress-results', '🎯 UI Responsiveness Enhancement system ready for testing!', 'success');
+                    displayResult('optimistic-results', '🎯 Optimistic UI system ready for testing!', 'success');
+                    displayResult('async-results', '🎯 Async operations system ready for testing!', 'success');
+                    displayResult('performance-results', '🎯 Performance monitoring system ready for testing!', 'success');
+                    displayResult('integration-results', '🎯 Integration testing system ready!', 'success');
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

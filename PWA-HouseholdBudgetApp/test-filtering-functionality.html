@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フィルタリング機能テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 8px 16px; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>フィルタリング機能テスト</h1>
+    
+    <div class="test-section">
+        <h2>1. 基本フィルター機能テスト</h2>
+        <button onclick="testBasicFiltering()">基本フィルターテスト実行</button>
+        <div id="basic-filter-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 共有関連フィルターテスト</h2>
+        <button onclick="testSharingFilters()">共有フィルターテスト実行</button>
+        <div id="sharing-filter-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. フィルター状態保存テスト</h2>
+        <button onclick="testFilterPersistence()">状態保存テスト実行</button>
+        <div id="persistence-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 作成者フィルターテスト</h2>
+        <button onclick="testCreatorFilter()">作成者フィルターテスト実行</button>
+        <div id="creator-filter-result" class="result"></div>
+    </div>
+
+    <script>
+        // Mock dependencies
+        window.storage = {
+            getTransactions: () => [
+                {
+                    id: '1',
+                    amount: -1000,
+                    categoryId: 'cat1',
+                    fundSourceId: 'fs1',
+                    date: new Date('2024-01-15'),
+                    createdBy: 'user1',
+                    createdByUsername: 'テストユーザー1',
+                    isShared: true
+                },
+                {
+                    id: '2',
+                    amount: 2000,
+                    categoryId: 'cat2',
+                    fundSourceId: 'fs2',
+                    date: new Date('2024-01-20'),
+                    createdBy: 'user2',
+                    createdByUsername: 'テストユーザー2',
+                    isShared: false
+                },
+                {
+                    id: '3',
+                    amount: -500,
+                    categoryId: 'cat1',
+                    fundSourceId: 'fs1',
+                    date: new Date('2024-01-25'),
+                    createdBy: 'user1',
+                    createdByUsername: 'テストユーザー1',
+                    isShared: true
+                }
+            ],
+            getCategories: () => [
+                { id: 'cat1', name: 'カテゴリ1' },
+                { id: 'cat2', name: 'カテゴリ2' }
+            ],
+            getFundSources: () => [
+                { id: 'fs1', name: '資金元1', isShared: true },
+                { id: 'fs2', name: '資金元2', isShared: false }
+            ]
+        };
+
+        window.authManager = {
+            getCurrentUser: () => ({ id: 'user1', username: 'テストユーザー1' })
+        };
+
+        // Mock DataManager for testing
+        class MockDataManager {
+            constructor() {
+                this.filters = {
+                    startDate: null,
+                    endDate: null,
+                    category: null,
+                    fundSource: null,
+                    createdBy: null,
+                    showOnlyMyTransactions: false,
+                    showOnlySharedTransactions: false
+                };
+            }
+
+            getTransactions(filtered = false) {
+                let transactions = window.storage.getTransactions();
+                if (filtered && this.hasActiveFilters()) {
+                    transactions = this.applyFilters(transactions);
+                }
+                return transactions;
+            }
+
+            setAdvancedFilters(filters) {
+                this.filters = { ...this.filters, ...filters };
+                this.saveFilterState();
+            }
+
+            clearFilters() {
+                this.filters = {
+                    startDate: null,
+                    endDate: null,
+                    category: null,
+                    fundSource: null,
+                    createdBy: null,
+                    showOnlyMyTransactions: false,
+                    showOnlySharedTransactions: false
+                };
+                this.saveFilterState();
+            }
+
+            hasActiveFilters() {
+                return Object.values(this.filters).some(filter => filter !== null && filter !== false);
+            }
+
+            applyFilters(transactions) {
+                const currentUser = window.authManager.getCurrentUser();
+                
+                return transactions.filter(transaction => {
+                    if (this.filters.startDate && new Date(transaction.date) < new Date(this.filters.startDate)) {
+                        return false;
+                    }
+                    if (this.filters.endDate && new Date(transaction.date) > new Date(this.filters.endDate)) {
+                        return false;
+                    }
+                    if (this.filters.category && transaction.categoryId !== this.filters.category) {
+                        return false;
+                    }
+                    if (this.filters.fundSource && transaction.fundSourceId !== this.filters.fundSource) {
+                        return false;
+                    }
+                    if (this.filters.createdBy && transaction.createdBy !== this.filters.createdBy) {
+                        return false;
+                    }
+                    if (this.filters.showOnlyMyTransactions && currentUser) {
+                        if (transaction.createdBy !== currentUser.id) {
+                            return false;
+                        }
+                    }
+                    if (this.filters.showOnlySharedTransactions) {
+                        if (!transaction.isShared) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            getAvailableCreators() {
+                const transactions = window.storage.getTransactions();
+                const creators = new Set();
+                
+                transactions.forEach(transaction => {
+                    if (transaction.createdBy && transaction.createdByUsername) {
+                        creators.add({
+                            id: transaction.createdBy,
+                            username: transaction.createdByUsername
+                        });
+                    }
+                });
+                
+                return Array.from(creators);
+            }
+
+            getSharedTransactions() {
+                return window.storage.getTransactions().filter(t => t.isShared === true);
+            }
+
+            getMyTransactions() {
+                const currentUser = window.authManager.getCurrentUser();
+                if (!currentUser) return [];
+                return window.storage.getTransactions().filter(t => t.createdBy === currentUser.id);
+            }
+
+            saveFilterState() {
+                try {
+                    const filterState = { ...this.filters, savedAt: new Date().toISOString() };
+                    localStorage.setItem('budget_filter_state', JSON.stringify(filterState));
+                } catch (error) {
+                    console.error('Error saving filter state:', error);
+                }
+            }
+
+            loadFilterState() {
+                try {
+                    const saved = localStorage.getItem('budget_filter_state');
+                    if (saved) {
+                        const filterState = JSON.parse(saved);
+                        const savedAt = new Date(filterState.savedAt);
+                        const now = new Date();
+                        const hoursDiff = (now - savedAt) / (1000 * 60 * 60);
+                        
+                        if (hoursDiff < 24) {
+                            delete filterState.savedAt;
+                            this.filters = { ...this.filters, ...filterState };
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading filter state:', error);
+                }
+                return false;
+            }
+
+            getFilterSummary() {
+                const activeFilters = [];
+                
+                if (this.filters.startDate || this.filters.endDate) {
+                    if (this.filters.startDate && this.filters.endDate) {
+                        activeFilters.push(`期間: ${this.filters.startDate} - ${this.filters.endDate}`);
+                    } else if (this.filters.startDate) {
+                        activeFilters.push(`開始日: ${this.filters.startDate}`);
+                    } else {
+                        activeFilters.push(`終了日: ${this.filters.endDate}`);
+                    }
+                }
+                
+                if (this.filters.category) {
+                    const categories = window.storage.getCategories();
+                    const category = categories.find(c => c.id === this.filters.category);
+                    activeFilters.push(`カテゴリ: ${category ? category.name : 'Unknown'}`);
+                }
+                
+                if (this.filters.fundSource) {
+                    const fundSources = window.storage.getFundSources();
+                    const fundSource = fundSources.find(fs => fs.id === this.filters.fundSource);
+                    activeFilters.push(`資金元: ${fundSource ? fundSource.name : 'Unknown'}`);
+                }
+                
+                if (this.filters.createdBy) {
+                    const creators = this.getAvailableCreators();
+                    const creator = creators.find(c => c.id === this.filters.createdBy);
+                    activeFilters.push(`作成者: ${creator ? creator.username : 'Unknown'}`);
+                }
+                
+                if (this.filters.showOnlyMyTransactions) {
+                    activeFilters.push('自分の取引のみ');
+                }
+                
+                if (this.filters.showOnlySharedTransactions) {
+                    activeFilters.push('共有取引のみ');
+                }
+                
+                return activeFilters;
+            }
+        }
+
+        const dataManager = new MockDataManager();
+
+        function testBasicFiltering() {
+            const result = document.getElementById('basic-filter-result');
+            let output = '<h3>基本フィルターテスト結果:</h3>';
+
+            try {
+                // Test 1: No filters
+                const allTransactions = dataManager.getTransactions(true);
+                output += `<p class="info">フィルターなし: ${allTransactions.length}件の取引</p>`;
+
+                // Test 2: Category filter
+                dataManager.setAdvancedFilters({ category: 'cat1' });
+                const categoryFiltered = dataManager.getTransactions(true);
+                output += `<p class="info">カテゴリフィルター (cat1): ${categoryFiltered.length}件の取引</p>`;
+
+                // Test 3: Date range filter
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ 
+                    startDate: '2024-01-16', 
+                    endDate: '2024-01-24' 
+                });
+                const dateFiltered = dataManager.getTransactions(true);
+                output += `<p class="info">日付フィルター (2024-01-16 to 2024-01-24): ${dateFiltered.length}件の取引</p>`;
+
+                // Test 4: Fund source filter
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ fundSource: 'fs1' });
+                const fundSourceFiltered = dataManager.getTransactions(true);
+                output += `<p class="info">資金元フィルター (fs1): ${fundSourceFiltered.length}件の取引</p>`;
+
+                output += '<p class="success">✓ 基本フィルターテスト完了</p>';
+
+            } catch (error) {
+                output += `<p class="error">✗ エラー: ${error.message}</p>`;
+            }
+
+            result.innerHTML = output;
+        }
+
+        function testSharingFilters() {
+            const result = document.getElementById('sharing-filter-result');
+            let output = '<h3>共有フィルターテスト結果:</h3>';
+
+            try {
+                // Test 1: Show only my transactions
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ showOnlyMyTransactions: true });
+                const myTransactions = dataManager.getTransactions(true);
+                output += `<p class="info">自分の取引のみ: ${myTransactions.length}件の取引</p>`;
+
+                // Test 2: Show only shared transactions
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ showOnlySharedTransactions: true });
+                const sharedTransactions = dataManager.getTransactions(true);
+                output += `<p class="info">共有取引のみ: ${sharedTransactions.length}件の取引</p>`;
+
+                // Test 3: Creator filter
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ createdBy: 'user2' });
+                const creatorFiltered = dataManager.getTransactions(true);
+                output += `<p class="info">作成者フィルター (user2): ${creatorFiltered.length}件の取引</p>`;
+
+                output += '<p class="success">✓ 共有フィルターテスト完了</p>';
+
+            } catch (error) {
+                output += `<p class="error">✗ エラー: ${error.message}</p>`;
+            }
+
+            result.innerHTML = output;
+        }
+
+        function testFilterPersistence() {
+            const result = document.getElementById('persistence-result');
+            let output = '<h3>フィルター状態保存テスト結果:</h3>';
+
+            try {
+                // Test 1: Save filter state
+                dataManager.clearFilters();
+                dataManager.setAdvancedFilters({ 
+                    category: 'cat1', 
+                    showOnlyMyTransactions: true 
+                });
+                output += '<p class="info">フィルター状態を保存しました</p>';
+
+                // Test 2: Create new instance and load state
+                const newDataManager = new MockDataManager();
+                const loaded = newDataManager.loadFilterState();
+                
+                if (loaded) {
+                    output += '<p class="success">✓ フィルター状態の復元に成功</p>';
+                    output += `<p class="info">復元されたフィルター: カテゴリ=${newDataManager.filters.category}, 自分の取引のみ=${newDataManager.filters.showOnlyMyTransactions}</p>`;
+                } else {
+                    output += '<p class="error">✗ フィルター状態の復元に失敗</p>';
+                }
+
+                // Test 3: Filter summary
+                const summary = dataManager.getFilterSummary();
+                output += `<p class="info">フィルター概要: ${summary.join(', ')}</p>`;
+
+                output += '<p class="success">✓ フィルター状態保存テスト完了</p>';
+
+            } catch (error) {
+                output += `<p class="error">✗ エラー: ${error.message}</p>`;
+            }
+
+            result.innerHTML = output;
+        }
+
+        function testCreatorFilter() {
+            const result = document.getElementById('creator-filter-result');
+            let output = '<h3>作成者フィルターテスト結果:</h3>';
+
+            try {
+                // Test 1: Get available creators
+                const creators = dataManager.getAvailableCreators();
+                output += `<p class="info">利用可能な作成者: ${creators.length}人</p>`;
+                creators.forEach(creator => {
+                    output += `<p class="info">- ${creator.username} (ID: ${creator.id})</p>`;
+                });
+
+                // Test 2: Get shared transactions
+                const sharedTransactions = dataManager.getSharedTransactions();
+                output += `<p class="info">共有取引数: ${sharedTransactions.length}件</p>`;
+
+                // Test 3: Get my transactions
+                const myTransactions = dataManager.getMyTransactions();
+                output += `<p class="info">自分の取引数: ${myTransactions.length}件</p>`;
+
+                output += '<p class="success">✓ 作成者フィルターテスト完了</p>';
+
+            } catch (error) {
+                output += `<p class="error">✗ エラー: ${error.message}</p>`;
+            }
+
+            result.innerHTML = output;
+        }
+
+        // Auto-run basic test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testBasicFiltering();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

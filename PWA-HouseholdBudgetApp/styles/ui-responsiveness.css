@@ -1,0 +1,516 @@
+/* UI Responsiveness Enhancement Styles */
+/* Task 12.2: UI応答性の向上 */
+
+/* Progress Indicators */
+.progress-indicator {
+    position: fixed;
+    z-index: 10000;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 200px;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-indicator.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.progress-indicator.removing {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.progress-indicator.with-overlay::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+}
+
+.progress-indicator.complete {
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+}
+
+.progress-indicator.error {
+    background: rgba(244, 67, 54, 0.95);
+    color: white;
+}
+
+/* Progress Message */
+.progress-message {
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 12px;
+    color: #333;
+    line-height: 1.4;
+}
+
+.progress-indicator.complete .progress-message,
+.progress-indicator.error .progress-message {
+    color: white;
+}
+
+/* Progress Spinner */
+.progress-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+}
+
+.spinner-ring {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007AFF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress Bar */
+.progress-bar {
+    width: 200px;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007AFF, #34C759);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Progress Dots */
+.progress-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+}
+
+.progress-dots .dot {
+    width: 8px;
+    height: 8px;
+    background: #007AFF;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.progress-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+.progress-dots .dot:nth-child(2) { animation-delay: -0.16s; }
+.progress-dots .dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Success and Error Icons */
+.success-icon,
+.error-icon {
+    font-size: 24px;
+    font-weight: bold;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: iconPop 0.3s ease-out;
+}
+
+@keyframes iconPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Cancel Button */
+.progress-cancel-btn {
+    margin-top: 12px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.progress-cancel-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Optimistic UI States */
+.optimistic-update {
+    position: relative;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.optimistic-update::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.1), transparent);
+    animation: optimisticShimmer 2s infinite;
+    pointer-events: none;
+}
+
+@keyframes optimisticShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.optimistic-update.confirmed {
+    opacity: 1;
+    animation: confirmPulse 0.5s ease-out;
+}
+
+.optimistic-update.confirmed::after {
+    display: none;
+}
+
+@keyframes confirmPulse {
+    0% { background-color: rgba(76, 175, 80, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.optimistic-update.failed {
+    opacity: 1;
+    animation: failurePulse 0.5s ease-out;
+}
+
+.optimistic-update.failed::after {
+    display: none;
+}
+
+@keyframes failurePulse {
+    0% { background-color: rgba(244, 67, 54, 0.2); }
+    100% { background-color: transparent; }
+}
+
+/* Enhanced Loading States */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.loading-skeleton.text {
+    height: 16px;
+    margin: 4px 0;
+}
+
+.loading-skeleton.title {
+    height: 20px;
+    width: 60%;
+    margin: 8px 0;
+}
+
+.loading-skeleton.button {
+    height: 36px;
+    width: 100px;
+    margin: 8px 0;
+}
+
+/* Async Operation Indicators */
+.async-operation-indicator {
+    position: relative;
+}
+
+.async-operation-indicator::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #007AFF, #34C759, #007AFF);
+    background-size: 200% 200%;
+    border-radius: inherit;
+    z-index: -1;
+    animation: asyncGlow 2s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes asyncGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Enhanced Button States */
+.btn.processing {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn.processing::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: buttonSpin 1s linear infinite;
+}
+
+@keyframes buttonSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn.success {
+    background-color: #34C759;
+    animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn.error {
+    background-color: #FF3B30;
+    animation: errorShake 0.6s ease-out;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Responsive Progress Indicators */
+@media (max-width: 768px) {
+    .progress-indicator {
+        min-width: 280px;
+        max-width: 90vw;
+        padding: 16px;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        max-width: 240px;
+    }
+    
+    .progress-message {
+        font-size: 13px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .progress-indicator {
+        background: rgba(28, 28, 30, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .progress-message {
+        color: #ffffff;
+    }
+    
+    .progress-bar {
+        background: #2c2c2e;
+    }
+    
+    .spinner-ring {
+        border: 3px solid #2c2c2e;
+        border-top: 3px solid #007AFF;
+    }
+    
+    .loading-skeleton {
+        background: linear-gradient(90deg, #2c2c2e 25%, #3a3a3c 50%, #2c2c2e 75%);
+        background-size: 200% 100%;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .progress-indicator {
+        border: 2px solid #000;
+        background: #fff;
+    }
+    
+    .progress-message {
+        color: #000;
+        font-weight: 600;
+    }
+    
+    .spinner-ring {
+        border: 3px solid #ccc;
+        border-top: 3px solid #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .progress-indicator,
+    .optimistic-update,
+    .btn.processing::after,
+    .spinner-ring,
+    .progress-dots .dot {
+        animation: none;
+    }
+    
+    .progress-bar-fill::after {
+        display: none;
+    }
+    
+    .optimistic-update::after {
+        display: none;
+    }
+}
+
+/* Performance Monitoring Indicator */
+.performance-monitor {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: monospace;
+    z-index: 9999;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.performance-monitor:hover {
+    opacity: 1;
+}
+
+.performance-monitor.hidden {
+    display: none;
+}
+
+/* Batch Operation Progress */
+.batch-progress {
+    margin-top: 8px;
+}
+
+.batch-progress-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.batch-progress-status {
+    font-weight: 500;
+}
+
+.batch-progress-status.success {
+    color: #34C759;
+}
+
+.batch-progress-status.error {
+    color: #FF3B30;
+}
+
+.batch-progress-status.pending {
+    color: #007AFF;
+}
+
+/* Micro-interactions */
+.ui-element-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui-element-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ui-element-active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+/* Smooth state transitions */
+.state-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimizations Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Performance Optimizations Test</h1>
+    <p>This page tests the performance optimization features implemented for the sharing system.</p>
+
+    <div class="test-section">
+        <h2>1. Performance Cache Test</h2>
+        <button onclick="testPerformanceCache()">Test Cache</button>
+        <div id="cache-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Data Access Optimizer Test</h2>
+        <button onclick="testDataOptimizer()">Test Data Optimizer</button>
+        <div id="optimizer-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. UI Responsiveness Optimizer Test</h2>
+        <button onclick="testUIOptimizer()">Test UI Optimizer</button>
+        <div id="ui-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Performance Monitor Test</h2>
+        <button onclick="testPerformanceMonitor()">Test Performance Monitor</button>
+        <div id="monitor-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Memory Management Test</h2>
+        <button onclick="testMemoryManagement()">Test Memory Management</button>
+        <div id="memory-results"></div>
+    </div>
+
+    <!-- Load performance optimization scripts -->
+    <script src="js/performance-cache.js"></script>
+    <script src="js/performance-monitor.js"></script>
+
+    <script>
+        // Mock storage for testing
+        const mockStorage = {
+            getFundSources: () => [
+                { id: 'fs1', name: 'Test Fund 1', isShared: true, sharedWith: [] },
+                { id: 'fs2', name: 'Test Fund 2', isShared: false, sharedWith: [] }
+            ],
+            getTransactions: () => [
+                { id: 't1', amount: 100, fundSourceId: 'fs1', isShared: true },
+                { id: 't2', amount: -50, fundSourceId: 'fs2', isShared: false }
+            ],
+            getCategories: () => [
+                { id: 'c1', name: 'Food' },
+                { id: 'c2', name: 'Transport' }
+            ],
+            getSubcategories: () => []
+        };
+
+        function displayResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            container.appendChild(resultDiv);
+        }
+
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        function testPerformanceCache() {
+            clearResults('cache-results');
+            
+            try {
+                // Test cache creation
+                const cache = new PerformanceCache();
+                displayResult('cache-results', '✓ PerformanceCache created successfully', 'success');
+
+                // Test cache operations
+                cache.set('test-key', { data: 'test-value' }, 1000);
+                const retrieved = cache.get('test-key');
+                
+                if (retrieved && retrieved.data === 'test-value') {
+                    displayResult('cache-results', '✓ Cache set/get operations working', 'success');
+                } else {
+                    displayResult('cache-results', '✗ Cache set/get operations failed', 'error');
+                }
+
+                // Test cache expiry
+                cache.set('expire-test', 'value', 1);
+                setTimeout(() => {
+                    const expired = cache.get('expire-test');
+                    if (expired === null) {
+                        displayResult('cache-results', '✓ Cache expiry working correctly', 'success');
+                    } else {
+                        displayResult('cache-results', '✗ Cache expiry not working', 'error');
+                    }
+                }, 10);
+
+                // Test cache statistics
+                const stats = cache.getStats();
+                displayResult('cache-results', `Cache stats: ${JSON.stringify(stats)}`, 'info');
+
+            } catch (error) {
+                displayResult('cache-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testDataOptimizer() {
+            clearResults('optimizer-results');
+            
+            try {
+                // Test data optimizer creation
+                const cache = new PerformanceCache();
+                const optimizer = new DataAccessOptimizer(mockStorage, cache);
+                displayResult('optimizer-results', '✓ DataAccessOptimizer created successfully', 'success');
+
+                // Test optimized data retrieval
+                const fundSources = optimizer.getFundSources();
+                if (fundSources && fundSources.length === 2) {
+                    displayResult('optimizer-results', '✓ Optimized fund source retrieval working', 'success');
+                } else {
+                    displayResult('optimizer-results', '✗ Optimized fund source retrieval failed', 'error');
+                }
+
+                // Test caching
+                const cachedFundSources = optimizer.getFundSources(true);
+                if (cachedFundSources && cachedFundSources.length === 2) {
+                    displayResult('optimizer-results', '✓ Cached data retrieval working', 'success');
+                } else {
+                    displayResult('optimizer-results', '✗ Cached data retrieval failed', 'error');
+                }
+
+                // Test batch operations
+                optimizer.batchOperation({
+                    type: 'test',
+                    execute: () => {
+                        displayResult('optimizer-results', '✓ Batch operation executed', 'success');
+                    }
+                });
+
+                // Test memory cleanup
+                optimizer.performMemoryCleanup();
+                displayResult('optimizer-results', '✓ Memory cleanup completed', 'success');
+
+            } catch (error) {
+                displayResult('optimizer-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testUIOptimizer() {
+            clearResults('ui-results');
+            
+            try {
+                // Test UI optimizer creation
+                const uiOptimizer = new UIResponsivenessOptimizer();
+                displayResult('ui-results', '✓ UIResponsivenessOptimizer created successfully', 'success');
+
+                // Test debounced updates
+                let updateCount = 0;
+                const testUpdate = () => updateCount++;
+                
+                uiOptimizer.debounceUpdate('test-key', testUpdate, 100);
+                uiOptimizer.debounceUpdate('test-key', testUpdate, 100);
+                uiOptimizer.debounceUpdate('test-key', testUpdate, 100);
+
+                setTimeout(() => {
+                    if (updateCount === 1) {
+                        displayResult('ui-results', '✓ Debounced updates working correctly', 'success');
+                    } else {
+                        displayResult('ui-results', `✗ Debounced updates failed (count: ${updateCount})`, 'error');
+                    }
+                }, 150);
+
+                // Test queued updates
+                uiOptimizer.queueUpdate(() => {
+                    displayResult('ui-results', '✓ Queued update executed', 'success');
+                }, 'high');
+
+                // Test performance metrics
+                const metrics = uiOptimizer.getPerformanceMetrics();
+                displayResult('ui-results', `Performance metrics: ${JSON.stringify(metrics)}`, 'info');
+
+                // Test throttling
+                let throttleCount = 0;
+                const throttledFunction = uiOptimizer.throttle(() => throttleCount++, 100);
+                
+                throttledFunction();
+                throttledFunction();
+                throttledFunction();
+
+                setTimeout(() => {
+                    if (throttleCount === 1) {
+                        displayResult('ui-results', '✓ Throttling working correctly', 'success');
+                    } else {
+                        displayResult('ui-results', `✗ Throttling failed (count: ${throttleCount})`, 'error');
+                    }
+                }, 50);
+
+            } catch (error) {
+                displayResult('ui-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testPerformanceMonitor() {
+            clearResults('monitor-results');
+            
+            try {
+                // Test performance monitor creation
+                const monitor = new PerformanceMonitor();
+                displayResult('monitor-results', '✓ PerformanceMonitor created successfully', 'success');
+
+                // Test performance report
+                const report = monitor.getPerformanceReport();
+                if (report && report.summary) {
+                    displayResult('monitor-results', '✓ Performance report generated', 'success');
+                    displayResult('monitor-results', `<pre>${JSON.stringify(report.summary, null, 2)}</pre>`, 'info');
+                } else {
+                    displayResult('monitor-results', '✗ Performance report generation failed', 'error');
+                }
+
+                // Test operation recording
+                monitor.recordOperation('testOperation', 150, true);
+                displayResult('monitor-results', '✓ Operation recording working', 'success');
+
+                // Test memory usage recording
+                monitor.recordMemoryUsage();
+                displayResult('monitor-results', '✓ Memory usage recording working', 'success');
+
+                // Test recommendations
+                const recommendations = monitor.getRecommendations();
+                displayResult('monitor-results', `Recommendations: ${recommendations.length} items`, 'info');
+
+            } catch (error) {
+                displayResult('monitor-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function testMemoryManagement() {
+            clearResults('memory-results');
+            
+            try {
+                // Test cache memory management
+                const cache = new PerformanceCache();
+                
+                // Fill cache with test data
+                for (let i = 0; i < 150; i++) {
+                    cache.set(`test-key-${i}`, { data: `test-value-${i}` });
+                }
+                
+                const statsAfterFill = cache.getStats();
+                displayResult('memory-results', `Cache filled: ${statsAfterFill.size} items`, 'info');
+
+                // Test cache cleanup
+                cache.cleanupExpired();
+                const statsAfterCleanup = cache.getStats();
+                displayResult('memory-results', `After cleanup: ${statsAfterCleanup.size} items`, 'info');
+
+                if (statsAfterCleanup.size <= cache.maxCacheSize) {
+                    displayResult('memory-results', '✓ Cache size management working', 'success');
+                } else {
+                    displayResult('memory-results', '✗ Cache size management failed', 'error');
+                }
+
+                // Test data optimizer memory management
+                const optimizer = new DataAccessOptimizer(mockStorage, cache);
+                optimizer.performMemoryCleanup();
+                displayResult('memory-results', '✓ Data optimizer memory cleanup completed', 'success');
+
+                // Test memory usage estimation
+                const memoryUsage = optimizer.estimateMemoryUsage();
+                displayResult('memory-results', `Estimated memory usage: ${memoryUsage.estimatedKB} KB`, 'info');
+
+            } catch (error) {
+                displayResult('memory-results', `✗ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                displayResult('cache-results', 'Performance optimization classes loaded successfully', 'success');
+                displayResult('optimizer-results', 'Ready for testing', 'info');
+                displayResult('ui-results', 'Ready for testing', 'info');
+                displayResult('monitor-results', 'Ready for testing', 'info');
+                displayResult('memory-results', 'Ready for testing', 'info');
+            }, 100);
+        });
+    </script>
+</body>
+</html>

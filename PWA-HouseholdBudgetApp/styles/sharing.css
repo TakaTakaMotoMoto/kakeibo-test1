@@ -1,0 +1,1428 @@
+/* Sharing UI Styles */
+
+/* Sharing Management */
+.sharing-management {
+    max-width: 600px;
+}
+
+.sharing-intro {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+}
+
+.sharing-intro p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.fund-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.fund-source-item {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.fund-source-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.fund-source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.fund-source-info {
+    flex: 1;
+}
+
+.fund-source-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.fund-source-status {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sharing-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.sharing-badge.shared {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+    border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.sharing-badge.not-shared {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8E8E93;
+    border: 1px solid rgba(142, 142, 147, 0.2);
+}
+
+.invitation-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+    border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.fund-source-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.shared-users-preview {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.shared-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.shared-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--background-color);
+    border-radius: 6px;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.user-permissions {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.permission-tag {
+    padding: 0.125rem 0.375rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: rgba(0, 122, 255, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+.permission-tag.granted {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+    border-color: rgba(52, 199, 89, 0.2);
+}
+
+.permission-tag.denied {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8E8E93;
+    border-color: rgba(142, 142, 147, 0.2);
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.more-users {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Fund Source Sharing Modal */
+.fund-source-sharing {
+    max-width: 600px;
+}
+
+.fund-source-info-header {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+}
+
+.fund-source-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.fund-source-details p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* Invitation Form */
+.invitation-form-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.invitation-form-section h5 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+
+.invitation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.permission-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.permission-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.permission-option input[type="checkbox"] {
+    margin: 0;
+}
+
+.permission-option input[type="checkbox"]:disabled {
+    opacity: 0.6;
+}
+
+.permission-option span {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+/* Shared Users Section */
+.shared-users-section,
+.pending-invitations-section {
+    margin-bottom: 2rem;
+}
+
+.shared-users-section h5,
+.pending-invitations-section h5 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shared-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5rem;
+}
+
+.shared-user-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Pending Invitations */
+.pending-invitations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pending-invitation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.invitation-info {
+    flex: 1;
+}
+
+.invitation-email {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.invitation-date,
+.invitation-expires {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.invitation-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Sharing Actions */
+.sharing-actions-section {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+/* Invitation Acceptance */
+.invitation-acceptance {
+    max-width: 600px;
+}
+
+.invitation-details-section {
+    margin-top: 1.5rem;
+}
+
+.invitation-details {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+}
+
+.invitation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invitation-header h5 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.invitation-status {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.invitation-status.valid {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+    border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.invitation-status.invalid {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+    border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.invitation-info-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.invitation-from h6,
+.fund-source-details h6,
+.permissions-details h6 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invitation-from p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.fund-source-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.fund-source-icon {
+    font-size: 2rem;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+    border-radius: 50%;
+}
+
+.fund-source-info {
+    flex: 1;
+}
+
+.fund-source-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.fund-source-type {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.fund-source-balance {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.permissions-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.invitation-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+}
+
+.invitation-date,
+.invitation-expires {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.invitation-error {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    border-radius: var(--border-radius);
+    color: #FF3B30;
+}
+
+.invitation-error p {
+    margin: 0 0 0.5rem 0;
+}
+
+.invitation-error p:last-child {
+    margin-bottom: 0;
+}
+
+.invitation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Shared Users Management */
+.shared-users-management {
+    max-width: 600px;
+}
+
+.received-invitations-section,
+.shared-fund-sources-section {
+    margin-bottom: 2rem;
+}
+
+.received-invitations-section h5,
+.shared-fund-sources-section h5 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.received-invitations-list,
+.shared-fund-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.received-invitation-item,
+.shared-fund-source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.received-invitation-item:hover,
+.shared-fund-source-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.invitation-from {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.invitation-fund-source {
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.fund-source-owner {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.fund-source-balance {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+.empty-state p:last-child {
+    margin-bottom: 0;
+}
+
+/* Form Help Text */
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Enhanced Sharing Indicators */
+.sharing-indicator-enhanced {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--primary-color);
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.sharing-indicator-enhanced:hover {
+    background: rgba(0, 122, 255, 0.15);
+    border-color: rgba(0, 122, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.sharing-icon {
+    font-size: 0.875rem;
+}
+
+.sharing-count {
+    font-weight: 600;
+    min-width: 1rem;
+    text-align: center;
+}
+
+/* Sharing Tooltip */
+.sharing-tooltip {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 0.75rem;
+    max-width: 250px;
+    font-size: 0.875rem;
+    z-index: 1000;
+}
+
+.tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tooltip-user {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.tooltip-user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.tooltip-user-permissions {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.tooltip-more {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Transaction Sharing Indicators */
+.shared-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    padding: 0.125rem 0.375rem;
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.shared-transaction {
+    border-left: 3px solid var(--primary-color);
+    background: rgba(0, 122, 255, 0.02);
+}
+
+.shared-transaction:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.transaction-creator {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.creator-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    background: rgba(142, 142, 147, 0.1);
+    border: 1px solid rgba(142, 142, 147, 0.2);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.creator-badge.self {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+    border-color: rgba(52, 199, 89, 0.2);
+}
+
+.creator-badge.other {
+    background: rgba(0, 122, 255, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(0, 122, 255, 0.2);
+}
+
+.creator-badge.guest {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+    border-color: rgba(255, 149, 0, 0.2);
+}
+
+.readonly-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(142, 142, 147, 0.1);
+    border: 1px solid rgba(142, 142, 147, 0.2);
+    border-radius: 50%;
+    color: #8E8E93;
+    font-size: 0.875rem;
+    cursor: help;
+}
+
+.transaction-item.readonly {
+    background: rgba(142, 142, 147, 0.05);
+    border-left: 3px solid rgba(142, 142, 147, 0.3);
+}
+
+.transaction-item.readonly:hover {
+    background: rgba(142, 142, 147, 0.08);
+}
+
+/* Permission Level Indicators */
+.permission-level {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.375rem;
+    background: rgba(255, 149, 0, 0.1);
+    border: 1px solid rgba(255, 149, 0, 0.2);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #FF9500;
+    margin-left: 0.5rem;
+}
+
+.permission-level.owner {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+    border-color: rgba(52, 199, 89, 0.2);
+}
+
+.permission-level.editor {
+    background: rgba(0, 122, 255, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(0, 122, 255, 0.2);
+}
+
+.permission-level.viewer {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8E8E93;
+    border-color: rgba(142, 142, 147, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .fund-source-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .fund-source-actions {
+        align-self: stretch;
+    }
+    
+    .fund-source-actions .btn {
+        flex: 1;
+    }
+    
+    .shared-user-item,
+    .pending-invitation-item,
+    .received-invitation-item,
+    .shared-fund-source-item {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .user-actions,
+    .invitation-actions {
+        align-self: stretch;
+    }
+    
+    .user-actions .btn,
+    .invitation-actions .btn {
+        flex: 1;
+    }
+    
+    .invitation-actions {
+        flex-direction: column;
+    }
+    
+    .fund-source-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .permissions-list {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .sharing-management,
+    .fund-source-sharing,
+    .invitation-acceptance,
+    .shared-users-management {
+        max-width: 100%;
+    }
+    
+    .invitation-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .invitation-status {
+        align-self: center;
+    }
+}/* Filter
+ Checkbox Styles */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    margin-right: 0.75rem;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.checkbox-label:hover .checkmark {
+    border-color: var(--primary-color);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-label input[type="checkbox"]:disabled + .checkmark {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkbox-label input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}/* Creator 
+Badge Styles */
+.creator-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    background-color: var(--background-color);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    margin-top: 0.25rem;
+}
+
+.creator-badge.self {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.creator-badge.other {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #856404;
+    border-color: #ffc107;
+}
+
+.creator-badge.guest {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+/* Enhanced Transaction Styles */
+.shared-transaction {
+    border-left: 3px solid var(--primary-color);
+    background: linear-gradient(90deg, rgba(0, 123, 255, 0.05) 0%, transparent 100%);
+}
+
+.shared-transaction .shared-indicator {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    background: rgba(0, 123, 255, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 8px;
+    margin-left: 0.5rem;
+}
+
+.transaction-creator {
+    margin-top: 0.25rem;
+}
+
+/* Filter Modal Enhancements */
+.form-group label {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-group select,
+.form-group input[type="date"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--surface-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group select:focus,
+.form-group input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+/* Filter Status Indicator */
+.filter-status {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    background: rgba(0, 123, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    margin-left: 0.5rem;
+}
+
+.header-btn.filter-active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.header-btn.filter-active .icon {
+    opacity: 1;
+}/* 
+Filter Summary Display */
+.filter-summary {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(0, 123, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+    padding: 0.5rem 1rem;
+    z-index: 10;
+}
+
+.filter-summary .filter-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.filter-summary .filter-status .icon {
+    margin-right: 0.5rem;
+}
+
+/* Adjust main content when filter summary is shown */
+.main-content {
+    transition: margin-top 0.2s ease;
+}
+
+.app-header {
+    position: relative;
+}
+
+/* Enhanced Filter Modal */
+.modal-body .form-group:last-of-type {
+    margin-bottom: 1.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.form-actions .btn {
+    min-width: 100px;
+}
+
+/* Filter Button Active State */
+.header-btn.filter-active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.header-btn.filter-active:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+/* Responsive Filter Summary */
+@media (max-width: 768px) {
+    .filter-summary {
+        padding: 0.375rem 1rem;
+    }
+    
+    .filter-summary .filter-status {
+        font-size: 0.75rem;
+    }
+}
+/* Enhance
+d UI Responsiveness Styles (Task 12.2) */
+
+/* Invitation sent indicator */
+.invitation-sent-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    z-index: 10001;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.invitation-sent-indicator.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.invitation-sent-indicator.removing {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+}
+
+.invitation-sent-indicator .success-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    animation: successPop 0.5s ease-out;
+}
+
+.invitation-sent-indicator .success-message {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+@keyframes successPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Enhanced button states */
+.btn.processing {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn.processing::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: buttonSpin 1s linear infinite;
+    color: inherit;
+}
+
+@keyframes buttonSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Smooth transitions for sharing elements */
+.fund-source-item,
+.shared-user-item,
+.invitation-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fund-source-item.fade-out,
+.shared-user-item.fade-out,
+.invitation-item.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.fund-source-item.fade-in,
+.shared-user-item.fade-in,
+.invitation-item.fade-in {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Enhanced hover effects */
+.fund-source-item:hover,
+.shared-user-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Optimistic update states */
+.fund-source-item.optimistic-update {
+    position: relative;
+    opacity: 0.8;
+}
+
+.fund-source-item.optimistic-update::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.1), transparent);
+    animation: optimisticShimmer 2s infinite;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+@keyframes optimisticShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.fund-source-item.optimistic-update.confirmed {
+    opacity: 1;
+    animation: confirmPulse 0.5s ease-out;
+}
+
+.fund-source-item.optimistic-update.confirmed::after {
+    display: none;
+}
+
+@keyframes confirmPulse {
+    0% { background-color: rgba(76, 175, 80, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.fund-source-item.optimistic-update.failed {
+    opacity: 1;
+    animation: failurePulse 0.5s ease-out;
+}
+
+.fund-source-item.optimistic-update.failed::after {
+    display: none;
+}
+
+@keyframes failurePulse {
+    0% { background-color: rgba(244, 67, 54, 0.2); }
+    100% { background-color: transparent; }
+}
+
+/* Loading skeleton for sharing content */
+.sharing-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.sharing-skeleton.fund-source {
+    height: 80px;
+    margin: 8px 0;
+}
+
+.sharing-skeleton.user-item {
+    height: 60px;
+    margin: 6px 0;
+}
+
+.sharing-skeleton.invitation {
+    height: 100px;
+    margin: 8px 0;
+}
+
+/* Enhanced modal animations */
+.modal.sharing-enhanced {
+    animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal.sharing-enhanced.closing {
+    animation: modalSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+/* Micro-interactions for sharing elements */
+.sharing-badge {
+    transition: all 0.2s ease;
+}
+
+.sharing-badge:hover {
+    transform: scale(1.05);
+}
+
+.permission-tag {
+    transition: all 0.2s ease;
+}
+
+.permission-tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced form interactions */
+.form-control:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+}
+
+/* Batch operation progress */
+.batch-operation-progress {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007AFF;
+}
+
+.batch-operation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.batch-operation-status {
+    font-weight: 500;
+}
+
+.batch-operation-status.success {
+    color: #34C759;
+}
+
+.batch-operation-status.error {
+    color: #FF3B30;
+}
+
+.batch-operation-status.pending {
+    color: #007AFF;
+}
+
+/* Performance indicator */
+.sharing-performance-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: monospace;
+    z-index: 9998;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.sharing-performance-indicator:hover {
+    opacity: 1;
+}
+
+.sharing-performance-indicator.hidden {
+    display: none;
+}
+
+/* Enhanced responsive design for UI responsiveness */
+@media (max-width: 768px) {
+    .invitation-sent-indicator {
+        max-width: 90vw;
+        padding: 16px;
+    }
+
+    .invitation-sent-indicator .success-icon {
+        font-size: 28px;
+    }
+
+    .invitation-sent-indicator .success-message {
+        font-size: 13px;
+    }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+    .sharing-skeleton {
+        background: linear-gradient(90deg, #2c2c2e 25%, #3a3a3c 50%, #2c2c2e 75%);
+        background-size: 200% 100%;
+    }
+
+    .batch-operation-progress {
+        background: #1c1c1e;
+        border-left-color: #007AFF;
+    }
+
+    .sharing-performance-indicator {
+        background: rgba(28, 28, 30, 0.9);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .fund-source-item,
+    .shared-user-item,
+    .invitation-item,
+    .btn.processing::after,
+    .sharing-skeleton {
+        animation: none;
+        transition: none;
+    }
+
+    .fund-source-item.optimistic-update::after {
+        display: none;
+    }
+
+    .invitation-sent-indicator .success-icon {
+        animation: none;
+    }
+}

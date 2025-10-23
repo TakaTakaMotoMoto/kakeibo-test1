@@ -2323,6 +2323,54 @@ Subcategory Management Styles */
     color: white;
 }
 
+/* Permission Level Indicators */
+.permission-level {
+    display: inline-block;
+    background: var(--secondary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.75em;
+    margin-left: 6px;
+    font-weight: 500;
+}
+
+/* Readonly Indicators */
+.readonly-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--text-secondary);
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Readonly Items */
+.fundsource-item.readonly,
+.transaction-item.readonly {
+    opacity: 0.8;
+    background: var(--background-color);
+}
+
+.fundsource-item.readonly:hover,
+.transaction-item.readonly:hover {
+    background: var(--background-color);
+    cursor: default;
+}
+
+/* Shared Transaction Indicator */
+.shared-indicator {
+    display: inline-block;
+    color: var(--primary-color);
+    margin-left: 6px;
+    font-size: 0.9em;
+}
+
 /* Sharing Management Styles */
 .sharing-user-management {
     margin-bottom: 20px;
@@ -2476,4 +2524,180 @@ Subcategory Management Styles */
 
 .btn.secondary:hover {
     background: #6d6d72;
+}
+/
+* User Info Section Styles */
+.user-info-section {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.user-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.user-email {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.user-last-login {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.user-note {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Settings Section Styles */
+.settings-sections {
+    padding: 1rem;
+}
+
+.settings-section {
+    margin-bottom: 2rem;
+}
+
+.settings-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.settings-item:hover {
+    background: var(--background-color);
+    transform: translateX(2px);
+}
+
+.settings-item:active {
+    transform: translateX(0);
+}
+
+.settings-item .icon {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.settings-item span:not(.icon):not(.arrow):not(.value) {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-item .arrow {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+}
+
+.settings-item .value {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+/* Disabled settings items */
+.settings-item:disabled,
+.settings-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Auth state dependent styles */
+.settings-item.auth-required {
+    opacity: 0.7;
+}
+
+.settings-item.auth-required:hover {
+    background: var(--surface-color);
+    transform: none;
+}
+
+/* Responsive design for settings */
+@media (max-width: 480px) {
+    .user-info-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .user-details {
+        align-items: center;
+    }
+    
+    .settings-item {
+        padding: 0.75rem;
+    }
+    
+    .settings-item .icon {
+        margin-right: 0.75rem;
+    }
+}
+
+/* Dark theme adjustments for settings */
+@media (prefers-color-scheme: dark) {
+    .user-info-section {
+        background: var(--background-color);
+    }
+    
+    .settings-item {
+        background: var(--surface-color);
+        border-color: var(--border-color);
+    }
+    
+    .settings-item:hover {
+        background: #2C2C2E;
+    }
 }

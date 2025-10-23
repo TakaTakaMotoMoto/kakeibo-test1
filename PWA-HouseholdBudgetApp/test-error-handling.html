@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有機能エラーハンドリングテスト</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #666;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+        }
+        
+        .test-button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #0056CC;
+        }
+        
+        .test-button.danger {
+            background: #FF3B30;
+        }
+        
+        .test-button.danger:hover {
+            background: #D70015;
+        }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .warning {
+            color: #ffc107;
+        }
+        
+        .info {
+            color: #17a2b8;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007AFF;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ 共有機能エラーハンドリングテスト</h1>
+        <p>共有機能の包括的エラーハンドリングシステムをテストします。</p>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h2>基本エラーハンドリングテスト</h2>
+            <button class="test-button" onclick="testBasicErrorHandling()">基本エラーハンドリング</button>
+            <button class="test-button" onclick="testErrorCategorization()">エラー分類テスト</button>
+            <button class="test-button" onclick="testUserFriendlyMessages()">ユーザーフレンドリーメッセージ</button>
+            <button class="test-button" onclick="testErrorRecovery()">エラー回復メカニズム</button>
+            <div id="basic-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>特定エラータイプテスト</h2>
+            <button class="test-button" onclick="testPermissionErrors()">権限エラー</button>
+            <button class="test-button" onclick="testTokenErrors()">トークンエラー</button>
+            <button class="test-button" onclick="testValidationErrors()">バリデーションエラー</button>
+            <button class="test-button" onclick="testDataIntegrityErrors()">データ整合性エラー</button>
+            <div id="specific-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>回復メカニズムテスト</h2>
+            <button class="test-button" onclick="testAutoRepair()">自動修復テスト</button>
+            <button class="test-button" onclick="testSyncRetry()">同期再試行テスト</button>
+            <button class="test-button" onclick="testDataRefresh()">データ更新テスト</button>
+            <div id="recovery-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>統計とログテスト</h2>
+            <button class="test-button" onclick="testErrorLogging()">エラーログテスト</button>
+            <button class="test-button" onclick="testErrorStatistics()">エラー統計テスト</button>
+            <button class="test-button" onclick="showErrorStats()">統計表示</button>
+            <button class="test-button danger" onclick="clearErrorData()">エラーデータクリア</button>
+            <div id="stats-results" class="test-results"></div>
+            <div id="error-stats" class="stats-grid"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>統合テスト</h2>
+            <button class="test-button" onclick="runAllTests()">全テスト実行</button>
+            <button class="test-button" onclick="testRealWorldScenarios()">実際のシナリオテスト</button>
+            <div id="integration-results" class="test-results"></div>
+        </div>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/sharing-error-handler.js"></script>
+
+    <script>
+        // Initialize test environment
+        let errorHandler;
+        let testResults = [];
+
+        function initializeTestEnvironment() {
+            try {
+                // Initialize storage
+                if (!window.storage) {
+                    window.storage = new StorageManager();
+                }
+
+                // Initialize error handler
+                errorHandler = new SharingErrorHandler(window.storage);
+                
+                log('テスト環境が初期化されました', 'success');
+                return true;
+            } catch (error) {
+                log(`テスト環境の初期化に失敗: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function log(message, type = 'info', containerId = 'basic-results') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Basic Error Handling Tests
+        function testBasicErrorHandling() {
+            log('基本エラーハンドリングテストを開始...', 'info', 'basic-results');
+            
+            try {
+                const testError = new Error('テストエラーメッセージ');
+                const result = errorHandler.handleError(testError, { test: true });
+                
+                if (result.success === false && result.error) {
+                    log('✅ エラーハンドリング基本機能: 正常', 'success', 'basic-results');
+                    log(`エラータイプ: ${result.error.type}`, 'info', 'basic-results');
+                    log(`ユーザーメッセージ: ${result.error.userMessage}`, 'info', 'basic-results');
+                } else {
+                    log('❌ エラーハンドリング基本機能: 異常', 'error', 'basic-results');
+                }
+            } catch (error) {
+                log(`❌ テスト実行エラー: ${error.message}`, 'error', 'basic-results');
+            }
+        }
+
+        function testErrorCategorization() {
+            log('エラー分類テストを開始...', 'info', 'basic-results');
+            
+            const testCases = [
+                { error: new Error('権限がありません'), expectedType: 'PERMISSION_DENIED' },
+                { error: new Error('無効なトークンです'), expectedType: 'INVALID_TOKEN' },
+                { error: new Error('期限切れです'), expectedType: 'EXPIRED_TOKEN' },
+                { error: new Error('データの整合性に問題があります'), expectedType: 'DATA_INTEGRITY' },
+                { error: new Error('有効なメールアドレスを入力してください'), expectedType: 'VALIDATION_ERROR' }
+            ];
+
+            let passed = 0;
+            testCases.forEach((testCase, index) => {
+                const result = errorHandler.handleError(testCase.error, { test: true });
+                if (result.error.type === testCase.expectedType) {
+                    log(`✅ テスト${index + 1}: ${testCase.expectedType} - 正常`, 'success', 'basic-results');
+                    passed++;
+                } else {
+                    log(`❌ テスト${index + 1}: 期待値 ${testCase.expectedType}, 実際 ${result.error.type}`, 'error', 'basic-results');
+                }
+            });
+
+            log(`エラー分類テスト完了: ${passed}/${testCases.length} 成功`, passed === testCases.length ? 'success' : 'warning', 'basic-results');
+        }
+
+        function testUserFriendlyMessages() {
+            log('ユーザーフレンドリーメッセージテストを開始...', 'info', 'basic-results');
+            
+            const testError = new Error('権限がありません');
+            const result = errorHandler.handleError(testError, { test: true });
+            
+            if (result.error.userMessage && result.error.userMessage !== result.error.message) {
+                log('✅ ユーザーフレンドリーメッセージ: 正常', 'success', 'basic-results');
+                log(`技術的メッセージ: ${result.error.message}`, 'info', 'basic-results');
+                log(`ユーザー向けメッセージ: ${result.error.userMessage}`, 'info', 'basic-results');
+            } else {
+                log('❌ ユーザーフレンドリーメッセージ: 異常', 'error', 'basic-results');
+            }
+        }
+
+        function testErrorRecovery() {
+            log('エラー回復メカニズムテストを開始...', 'info', 'basic-results');
+            
+            // Test auto-retry error
+            const autoRetryError = new Error('データの整合性に問題があります');
+            const result = errorHandler.handleError(autoRetryError, { test: true });
+            
+            if (result.recovery && result.recovery.attempted !== undefined) {
+                log('✅ 回復メカニズム: 正常', 'success', 'basic-results');
+                log(`回復試行: ${result.recovery.attempted}`, 'info', 'basic-results');
+                log(`回復成功: ${result.recovery.successful}`, 'info', 'basic-results');
+                log(`推奨アクション: ${result.suggestedAction}`, 'info', 'basic-results');
+            } else {
+                log('❌ 回復メカニズム: 異常', 'error', 'basic-results');
+            }
+        }
+
+        // Specific Error Type Tests
+        function testPermissionErrors() {
+            log('権限エラーテストを開始...', 'info', 'specific-results');
+            
+            const permissionErrors = [
+                '権限がありません',
+                'この操作を実行する権限がありません',
+                'unauthorized access',
+                'permission denied'
+            ];
+
+            permissionErrors.forEach((errorMsg, index) => {
+                const error = new Error(errorMsg);
+                const result = errorHandler.handleError(error, { test: true });
+                
+                if (result.error.type === 'PERMISSION_DENIED') {
+                    log(`✅ 権限エラー${index + 1}: 正常分類`, 'success', 'specific-results');
+                } else {
+                    log(`❌ 権限エラー${index + 1}: 分類失敗 (${result.error.type})`, 'error', 'specific-results');
+                }
+            });
+        }
+
+        function testTokenErrors() {
+            log('トークンエラーテストを開始...', 'info', 'specific-results');
+            
+            const tokenErrors = [
+                { msg: '無効なトークンです', type: 'INVALID_TOKEN' },
+                { msg: '期限切れのトークンです', type: 'EXPIRED_TOKEN' },
+                { msg: 'invalid token', type: 'INVALID_TOKEN' },
+                { msg: 'token expired', type: 'EXPIRED_TOKEN' }
+            ];
+
+            tokenErrors.forEach((testCase, index) => {
+                const error = new Error(testCase.msg);
+                const result = errorHandler.handleError(error, { test: true });
+                
+                if (result.error.type === testCase.type) {
+                    log(`✅ トークンエラー${index + 1}: 正常分類`, 'success', 'specific-results');
+                } else {
+                    log(`❌ トークンエラー${index + 1}: 分類失敗 (${result.error.type})`, 'error', 'specific-results');
+                }
+            });
+        }
+
+        function testValidationErrors() {
+            log('バリデーションエラーテストを開始...', 'info', 'specific-results');
+            
+            const validationErrors = [
+                '有効なメールアドレスを入力してください',
+                'バリデーションエラーが発生しました',
+                'invalid input data',
+                '無効な形式です'
+            ];
+
+            validationErrors.forEach((errorMsg, index) => {
+                const error = new Error(errorMsg);
+                const result = errorHandler.handleError(error, { test: true });
+                
+                if (result.error.type === 'VALIDATION_ERROR') {
+                    log(`✅ バリデーションエラー${index + 1}: 正常分類`, 'success', 'specific-results');
+                } else {
+                    log(`❌ バリデーションエラー${index + 1}: 分類失敗 (${result.error.type})`, 'error', 'specific-results');
+                }
+            });
+        }
+
+        function testDataIntegrityErrors() {
+            log('データ整合性エラーテストを開始...', 'info', 'specific-results');
+            
+            const integrityErrors = [
+                'データの整合性に問題があります',
+                '不整合なデータが検出されました',
+                'data integrity violation',
+                'orphaned data found'
+            ];
+
+            integrityErrors.forEach((errorMsg, index) => {
+                const error = new Error(errorMsg);
+                const result = errorHandler.handleError(error, { test: true });
+                
+                if (result.error.type === 'DATA_INTEGRITY') {
+                    log(`✅ データ整合性エラー${index + 1}: 正常分類`, 'success', 'specific-results');
+                    log(`自動修復試行: ${result.recovery.attempted}`, 'info', 'specific-results');
+                } else {
+                    log(`❌ データ整合性エラー${index + 1}: 分類失敗 (${result.error.type})`, 'error', 'specific-results');
+                }
+            });
+        }
+
+        // Recovery Mechanism Tests
+        function testAutoRepair() {
+            log('自動修復テストを開始...', 'info', 'recovery-results');
+            
+            const integrityError = new Error('データの整合性に問題があります');
+            const result = errorHandler.handleError(integrityError, { test: true });
+            
+            if (result.recovery.attempted && result.recovery.action === 'AUTO_REPAIR') {
+                log('✅ 自動修復メカニズム: 正常', 'success', 'recovery-results');
+                log(`修復結果: ${result.recovery.successful ? '成功' : '失敗'}`, 
+                    result.recovery.successful ? 'success' : 'warning', 'recovery-results');
+                
+                if (result.recovery.details) {
+                    log(`修復詳細: ${JSON.stringify(result.recovery.details)}`, 'info', 'recovery-results');
+                }
+            } else {
+                log('❌ 自動修復メカニズム: 異常', 'error', 'recovery-results');
+            }
+        }
+
+        function testSyncRetry() {
+            log('同期再試行テストを開始...', 'info', 'recovery-results');
+            
+            const syncError = new Error('同期エラーが発生しました');
+            const result = errorHandler.handleError(syncError, { test: true });
+            
+            if (result.recovery.attempted && result.recovery.action === 'RETRY_SYNC') {
+                log('✅ 同期再試行メカニズム: 正常', 'success', 'recovery-results');
+                log(`再試行結果: ${result.recovery.successful ? '成功' : '失敗'}`, 
+                    result.recovery.successful ? 'success' : 'warning', 'recovery-results');
+            } else {
+                log('❌ 同期再試行メカニズム: 異常', 'error', 'recovery-results');
+            }
+        }
+
+        function testDataRefresh() {
+            log('データ更新テストを開始...', 'info', 'recovery-results');
+            
+            const notFoundError = new Error('資金元が見つかりません');
+            const result = errorHandler.handleError(notFoundError, { test: true });
+            
+            if (result.suggestedAction === 'REFRESH_DATA') {
+                log('✅ データ更新メカニズム: 正常', 'success', 'recovery-results');
+                log(`推奨アクション: ${result.suggestedAction}`, 'info', 'recovery-results');
+            } else {
+                log('❌ データ更新メカニズム: 異常', 'error', 'recovery-results');
+            }
+        }
+
+        // Statistics and Logging Tests
+        function testErrorLogging() {
+            log('エラーログテストを開始...', 'info', 'stats-results');
+            
+            // Generate some test errors
+            const testErrors = [
+                new Error('テストエラー1'),
+                new Error('権限エラーテスト'),
+                new Error('無効なトークンテスト')
+            ];
+
+            testErrors.forEach((error, index) => {
+                errorHandler.handleError(error, { test: true, errorIndex: index });
+            });
+
+            // Check if errors were logged
+            const errorLog = errorHandler.getErrorLog(10);
+            
+            if (errorLog.length >= testErrors.length) {
+                log('✅ エラーログ機能: 正常', 'success', 'stats-results');
+                log(`ログエントリ数: ${errorLog.length}`, 'info', 'stats-results');
+            } else {
+                log('❌ エラーログ機能: 異常', 'error', 'stats-results');
+            }
+        }
+
+        function testErrorStatistics() {
+            log('エラー統計テストを開始...', 'info', 'stats-results');
+            
+            const stats = errorHandler.getErrorStats();
+            
+            if (stats && typeof stats.totalErrors === 'number') {
+                log('✅ エラー統計機能: 正常', 'success', 'stats-results');
+                log(`総エラー数: ${stats.totalErrors}`, 'info', 'stats-results');
+                log(`回復試行数: ${stats.recoveryAttempts}`, 'info', 'stats-results');
+                log(`成功回復数: ${stats.successfulRecoveries}`, 'info', 'stats-results');
+            } else {
+                log('❌ エラー統計機能: 異常', 'error', 'stats-results');
+            }
+        }
+
+        function showErrorStats() {
+            const stats = errorHandler.getErrorStats();
+            const container = document.getElementById('error-stats');
+            
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalErrors}</div>
+                    <div class="stat-label">総エラー数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.recoveryAttempts}</div>
+                    <div class="stat-label">回復試行数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.successfulRecoveries}</div>
+                    <div class="stat-label">成功回復数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${Object.keys(stats.errorsByCategory).length}</div>
+                    <div class="stat-label">エラータイプ数</div>
+                </div>
+            `;
+        }
+
+        function clearErrorData() {
+            if (confirm('エラーデータをクリアしますか？')) {
+                const success = errorHandler.clearErrorData();
+                if (success) {
+                    log('✅ エラーデータをクリアしました', 'success', 'stats-results');
+                    showErrorStats();
+                } else {
+                    log('❌ エラーデータのクリアに失敗しました', 'error', 'stats-results');
+                }
+            }
+        }
+
+        // Integration Tests
+        function runAllTests() {
+            log('全テスト実行を開始...', 'info', 'integration-results');
+            
+            const tests = [
+                testBasicErrorHandling,
+                testErrorCategorization,
+                testUserFriendlyMessages,
+                testErrorRecovery,
+                testPermissionErrors,
+                testTokenErrors,
+                testValidationErrors,
+                testDataIntegrityErrors,
+                testAutoRepair,
+                testSyncRetry,
+                testDataRefresh,
+                testErrorLogging,
+                testErrorStatistics
+            ];
+
+            let completed = 0;
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    try {
+                        test();
+                        completed++;
+                        log(`テスト ${index + 1}/${tests.length} 完了`, 'info', 'integration-results');
+                        
+                        if (completed === tests.length) {
+                            log('🎉 全テスト完了！', 'success', 'integration-results');
+                            showErrorStats();
+                        }
+                    } catch (error) {
+                        log(`テスト ${index + 1} でエラー: ${error.message}`, 'error', 'integration-results');
+                    }
+                }, index * 500);
+            });
+        }
+
+        function testRealWorldScenarios() {
+            log('実際のシナリオテストを開始...', 'info', 'integration-results');
+            
+            // Scenario 1: User tries to share without permission
+            setTimeout(() => {
+                const error1 = new Error('この資金元を共有する権限がありません');
+                const result1 = errorHandler.handleError(error1, { 
+                    operation: 'shareFundSource',
+                    fundSourceId: 'test-fund-1'
+                });
+                log(`シナリオ1 (権限なし共有): ${result1.error.type}`, 'info', 'integration-results');
+            }, 100);
+
+            // Scenario 2: Invalid invitation token
+            setTimeout(() => {
+                const error2 = new Error('無効または期限切れの招待トークンです');
+                const result2 = errorHandler.handleError(error2, { 
+                    operation: 'acceptInvitation',
+                    token: 'invalid-token'
+                });
+                log(`シナリオ2 (無効トークン): ${result2.error.type}`, 'info', 'integration-results');
+            }, 200);
+
+            // Scenario 3: Data integrity issue
+            setTimeout(() => {
+                const error3 = new Error('共有資金元が存在しない共有取引があります');
+                const result3 = errorHandler.handleError(error3, { 
+                    operation: 'dataIntegrityCheck'
+                });
+                log(`シナリオ3 (データ整合性): ${result3.error.type}`, 'info', 'integration-results');
+                log(`自動修復: ${result3.recovery.attempted ? '試行' : '未試行'}`, 'info', 'integration-results');
+            }, 300);
+
+            setTimeout(() => {
+                log('実際のシナリオテスト完了', 'success', 'integration-results');
+            }, 500);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (initializeTestEnvironment()) {
+                log('🚀 エラーハンドリングテストシステム準備完了', 'success');
+            }
+        });
+    </script>
+</body>
+</html>

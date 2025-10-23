@@ -22,6 +22,7 @@ class UIManager {
     initialize() {
         try {
             this.initializeEventListeners();
+            this.initializeAuthStateListener();
             this.formValidator.initializeFormValidation();
             this.loadInitialData();
             console.log('UI Manager initialized successfully');
@@ -60,6 +61,17 @@ class UIManager {
             filterBtn.addEventListener('click', () => this.openFilterModal());
         }
 
+        // Filter modal buttons
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', () => this.applyFilters());
+        }
+
+        const clearFiltersBtn = document.getElementById('clear-filters');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => this.clearFilters());
+        }
+
         // Auth-related buttons
         const showLoginBtn = document.getElementById('show-login');
         if (showLoginBtn) {
@@ -68,6 +80,42 @@ class UIManager {
                     window.authManager.showAuthModal('login');
                 }
             });
+        }
+
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (window.authManager) {
+                    window.authManager.logout();
+                }
+            });
+        }
+
+        // Sharing-related buttons
+        const manageSharingBtn = document.getElementById('manage-sharing');
+        if (manageSharingBtn) {
+            manageSharingBtn.addEventListener('click', () => this.openSharingManagementModal());
+        }
+
+        const sharedUsersBtn = document.getElementById('shared-users');
+        if (sharedUsersBtn) {
+            sharedUsersBtn.addEventListener('click', () => this.openSharedUsersModal());
+        }
+
+        // Data management buttons
+        const exportDataBtn = document.getElementById('export-data');
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener('click', () => this.exportData());
+        }
+
+        const importDataBtn = document.getElementById('import-data');
+        if (importDataBtn) {
+            importDataBtn.addEventListener('click', () => this.importData());
+        }
+
+        const clearDataBtn = document.getElementById('clear-data');
+        if (clearDataBtn) {
+            clearDataBtn.addEventListener('click', () => this.confirmClearData());
         }
 
         // Modal close buttons
@@ -128,8 +176,42 @@ class UIManager {
         });
     }
 
+    initializeAuthStateListener() {
+        // Listen for authentication state changes
+        window.addEventListener('authStateChange', (event) => {
+            try {
+                console.log('UI Manager received auth state change:', event.detail);
+                
+                // Update auth-dependent UI elements
+                setTimeout(() => {
+                    this.updateAuthDependentUI();
+                    
+                    // Refresh data display
+                    this.loadInitialData();
+                    
+                    // Show appropriate notification
+                    if (event.detail.type === 'login') {
+                        UIUtils.showNotification(`${event.detail.user.username}さん、おかえりなさい！`, 'success');
+                    } else if (event.detail.type === 'logout') {
+                        UIUtils.showNotification('ログアウトしました', 'info');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error handling auth state change in UI Manager:', error);
+                UIUtils.showNotification('認証状態の更新でエラーが発生しました', 'warning');
+            }
+        });
+    }
+
     loadInitialData() {
         try {
+            // Load saved filter state
+            const filtersLoaded = window.dataManager.loadFilterState();
+            if (filtersLoaded) {
+                this.updateFilterButtonState();
+            }
+            
             this.renderer.renderTransactions();
             this.renderer.renderFundSources();
             this.renderer.populateSelects();
@@ -366,6 +448,12 @@ class UIManager {
             };
 
             if (this.editingFundSource) {
+                // Check permission to manage fund source
+                if (!window.dataManager.canManageFundSource(this.editingFundSource)) {
+                    UIUtils.showNotification('この資金元を編集する権限がありません', 'error');
+                    return;
+                }
+
                 const fundSources = window.storage.getFundSources();
                 const index = fundSources.findIndex(fs => fs.id === this.editingFundSource);
                 if (index !== -1) {
@@ -459,6 +547,14 @@ class UIManager {
                 return;
             }
 
+            // Check permission to manage specific fund source if editing
+            if (fundSourceId) {
+                if (!window.dataManager.canManageFundSource(fundSourceId)) {
+                    UIUtils.showNotification('この資金元を編集する権限がありません', 'warning');
+                    return;
+                }
+            }
+
             this.editingFundSource = fundSourceId;
             const modal = document.getElementById('fundsource-modal');
             const title = document.getElementById('fundsource-modal-title');
@@ -513,6 +609,17 @@ class UIManager {
                 }
             }
 
+            // Populate creator dropdown
+            this.populateCreatorFilter();
+
+            if (filters.createdBy) {
+                document.getElementById('filter-creator').value = filters.createdBy;
+            }
+
+            // Set checkbox states
+            document.getElementById('filter-only-my-transactions').checked = filters.showOnlyMyTransactions || false;
+            document.getElementById('filter-only-shared-transactions').checked = filters.showOnlySharedTransactions || false;
+
             this.modalManager.showModal('filter-modal');
         } catch (error) {
             console.error('Error opening filter modal:', error);
@@ -546,19 +653,23 @@ class UIManager {
     checkAuthForAction(action) {
         try {
             // Allow basic actions for guest users
-            const guestAllowedActions = ['add_transaction', 'filter_transactions', 'view_data', 'manage_subcategories'];
+            const guestAllowedActions = ['add_transaction', 'filter_transactions', 'view_data', 'manage_subcategories', 'export_data', 'import_data', 'clear_data'];
 
             if (guestAllowedActions.includes(action)) {
                 return true;
             }
 
-            // For other actions, require authentication
-            if (!window.authManager || !window.authManager.getIsLoggedIn()) {
-                UIUtils.showNotification('この機能を使用するにはログインが必要です', 'warning');
-                if (window.authManager) {
-                    window.authManager.showAuthModal('login');
+            // Actions that require authentication
+            const authRequiredActions = ['manage_sharing', 'manage_fund_source'];
+
+            if (authRequiredActions.includes(action)) {
+                if (!window.authManager || !window.authManager.getIsLoggedIn()) {
+                    UIUtils.showNotification('この機能を使用するにはログインが必要です', 'warning');
+                    if (window.authManager) {
+                        window.authManager.showAuthModal('login');
+                    }
+                    return false;
                 }
-                return false;
             }
 
             return true;
@@ -790,6 +901,408 @@ class UIManager {
         } catch (error) {
             console.error('Error deleting subcategory:', error);
             UIUtils.showNotification('サブカテゴリの削除に失敗しました: ' + error.message, 'error');
+        }
+    }
+
+    // Filter management methods
+    populateCreatorFilter() {
+        try {
+            const creatorSelect = document.getElementById('filter-creator');
+            if (!creatorSelect) return;
+
+            // Clear existing options except "すべて"
+            creatorSelect.innerHTML = '<option value="">すべて</option>';
+
+            // Get available creators
+            const creators = window.dataManager.getAvailableCreators();
+            
+            creators.forEach(creator => {
+                const option = document.createElement('option');
+                option.value = creator.id;
+                option.textContent = creator.username;
+                creatorSelect.appendChild(option);
+            });
+
+        } catch (error) {
+            console.error('Error populating creator filter:', error);
+        }
+    }
+
+    applyFilters() {
+        try {
+            const filters = {
+                startDate: document.getElementById('filter-start-date').value || null,
+                endDate: document.getElementById('filter-end-date').value || null,
+                category: document.getElementById('filter-category').value || null,
+                fundSource: document.getElementById('filter-fund-source').value || null,
+                createdBy: document.getElementById('filter-creator').value || null,
+                showOnlyMyTransactions: document.getElementById('filter-only-my-transactions').checked,
+                showOnlySharedTransactions: document.getElementById('filter-only-shared-transactions').checked
+            };
+
+            // Validate mutual exclusivity of checkboxes
+            if (filters.showOnlyMyTransactions && filters.showOnlySharedTransactions) {
+                UIUtils.showNotification('「自分の取引のみ」と「共有取引のみ」は同時に選択できません', 'warning');
+                return;
+            }
+
+            window.dataManager.setAdvancedFilters(filters);
+            this.updateFilterButtonState();
+            this.renderTransactions();
+            this.modalManager.closeModal('filter-modal');
+
+            // Show notification about active filters
+            const filterSummary = window.dataManager.getFilterSummary();
+            if (filterSummary.length > 0) {
+                UIUtils.showNotification(`${filterSummary.length}個のフィルターが適用されました`, 'success');
+            } else {
+                UIUtils.showNotification('フィルターをクリアしました', 'info');
+            }
+
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            UIUtils.showNotification('フィルターの適用に失敗しました', 'error');
+        }
+    }
+
+    clearFilters() {
+        try {
+            // Clear form fields
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-category').value = '';
+            document.getElementById('filter-fund-source').value = '';
+            document.getElementById('filter-creator').value = '';
+            document.getElementById('filter-only-my-transactions').checked = false;
+            document.getElementById('filter-only-shared-transactions').checked = false;
+
+            // Clear filters in data manager
+            window.dataManager.clearFilters();
+            this.updateFilterButtonState();
+            this.renderTransactions();
+            this.modalManager.closeModal('filter-modal');
+
+            UIUtils.showNotification('フィルターをクリアしました', 'info');
+
+        } catch (error) {
+            console.error('Error clearing filters:', error);
+            UIUtils.showNotification('フィルターのクリアに失敗しました', 'error');
+        }
+    }
+
+    updateFilterButtonState() {
+        try {
+            const filterBtn = document.getElementById('filter-btn');
+            if (!filterBtn) return;
+
+            const hasActiveFilters = window.dataManager.hasActiveFilters();
+            
+            if (hasActiveFilters) {
+                filterBtn.classList.add('filter-active');
+                filterBtn.title = 'フィルター適用中 - クリックして編集';
+                
+                // Add filter summary to header if not already present
+                this.showFilterSummary();
+            } else {
+                filterBtn.classList.remove('filter-active');
+                filterBtn.title = 'フィルター';
+                
+                // Remove filter summary
+                this.hideFilterSummary();
+            }
+
+        } catch (error) {
+            console.error('Error updating filter button state:', error);
+        }
+    }
+
+    showFilterSummary() {
+        try {
+            // Remove existing summary
+            this.hideFilterSummary();
+            
+            const filterSummary = window.dataManager.getFilterSummary();
+            if (filterSummary.length === 0) return;
+
+            const header = document.querySelector('.app-header');
+            if (!header) return;
+
+            const summaryElement = document.createElement('div');
+            summaryElement.className = 'filter-summary';
+            summaryElement.innerHTML = `
+                <div class="filter-status">
+                    <span class="icon">🔍</span>
+                    <span>${filterSummary.length}個のフィルター適用中</span>
+                </div>
+            `;
+
+            header.appendChild(summaryElement);
+
+        } catch (error) {
+            console.error('Error showing filter summary:', error);
+        }
+    }
+
+    hideFilterSummary() {
+        try {
+            const existingSummary = document.querySelector('.filter-summary');
+            if (existingSummary) {
+                existingSummary.remove();
+            }
+        } catch (error) {
+            console.error('Error hiding filter summary:', error);
+        }
+    }
+
+    // Settings-related methods
+    openSharingManagementModal() {
+        try {
+            // Check authentication first
+            if (!this.checkAuthForAction('manage_sharing')) {
+                return;
+            }
+
+            if (window.uiSharing && typeof window.uiSharing.openSharingManagementModal === 'function') {
+                window.uiSharing.openSharingManagementModal();
+            } else {
+                UIUtils.showNotification('共有管理機能が利用できません', 'error');
+            }
+        } catch (error) {
+            console.error('Error opening sharing management modal:', error);
+            UIUtils.showNotification('共有管理モーダルを開けませんでした', 'error');
+        }
+    }
+
+    openSharedUsersModal() {
+        try {
+            // Check authentication first
+            if (!this.checkAuthForAction('manage_sharing')) {
+                return;
+            }
+
+            if (window.uiSharing && typeof window.uiSharing.openSharedUsersModal === 'function') {
+                window.uiSharing.openSharedUsersModal();
+            } else {
+                UIUtils.showNotification('共有ユーザー管理機能が利用できません', 'error');
+            }
+        } catch (error) {
+            console.error('Error opening shared users modal:', error);
+            UIUtils.showNotification('共有ユーザーモーダルを開けませんでした', 'error');
+        }
+    }
+
+    exportData() {
+        try {
+            // Check authentication first
+            if (!this.checkAuthForAction('export_data')) {
+                return;
+            }
+
+            const data = {
+                transactions: window.storage.getTransactions(),
+                fundSources: window.storage.getFundSources(),
+                subcategories: window.storage.getSubcategories(),
+                exportDate: new Date().toISOString(),
+                version: '1.0.0'
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `budget-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            UIUtils.showNotification('データをエクスポートしました', 'success');
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            UIUtils.showNotification('データのエクスポートに失敗しました', 'error');
+        }
+    }
+
+    importData() {
+        try {
+            // Check authentication first
+            if (!this.checkAuthForAction('import_data')) {
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        // Validate data structure
+                        if (!data.transactions || !data.fundSources) {
+                            throw new Error('無効なデータ形式です');
+                        }
+
+                        if (confirm('現在のデータを上書きしますか？この操作は元に戻せません。')) {
+                            // Import data
+                            if (data.transactions) window.storage.setTransactions(data.transactions);
+                            if (data.fundSources) window.storage.setFundSources(data.fundSources);
+                            if (data.subcategories) window.storage.setSubcategories(data.subcategories);
+
+                            // Refresh UI
+                            this.loadInitialData();
+                            UIUtils.showNotification('データをインポートしました', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error importing data:', error);
+                        UIUtils.showNotification('データのインポートに失敗しました: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        } catch (error) {
+            console.error('Error importing data:', error);
+            UIUtils.showNotification('データのインポートに失敗しました', 'error');
+        }
+    }
+
+    confirmClearData() {
+        try {
+            // Check authentication first
+            if (!this.checkAuthForAction('clear_data')) {
+                return;
+            }
+
+            const confirmMessage = 'すべてのデータを削除しますか？この操作は元に戻せません。\n\n削除されるデータ:\n- すべての取引\n- すべての資金元\n- すべてのサブカテゴリ\n- 共有設定';
+            
+            if (confirm(confirmMessage)) {
+                if (confirm('本当にすべてのデータを削除しますか？')) {
+                    // Clear all data
+                    window.storage.clearAllData();
+                    
+                    // Refresh UI
+                    this.loadInitialData();
+                    UIUtils.showNotification('すべてのデータを削除しました', 'info');
+                }
+            }
+        } catch (error) {
+            console.error('Error clearing data:', error);
+            UIUtils.showNotification('データの削除に失敗しました', 'error');
+        }
+    }
+
+    // Update auth-dependent UI elements
+    updateAuthDependentUI() {
+        try {
+            const sharingSection = document.getElementById('sharing-section');
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('show-login');
+            const logoutBtn = document.getElementById('logout-btn');
+            const manageSharingBtn = document.getElementById('manage-sharing');
+            const sharedUsersBtn = document.getElementById('shared-users');
+
+            const isLoggedIn = window.authManager && window.authManager.getIsLoggedIn();
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+
+            if (isLoggedIn && currentUser) {
+                // Show sharing section for logged in users
+                if (sharingSection) {
+                    sharingSection.style.display = 'block';
+                    
+                    // Update sharing buttons state
+                    if (manageSharingBtn) {
+                        manageSharingBtn.style.opacity = '1';
+                        manageSharingBtn.style.pointerEvents = 'auto';
+                        manageSharingBtn.title = '資金元の共有設定を管理';
+                    }
+                    
+                    if (sharedUsersBtn) {
+                        sharedUsersBtn.style.opacity = '1';
+                        sharedUsersBtn.style.pointerEvents = 'auto';
+                        sharedUsersBtn.title = '共有ユーザーを管理';
+                    }
+                }
+                
+                // Update user info
+                if (userInfo) {
+                    userInfo.innerHTML = `
+                        <div class="user-avatar">👤</div>
+                        <div class="user-details">
+                            <div class="user-name">${UIUtils.escapeHtml(currentUser.username)}</div>
+                            <div class="user-email">${UIUtils.escapeHtml(currentUser.email)}</div>
+                            ${currentUser.lastLoginDate ? `<div class="user-last-login">最終ログイン: ${new Date(currentUser.lastLoginDate).toLocaleDateString('ja-JP')}</div>` : ''}
+                        </div>
+                    `;
+                }
+                
+                // Show logout button, hide login button
+                if (logoutBtn) logoutBtn.style.display = 'block';
+                if (loginBtn) loginBtn.style.display = 'none';
+                
+            } else {
+                // Hide sharing section for guest users
+                if (sharingSection) {
+                    sharingSection.style.display = 'none';
+                }
+                
+                // Show guest user info
+                if (userInfo) {
+                    userInfo.innerHTML = `
+                        <div class="user-avatar">👤</div>
+                        <div class="user-details">
+                            <div class="user-name">ゲストユーザー</div>
+                            <div class="user-email">ログインしてデータを保存</div>
+                            <div class="user-note">共有機能を使用するにはログインが必要です</div>
+                        </div>
+                    `;
+                }
+                
+                // Hide logout button, show login button
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (loginBtn) loginBtn.style.display = 'block';
+            }
+
+            // Update page title to reflect auth state
+            this.updatePageTitleWithAuthState();
+
+            // Update sharing-related UI elements
+            if (window.uiSharing && typeof window.uiSharing.updateAuthDependentUI === 'function') {
+                window.uiSharing.updateAuthDependentUI();
+            }
+
+            // Update fund sources display to show sharing indicators
+            this.renderFundSources();
+
+            // Update transaction display to show sharing information
+            this.renderTransactions();
+
+        } catch (error) {
+            console.error('Error updating auth-dependent UI:', error);
+        }
+    }
+
+    updatePageTitleWithAuthState() {
+        try {
+            const pageTitle = document.getElementById('page-title');
+            if (!pageTitle) return;
+
+            const isLoggedIn = window.authManager && window.authManager.getIsLoggedIn();
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+
+            if (this.currentView === 'settings' && pageTitle) {
+                if (isLoggedIn && currentUser) {
+                    pageTitle.textContent = `設定 - ${currentUser.username}`;
+                } else {
+                    pageTitle.textContent = '設定 - ゲスト';
+                }
+            }
+        } catch (error) {
+            console.error('Error updating page title with auth state:', error);
         }
     }
 }

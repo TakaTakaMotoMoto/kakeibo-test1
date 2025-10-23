@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有インジケーター テスト</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/sharing.css">
+</head>
+<body>
+    <div class="container">
+        <h1>共有インジケーター テスト</h1>
+        
+        <h2>資金元リスト</h2>
+        <div id="fundsources-list" class="fundsources-list">
+            <!-- Fund sources will be rendered here -->
+        </div>
+        
+        <h2>取引リスト</h2>
+        <div id="list-view" class="transactions-list">
+            <!-- Transactions will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Include all necessary scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/sharing-models.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-rendering.js"></script>
+    
+    <script>
+        // Initialize test data
+        window.storage = new StorageManager();
+        window.dataManager = new DataManager(window.storage);
+        window.permissionManager = new PermissionManager();
+        
+        // Mock auth manager for testing
+        window.authManager = {
+            getCurrentUser: () => ({ id: 'user1', username: 'テストユーザー', email: 'test@example.com' }),
+            getIsLoggedIn: () => true
+        };
+        
+        // Create test data
+        const testFundSources = [
+            {
+                id: 'fs1',
+                name: '共有銀行口座',
+                type: 'bank',
+                initialBalance: 100000,
+                currentBalance: 95000,
+                isShared: true,
+                sharedWith: [
+                    { 
+                        userId: 'user2', 
+                        username: '家族メンバー', 
+                        email: 'family@example.com',
+                        permissions: { canView: true, canEdit: true, canDelete: false }
+                    },
+                    { 
+                        userId: 'user3', 
+                        username: '共同生活者', 
+                        email: 'roommate@example.com',
+                        permissions: { canView: true, canEdit: false, canDelete: false }
+                    }
+                ]
+            },
+            {
+                id: 'fs2',
+                name: '個人現金',
+                type: 'cash',
+                initialBalance: 50000,
+                currentBalance: 45000,
+                isShared: false,
+                sharedWith: []
+            }
+        ];
+        
+        const testTransactions = [
+            {
+                id: 't1',
+                amount: -5000,
+                categoryId: 'cat1',
+                fundSourceId: 'fs1',
+                date: new Date('2024-01-15'),
+                note: '共有取引の例',
+                createdBy: 'user1',
+                createdByUsername: 'テストユーザー',
+                isShared: true
+            },
+            {
+                id: 't2',
+                amount: -3000,
+                categoryId: 'cat1',
+                fundSourceId: 'fs1',
+                date: new Date('2024-01-14'),
+                note: '他のユーザーが作成',
+                createdBy: 'user2',
+                createdByUsername: '家族メンバー',
+                isShared: true
+            },
+            {
+                id: 't3',
+                amount: -2000,
+                categoryId: 'cat1',
+                fundSourceId: 'fs2',
+                date: new Date('2024-01-13'),
+                note: '個人取引',
+                createdBy: 'user1',
+                createdByUsername: 'テストユーザー',
+                isShared: false
+            }
+        ];
+        
+        const testCategories = [
+            { id: 'cat1', name: '食費', icon: '🍽️' }
+        ];
+        
+        // Set test data
+        window.storage.setFundSources(testFundSources);
+        window.storage.setTransactions(testTransactions);
+        window.storage.setCategories(testCategories);
+        
+        // Initialize renderer and render
+        const renderer = new UIRenderer();
+        renderer.renderFundSources();
+        renderer.renderTransactions();
+        
+        console.log('共有インジケーター テスト初期化完了');
+    </script>
+</body>
+</html>
+</html>
