@@ -744,3 +744,6 @@ class PermissionManager {
         }
     }
 }
+
+// Export for global use
+window.PermissionManager = PermissionManager;

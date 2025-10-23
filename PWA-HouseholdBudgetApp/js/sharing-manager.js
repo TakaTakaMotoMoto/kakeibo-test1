@@ -2267,3 +2267,6 @@ class SharingManager {
         });
     }
 }
+
+// Export for global use
+window.SharingManager = SharingManager;

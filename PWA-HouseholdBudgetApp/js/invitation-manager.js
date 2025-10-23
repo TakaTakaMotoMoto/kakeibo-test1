@@ -620,3 +620,6 @@ class InvitationManager {
         }
     }
 }
+
+// Export for global use
+window.InvitationManager = InvitationManager;
