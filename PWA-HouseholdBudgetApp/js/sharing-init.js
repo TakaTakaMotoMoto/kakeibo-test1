@@ -414,6 +414,44 @@ if (document.readyState === 'loading') {
     // DOM is already ready
     setTimeout(initializeSharingSystem, 100);
 }
+
+// Ensure initialization happens even if other methods fail
+let initializationAttempts = 0;
+const maxInitializationAttempts = 10;
+
+function ensureInitialization() {
+    initializationAttempts++;
+    
+    if (window.sharingManager && window.invitationManager && 
+        window.permissionManager && window.sharingUIManager) {
+        console.log('Sharing system fully initialized');
+        return;
+    }
+    
+    if (initializationAttempts <= maxInitializationAttempts) {
+        console.log(`Ensuring initialization attempt ${initializationAttempts}/${maxInitializationAttempts}`);
+        
+        // Try system initialization
+        if (!window.sharingManager || !window.invitationManager || !window.permissionManager) {
+            initializeSharingSystem();
+        }
+        
+        // Try UI initialization
+        if (!window.sharingUIManager) {
+            setTimeout(() => {
+                initializeSharingUI();
+            }, 200);
+        }
+        
+        // Schedule next check
+        setTimeout(ensureInitialization, 1000 * initializationAttempts);
+    } else {
+        console.warn('Maximum initialization attempts reached');
+    }
+}
+
+// Start ensuring initialization
+setTimeout(ensureInitialization, 1000);
 // Initialize sharing UI system
 function initializeSharingUI() {
     try {

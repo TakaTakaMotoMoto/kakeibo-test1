@@ -1064,39 +1064,25 @@ class UIManager {
 
             // Try to initialize sharing UI if not available
             if (!window.sharingUIManager) {
-                console.log('SharingUIManager not available, attempting initialization...');
+                console.log('SharingUIManager not available, attempting automatic initialization...');
                 
-                if (window.initializeSharingUI) {
-                    const success = window.initializeSharingUI();
-                    if (!success) {
-                        // Try force reinitialization
-                        if (window.reinitializeSharing) {
-                            console.log('Attempting force reinitialization...');
-                            window.reinitializeSharing();
-                        }
-                    }
-                }
+                // Show loading message
+                UIUtils.showNotification('共有管理機能を初期化中...', 'info');
                 
-                // Wait a moment and try again
-                setTimeout(() => {
+                // Attempt multiple initialization strategies
+                this.attemptSharingInitialization(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
                         window.sharingUIManager.openSharingManagementModal();
                     } else {
-                        console.log('Initialization failed. Run debugSharingSystem() for details.');
-                        UIUtils.showNotification('共有管理機能の初期化に失敗しました。コンソールでdebugSharingSystem()を実行してください。', 'error');
+                        UIUtils.showNotification('共有管理機能が一時的に利用できません。ページを再読み込みしてください。', 'warning');
                     }
-                }, 1000);
+                });
                 return;
             }
 
             if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
                 window.sharingUIManager.openSharingManagementModal();
             } else {
-                // Call debug function if available
-                if (window.checkSharingUIStatus) {
-                    window.checkSharingUIStatus();
-                }
-                
                 console.log('Sharing UI Manager status:', {
                     exists: !!window.sharingUIManager,
                     hasMethod: window.sharingUIManager ? typeof window.sharingUIManager.openSharingManagementModal : 'N/A',
@@ -1104,7 +1090,9 @@ class UIManager {
                     invitationManager: !!window.invitationManager,
                     permissionManager: !!window.permissionManager
                 });
-                UIUtils.showNotification('共有管理機能が利用できません。コンソールを確認してください。', 'error');
+                
+                // Show helpful message with alternative
+                this.showSharingUnavailableMessage('共有管理');
             }
         } catch (error) {
             console.error('Error opening sharing management modal:', error);
@@ -1121,39 +1109,25 @@ class UIManager {
 
             // Try to initialize sharing UI if not available
             if (!window.sharingUIManager) {
-                console.log('SharingUIManager not available, attempting initialization...');
+                console.log('SharingUIManager not available, attempting automatic initialization...');
                 
-                if (window.initializeSharingUI) {
-                    const success = window.initializeSharingUI();
-                    if (!success) {
-                        // Try force reinitialization
-                        if (window.reinitializeSharing) {
-                            console.log('Attempting force reinitialization...');
-                            window.reinitializeSharing();
-                        }
-                    }
-                }
+                // Show loading message
+                UIUtils.showNotification('共有ユーザー管理機能を初期化中...', 'info');
                 
-                // Wait a moment and try again
-                setTimeout(() => {
+                // Attempt multiple initialization strategies
+                this.attemptSharingInitialization(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
                         window.sharingUIManager.openSharedUsersModal();
                     } else {
-                        console.log('Initialization failed. Run debugSharingSystem() for details.');
-                        UIUtils.showNotification('共有ユーザー管理機能の初期化に失敗しました。コンソールでdebugSharingSystem()を実行してください。', 'error');
+                        UIUtils.showNotification('共有ユーザー管理機能が一時的に利用できません。ページを再読み込みしてください。', 'warning');
                     }
-                }, 1000);
+                });
                 return;
             }
 
             if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
                 window.sharingUIManager.openSharedUsersModal();
             } else {
-                // Call debug function if available
-                if (window.checkSharingUIStatus) {
-                    window.checkSharingUIStatus();
-                }
-                
                 console.log('Sharing UI Manager status:', {
                     exists: !!window.sharingUIManager,
                     hasMethod: window.sharingUIManager ? typeof window.sharingUIManager.openSharedUsersModal : 'N/A',
@@ -1161,7 +1135,9 @@ class UIManager {
                     invitationManager: !!window.invitationManager,
                     permissionManager: !!window.permissionManager
                 });
-                UIUtils.showNotification('共有ユーザー管理機能が利用できません。コンソールを確認してください。', 'error');
+                
+                // Show helpful message with alternative
+                this.showSharingUnavailableMessage('共有ユーザー管理');
             }
         } catch (error) {
             console.error('Error opening shared users modal:', error);
@@ -1381,6 +1357,76 @@ class UIManager {
             }
         } catch (error) {
             console.error('Error updating page title with auth state:', error);
+        }
+    }
+
+    // Attempt sharing initialization with multiple strategies
+    attemptSharingInitialization(callback) {
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        const tryInitialization = () => {
+            attempts++;
+            console.log(`Sharing initialization attempt ${attempts}/${maxAttempts}`);
+            
+            // Strategy 1: Try normal initialization
+            if (window.initializeSharingUI) {
+                const success = window.initializeSharingUI();
+                if (success && window.sharingUIManager) {
+                    console.log('Sharing initialization successful');
+                    callback();
+                    return;
+                }
+            }
+            
+            // Strategy 2: Try force reinitialization
+            if (window.reinitializeSharing) {
+                console.log('Attempting force reinitialization...');
+                window.reinitializeSharing();
+            }
+            
+            // Strategy 3: Manual initialization
+            if (!window.sharingUIManager && window.SharingUIManager && 
+                window.uiManager && window.sharingManager && 
+                window.invitationManager && window.permissionManager) {
+                
+                try {
+                    console.log('Attempting manual SharingUIManager creation...');
+                    window.sharingUIManager = new SharingUIManager(
+                        window.uiManager,
+                        window.sharingManager,
+                        window.invitationManager,
+                        window.permissionManager
+                    );
+                    
+                    if (window.sharingUIManager) {
+                        console.log('Manual SharingUIManager creation successful');
+                        callback();
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Manual initialization failed:', error);
+                }
+            }
+            
+            // If still not successful and we have attempts left, try again
+            if (attempts < maxAttempts) {
+                setTimeout(tryInitialization, 500 * attempts); // Increasing delay
+            } else {
+                console.error('All sharing initialization attempts failed');
+                callback(); // Call callback anyway to show error message
+            }
+        };
+        
+        tryInitialization();
+    }
+
+    // Show user-friendly message when sharing is unavailable
+    showSharingUnavailableMessage(featureName) {
+        const message = `${featureName}機能が一時的に利用できません。\n\n以下をお試しください：\n• ページを再読み込み\n• ログアウト後に再ログイン\n• しばらく時間をおいて再試行`;
+        
+        if (confirm(message + '\n\n今すぐページを再読み込みしますか？')) {
+            window.location.reload();
         }
     }
 }
