@@ -29,17 +29,15 @@ class DataIntegrityManager {
                 }
             },
             fundSource: {
-                required: ['name', 'initialBalance', 'type'],
+                required: ['name', 'balance', 'type'],
                 types: {
                     name: 'string',
-                    initialBalance: 'number',
-                    currentBalance: 'number',
+                    balance: 'number',
                     type: 'string'
                 },
                 constraints: {
                     name: { minLength: 1, maxLength: 50, unique: true },
-                    initialBalance: { min: -10000000, max: 10000000 },
-                    currentBalance: { min: -10000000, max: 10000000 },
+                    balance: { min: -10000000, max: 10000000 },
                     type: { enum: ['cash', 'bank', 'credit', 'savings', 'investment'] }
                 }
             },
@@ -88,7 +86,7 @@ class DataIntegrityManager {
             },
             transactions: {
                 dependencies: ['categories', 'fundSources', 'subcategories'],
-                updateTriggers: ['fundSource.currentBalance'] // Update fund source balance
+                updateTriggers: ['fundSource.balance'] // Update fund source balance
             }
         };
     }
@@ -606,7 +604,7 @@ class DataIntegrityManager {
             for (const fundSource of fundSources) {
                 const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
                 const totalTransactionAmount = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
-                fundSource.currentBalance = fundSource.initialBalance + totalTransactionAmount;
+                fundSource.balance = totalTransactionAmount;
             }
 
             this.storage.setFundSources(fundSources);
@@ -782,16 +780,15 @@ class DataIntegrityManager {
 
         for (const fundSource of fundSources) {
             const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
-            const calculatedBalance = fundSource.initialBalance + 
-                relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
+            const calculatedBalance = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
             
-            if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
+            if (Math.abs(calculatedBalance - fundSource.balance) > 0.01) {
                 issues.push({
                     id: fundSource.id,
                     name: fundSource.name,
-                    storedBalance: fundSource.currentBalance,
+                    storedBalance: fundSource.balance,
                     calculatedBalance: calculatedBalance,
-                    difference: calculatedBalance - fundSource.currentBalance
+                    difference: calculatedBalance - fundSource.balance
                 });
             }
         }
@@ -873,7 +870,7 @@ class DataIntegrityManager {
         for (const issue of balanceIssues) {
             const fsIndex = fundSources.findIndex(fs => fs.id === issue.id);
             if (fsIndex >= 0) {
-                fundSources[fsIndex].currentBalance = issue.calculatedBalance;
+                fundSources[fsIndex].balance = issue.calculatedBalance;
                 fixed++;
             }
         }

@@ -173,6 +173,9 @@ class StorageManager {
         // Update related data synchronously
         this.updateRelatedData('transaction', 'create', newTransaction);
         
+        // Notify UI update system
+        this.notifyDataChange('transaction', 'create', newTransaction);
+        
         return newTransaction;
     }
 
@@ -201,6 +204,9 @@ class StorageManager {
         // Update related data synchronously
         this.updateRelatedData('transaction', 'update', updatedData, originalTransaction);
         
+        // Notify UI update system
+        this.notifyDataChange('transaction', 'update', updatedData);
+        
         return transactions[index];
     }
 
@@ -218,6 +224,9 @@ class StorageManager {
         
         // Update related data synchronously
         this.updateRelatedData('transaction', 'delete', null, transactionToDelete);
+        
+        // Notify UI update system
+        this.notifyDataChange('transaction', 'delete', transactionToDelete);
         
         return filtered.length < transactions.length;
     }
@@ -273,7 +282,6 @@ class StorageManager {
         const newFundSource = {
             id: this.generateId(),
             ...fundSource,
-            currentBalance: fundSource.initialBalance,
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -287,6 +295,9 @@ class StorageManager {
         // Update related data synchronously
         this.updateRelatedData('fundSource', 'create', newFundSource);
         
+        // Notify UI update system
+        this.notifyDataChange('fundSource', 'create', newFundSource);
+        
         return newFundSource;
     }
 
@@ -294,7 +305,7 @@ class StorageManager {
         const fundSources = this.getFundSources();
         const index = fundSources.findIndex(fs => fs.id === id);
         if (index !== -1) {
-            fundSources[index].currentBalance -= amount;
+            fundSources[index].balance += amount;
             this.setFundSources(fundSources);
             return fundSources[index];
         }
@@ -320,6 +331,9 @@ class StorageManager {
         
         // Update related data synchronously
         this.updateRelatedData('fundSource', 'delete', null, fundSourceToDelete);
+        
+        // Notify UI update system
+        this.notifyDataChange('fundSource', 'delete', fundSourceToDelete);
         
         return filtered.length < fundSources.length;
     }
@@ -389,8 +403,11 @@ class StorageManager {
         setTimeout(() => {
             this.initializeDefaultData();
             
-            // Trigger UI refresh if available
-            if (window.uiManager) {
+            // Notify UI update system for full refresh
+            this.notifyDataChange('all', 'auth_change', null);
+            
+            // Fallback for older UI system
+            if (window.uiManager && !window.uiUpdateManager) {
                 window.uiManager.loadInitialData();
             }
         }, 200);
@@ -415,7 +432,7 @@ class StorageManager {
             
             // Minimal fund sources
             const minimalFundSources = [
-                { id: 'fs1', name: '現金', initialBalance: 0, currentBalance: 0, type: 'cash', isShared: false, sharedWith: [] }
+                { id: 'fs1', name: '現金', balance: 0, type: 'cash', isShared: false, sharedWith: [] }
             ];
             
             // Force set minimal data
@@ -463,12 +480,26 @@ class StorageManager {
             // Reinitialize
             this.initializeDefaultData();
             
+            // Notify UI update system
+            this.notifyDataChange('all', 'reinitialize', null);
+            
             console.log('Force reinitialization completed');
             return true;
             
         } catch (error) {
             console.error('Error during force reinitialization:', error);
             return false;
+        }
+    }
+
+    // Notify UI update system of data changes
+    notifyDataChange(type, action, data = null) {
+        try {
+            if (window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange(type, action, data);
+            }
+        } catch (error) {
+            console.error('Error notifying data change:', error);
         }
     }
 
@@ -514,12 +545,12 @@ class StorageManager {
             case 'fundSource':
                 if (action === 'create' || action === 'update') {
                     // Ensure required fields are present
-                    if (!newData.name || newData.initialBalance === undefined) {
+                    if (!newData.name || newData.balance === undefined) {
                         throw new Error('Fund source missing required fields');
                     }
                     
                     // Validate balance is a number
-                    if (typeof newData.initialBalance !== 'number' || isNaN(newData.initialBalance)) {
+                    if (typeof newData.balance !== 'number' || isNaN(newData.balance)) {
                         throw new Error('Fund source balance must be a valid number');
                     }
                     
@@ -604,7 +635,7 @@ class StorageManager {
                 // Update fund source balance for new transaction
                 const fundSource = fundSources.find(fs => fs.id === newData.fundSourceId);
                 if (fundSource) {
-                    fundSource.currentBalance = (fundSource.currentBalance || fundSource.initialBalance) + newData.amount;
+                    fundSource.balance += newData.amount;
                     fundSource.updatedAt = new Date();
                 }
             } else if (action === 'update' && oldData) {
@@ -614,7 +645,7 @@ class StorageManager {
                     const fundSource = fundSources.find(fs => fs.id === newData.fundSourceId);
                     if (fundSource) {
                         const difference = newData.amount - oldData.amount;
-                        fundSource.currentBalance = (fundSource.currentBalance || fundSource.initialBalance) + difference;
+                        fundSource.balance += difference;
                         fundSource.updatedAt = new Date();
                     }
                 } else {
@@ -623,12 +654,12 @@ class StorageManager {
                     const newFundSource = fundSources.find(fs => fs.id === newData.fundSourceId);
                     
                     if (oldFundSource) {
-                        oldFundSource.currentBalance = (oldFundSource.currentBalance || oldFundSource.initialBalance) - oldData.amount;
+                        oldFundSource.balance -= oldData.amount;
                         oldFundSource.updatedAt = new Date();
                     }
                     
                     if (newFundSource) {
-                        newFundSource.currentBalance = (newFundSource.currentBalance || newFundSource.initialBalance) + newData.amount;
+                        newFundSource.balance += newData.amount;
                         newFundSource.updatedAt = new Date();
                     }
                 }
@@ -636,7 +667,7 @@ class StorageManager {
                 // Revert transaction amount from fund source
                 const fundSource = fundSources.find(fs => fs.id === oldData.fundSourceId);
                 if (fundSource) {
-                    fundSource.currentBalance = (fundSource.currentBalance || fundSource.initialBalance) - oldData.amount;
+                    fundSource.balance -= oldData.amount;
                     fundSource.updatedAt = new Date();
                 }
             }
@@ -714,9 +745,9 @@ class StorageManager {
             errors.push('Name is required');
         }
         
-        if (data.initialBalance === undefined || data.initialBalance === null || 
-            typeof data.initialBalance !== 'number' || isNaN(data.initialBalance)) {
-            errors.push('Valid initial balance is required');
+        if (data.balance === undefined || data.balance === null || 
+            typeof data.balance !== 'number' || isNaN(data.balance)) {
+            errors.push('Valid balance is required');
         }
         
         return errors;
@@ -752,12 +783,12 @@ class StorageManager {
             
             for (const fundSource of fundSources) {
                 const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
-                const totalTransactionAmount = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
-                const calculatedBalance = fundSource.initialBalance + totalTransactionAmount;
+                // 残高は取引の累積で計算される（初期値は0として扱う）
+                const calculatedBalance = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
                 
-                if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
-                    console.log(`Correcting balance for ${fundSource.name}: ${fundSource.currentBalance} -> ${calculatedBalance}`);
-                    fundSource.currentBalance = calculatedBalance;
+                if (Math.abs(calculatedBalance - fundSource.balance) > 0.01) {
+                    console.log(`Correcting balance for ${fundSource.name}: ${fundSource.balance} -> ${calculatedBalance}`);
+                    fundSource.balance = calculatedBalance;
                     fundSource.updatedAt = new Date();
                 }
             }
@@ -868,6 +899,10 @@ class StorageManager {
         };
         subcategories.push(newSubcategory);
         this.setSubcategories(subcategories);
+        
+        // Notify UI update system
+        this.notifyDataChange('subcategory', 'create', newSubcategory);
+        
         return newSubcategory;
     }
 
@@ -875,12 +910,17 @@ class StorageManager {
         const subcategories = this.getSubcategories();
         const index = subcategories.findIndex(sc => sc.id === id);
         if (index !== -1) {
+            const originalSubcategory = { ...subcategories[index] };
             subcategories[index] = {
                 ...subcategories[index],
                 ...updates,
                 updatedAt: new Date()
             };
             this.setSubcategories(subcategories);
+            
+            // Notify UI update system
+            this.notifyDataChange('subcategory', 'update', subcategories[index]);
+            
             return subcategories[index];
         }
         return null;
@@ -888,8 +928,15 @@ class StorageManager {
 
     deleteSubcategory(id) {
         const subcategories = this.getSubcategories();
+        const subcategoryToDelete = subcategories.find(sc => sc.id === id);
         const filtered = subcategories.filter(sc => sc.id !== id);
         this.setSubcategories(filtered);
+        
+        // Notify UI update system
+        if (subcategoryToDelete) {
+            this.notifyDataChange('subcategory', 'delete', subcategoryToDelete);
+        }
+        
         return filtered.length < subcategories.length;
     }
 
@@ -922,8 +969,7 @@ class StorageManager {
             { 
                 id: 'fs1', 
                 name: '現金', 
-                initialBalance: 50000, 
-                currentBalance: 50000, 
+                balance: 50000, 
                 type: 'cash', 
                 isShared: false, 
                 sharedWith: [],
@@ -938,8 +984,7 @@ class StorageManager {
             { 
                 id: 'fs2', 
                 name: '銀行口座', 
-                initialBalance: 200000, 
-                currentBalance: 200000, 
+                balance: 200000, 
                 type: 'bank', 
                 isShared: false, 
                 sharedWith: [],
@@ -954,8 +999,7 @@ class StorageManager {
             { 
                 id: 'fs3', 
                 name: 'クレジットカード',
-                initialBalance: 0, 
-                currentBalance: 0, 
+                balance: 0, 
                 type: 'credit', 
                 isShared: false, 
                 sharedWith: [],

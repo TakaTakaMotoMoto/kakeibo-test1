@@ -137,12 +137,29 @@ class BudgetApp {
     handleURLParameters() {
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
+        const invitation = urlParams.get('invitation');
         
         if (action === 'add') {
             // Open add transaction modal
             setTimeout(() => {
                 window.uiManager.openTransactionModal();
             }, 500);
+        }
+        
+        if (invitation) {
+            // Handle invitation token from URL
+            setTimeout(() => {
+                if (window.uiSharing && window.uiSharing.processInvitationToken) {
+                    window.uiSharing.processInvitationToken(invitation);
+                } else {
+                    // Store for later processing when sharing system is ready
+                    sessionStorage.setItem('pendingInvitationToken', invitation);
+                }
+                
+                // Clear URL parameter
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }, 1000);
         }
     }
 

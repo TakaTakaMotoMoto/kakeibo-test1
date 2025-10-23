@@ -1,8 +1,14 @@
-// Data Processing and Business Logic
+// Data Processing and Business Logic - Coordinating Manager
 class DataManager {
     constructor(storage) {
         this.storage = storage;
         this.permissionManager = window.permissionManager || new PermissionManager();
+        
+        // Initialize specialized managers
+        this.transactionManager = new TransactionManager(storage, this.permissionManager);
+        this.fundSourceManager = new FundSourceManager(storage, this.permissionManager);
+        this.subcategoryManager = new SubcategoryManager(storage);
+        
         this.filters = {
             startDate: null,
             endDate: null,
@@ -32,18 +38,9 @@ class DataManager {
         };
     }
 
-    // Transaction methods (Performance Optimized)
+    // Transaction methods (delegated to TransactionManager)
     getTransactions(filtered = false) {
-        // Use optimized data access
-        let transactions = this.dataOptimizer ?
-            this.dataOptimizer.getTransactions() :
-            this.storage.getTransactions();
-
-        if (filtered && this.hasActiveFilters()) {
-            transactions = this.applyFiltersOptimized(transactions);
-        }
-
-        return transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        return this.transactionManager.getTransactions(filtered, this.filters);
     }
 
     // Optimized filter application with caching
@@ -113,230 +110,45 @@ class DataManager {
     }
 
     addTransaction(transactionData) {
-        // Check permission to create transaction in the fund source
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (currentUser && transactionData.fundSourceId) {
-            const fundSources = this.storage.getFundSources();
-            const fundSource = fundSources.find(fs => fs.id === transactionData.fundSourceId);
-
-            if (fundSource && fundSource.isShared) {
-                if (!this.permissionManager.canViewFundSource(currentUser.id, transactionData.fundSourceId, fundSources)) {
-                    throw new Error('この資金元にアクセスする権限がありません');
-                }
-
-                // For shared fund sources, check if user has edit permission
-                const userPermissions = this.permissionManager.getUserPermissions(currentUser.id, transactionData.fundSourceId, fundSources);
-                if (userPermissions && !userPermissions.canEdit) {
-                    throw new Error('この資金元で取引を作成する権限がありません');
-                }
-            }
-        }
-
-        // Validate transaction data
-        const validationErrors = this.validateTransaction(transactionData);
-        if (validationErrors.length > 0) {
-            throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
-        }
-
-        // Add sharing-related fields
-        if (currentUser) {
-            transactionData.createdBy = currentUser.id;
-            transactionData.createdByUsername = currentUser.username || currentUser.email;
-        }
-
-        // Check if transaction should be marked as shared
-        if (transactionData.fundSourceId) {
-            const fundSources = this.storage.getFundSources();
-            const fundSource = fundSources.find(fs => fs.id === transactionData.fundSourceId);
-            if (fundSource && fundSource.isShared) {
-                transactionData.isShared = true;
-            }
-        }
-
-        // Direct storage operation
-        const transaction = this.storage.addTransaction(transactionData);
-        return transaction;
+        return this.transactionManager.addTransaction(transactionData);
     }
 
     updateTransaction(id, updates) {
-        // Check permission to edit transaction
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        const existingTransaction = this.storage.getTransactions().find(t => t.id === id);
-        if (!existingTransaction) {
-            throw new Error('Transaction not found');
-        }
-
-        if (currentUser) {
-            const transactions = this.storage.getTransactions();
-            const fundSources = this.storage.getFundSources();
-
-            if (!this.permissionManager.canEditTransaction(currentUser.id, id, transactions, fundSources)) {
-                throw new Error('この取引を編集する権限がありません');
-            }
-        }
-
-        const updatedData = { ...existingTransaction, ...updates };
-        const validationErrors = this.validateTransaction(updatedData);
-        if (validationErrors.length > 0) {
-            throw new Error(`Transaction validation failed: ${validationErrors.join(', ')}`);
-        }
-
-        // Add update tracking
-        updates.updatedAt = new Date();
-        if (currentUser) {
-            updates.updatedBy = currentUser.id;
-        }
-
-        // Direct storage operation
-        return this.storage.updateTransaction(id, updates);
+        return this.transactionManager.updateTransaction(id, updates);
     }
 
     deleteTransaction(id) {
-        // Check permission to delete transaction
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        const transaction = this.storage.getTransactions().find(t => t.id === id);
-        if (!transaction) {
-            throw new Error('Transaction not found');
-        }
-
-        if (currentUser) {
-            const transactions = this.storage.getTransactions();
-            const fundSources = this.storage.getFundSources();
-
-            if (!this.permissionManager.canDeleteTransaction(currentUser.id, id, transactions, fundSources)) {
-                throw new Error('この取引を削除する権限がありません');
-            }
-        }
-
-        // Direct storage operation
-        return this.storage.deleteTransaction(id);
+        return this.transactionManager.deleteTransaction(id);
     }
 
-    // Fund source deletion with validation
+    // Fund source methods (delegated to FundSourceManager)
     deleteFundSource(id) {
-        // Check permission to manage fund source
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (currentUser) {
-            const fundSources = this.storage.getFundSources();
-
-            if (!this.permissionManager.canManageFundSource(currentUser.id, id, fundSources)) {
-                throw new Error('この資金元を削除する権限がありません');
-            }
-        }
-
-        // Check if deletion is allowed
-        if (!this.canDeleteFundSource(id)) {
-            throw new Error('この資金元は取引で使用されているため削除できません');
-        }
-
-        // Direct storage operation
-        return this.storage.deleteFundSource(id);
+        return this.fundSourceManager.deleteFundSource(id);
     }
 
     canDeleteFundSource(id) {
-        // Use integrity manager if available
-        if (window.dataIntegrityManager) {
-            return window.dataIntegrityManager.canDelete('fundSources', id);
-        }
-
-        // Fallback check
-        const transactions = this.getTransactions();
-        return !transactions.some(t => t.fundSourceId === id);
+        return this.fundSourceManager.canDeleteFundSource(id);
     }
 
-    // Subcategory management
+    // Subcategory methods (delegated to SubcategoryManager)
     getSubcategories(categoryId = null) {
-        const subcategories = this.storage.getSubcategories();
-        if (categoryId) {
-            return subcategories.filter(sc => sc.categoryId === categoryId);
-        }
-        return subcategories;
+        return this.subcategoryManager.getSubcategories(categoryId);
     }
 
     addSubcategory(subcategoryData) {
-        // Validate input data
-        if (!subcategoryData.name || !subcategoryData.name.trim()) {
-            throw new Error('サブカテゴリ名を入力してください');
-        }
-
-        if (!subcategoryData.categoryId) {
-            throw new Error('カテゴリが選択されていません');
-        }
-
-        // Normalize the name
-        const normalizedName = subcategoryData.name.trim();
-
-        // Check for duplicate names within the same category (case-insensitive)
-        const existingSubcategories = this.getSubcategories(subcategoryData.categoryId);
-        const isDuplicate = existingSubcategories.some(sc =>
-            sc.name.toLowerCase().trim() === normalizedName.toLowerCase()
-        );
-
-        if (isDuplicate) {
-            throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
-        }
-
-        // Create the subcategory with normalized name
-        const subcategoryToAdd = {
-            ...subcategoryData,
-            name: normalizedName
-        };
-
-        return this.storage.addSubcategory(subcategoryToAdd);
+        return this.subcategoryManager.addSubcategory(subcategoryData);
     }
 
     updateSubcategory(id, updates) {
-        // Validate input
-        if (!id) {
-            throw new Error('サブカテゴリIDが指定されていません');
-        }
-
-        // Check for duplicate names if name is being updated
-        if (updates.name) {
-            const normalizedName = updates.name.trim();
-
-            if (!normalizedName) {
-                throw new Error('サブカテゴリ名を入力してください');
-            }
-
-            const subcategory = this.storage.getSubcategories().find(sc => sc.id === id);
-            if (!subcategory) {
-                throw new Error('更新対象のサブカテゴリが見つかりません');
-            }
-
-            const existingSubcategories = this.getSubcategories(subcategory.categoryId);
-            const isDuplicate = existingSubcategories.some(sc =>
-                sc.id !== id && sc.name.toLowerCase().trim() === normalizedName.toLowerCase()
-            );
-
-            if (isDuplicate) {
-                throw new Error('同じカテゴリ内に同じ名前のサブカテゴリが既に存在します');
-            }
-
-            // Normalize the name in updates
-            updates = {
-                ...updates,
-                name: normalizedName
-            };
-        }
-
-        return this.storage.updateSubcategory(id, updates);
+        return this.subcategoryManager.updateSubcategory(id, updates);
     }
 
     deleteSubcategory(id) {
-        const transactions = this.getTransactions();
-        const hasTransactions = transactions.some(t => t.subcategoryId === id);
-
-        if (hasTransactions) {
-            throw new Error('このサブカテゴリは取引で使用されているため削除できません');
-        }
-
-        return this.storage.deleteSubcategory(id);
+        return this.subcategoryManager.deleteSubcategory(id);
     }
 
     canDeleteSubcategory(id) {
-        const transactions = this.getTransactions();
-        return !transactions.some(t => t.subcategoryId === id);
+        return this.subcategoryManager.canDeleteSubcategory(id);
     }
 
     // Filter methods
@@ -374,25 +186,17 @@ class DataManager {
         return Array.from(creators);
     }
 
-    // Filter transactions by creator
+    // Transaction query methods (delegated to TransactionManager)
     getTransactionsByCreator(creatorId) {
-        const transactions = this.storage.getTransactions();
-        return transactions.filter(transaction => transaction.createdBy === creatorId);
+        return this.transactionManager.getTransactionsByCreator(creatorId);
     }
 
-    // Get only shared transactions
     getSharedTransactions() {
-        const transactions = this.storage.getTransactions();
-        return transactions.filter(transaction => transaction.isShared === true);
+        return this.transactionManager.getSharedTransactions();
     }
 
-    // Get only user's own transactions
     getMyTransactions() {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return [];
-
-        const transactions = this.storage.getTransactions();
-        return transactions.filter(transaction => transaction.createdBy === currentUser.id);
+        return this.transactionManager.getMyTransactions();
     }
 
     clearFilters() {
@@ -535,20 +339,13 @@ class DataManager {
         });
     }
 
-    // Analytics methods
+    // Analytics methods (delegated to TransactionManager)
     getTransactionsByDate(date) {
-        const targetDate = new Date(date);
-        return this.getTransactions().filter(transaction => {
-            const transactionDate = new Date(transaction.date);
-            return transactionDate.toDateString() === targetDate.toDateString();
-        });
+        return this.transactionManager.getTransactionsByDate(date);
     }
 
     getTransactionsByMonth(year, month) {
-        return this.getTransactions().filter(transaction => {
-            const date = new Date(transaction.date);
-            return date.getFullYear() === year && date.getMonth() === month;
-        });
+        return this.transactionManager.getTransactionsByMonth(year, month);
     }
 
     getCategoryTotals(transactions = null) {
@@ -623,7 +420,7 @@ class DataManager {
     // Summary methods
     getTotalBalance() {
         const fundSources = this.storage.getFundSources();
-        return fundSources.reduce((total, fs) => total + fs.currentBalance, 0);
+        return fundSources.reduce((total, fs) => total + fs.balance, 0);
     }
 
     getMonthlyExpenses() {
@@ -668,57 +465,30 @@ class DataManager {
         });
     }
 
-    // Sharing-related methods
+    // Transaction permission methods (delegated to TransactionManager)
     canEditTransaction(transaction) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return false;
-
-        const transactions = this.storage.getTransactions();
-        const fundSources = this.storage.getFundSources();
-
-        return this.permissionManager.canEditTransaction(currentUser.id, transaction.id, transactions, fundSources);
+        return this.transactionManager.canEditTransaction(transaction);
     }
 
     canDeleteTransaction(transaction) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return false;
-
-        const transactions = this.storage.getTransactions();
-        const fundSources = this.storage.getFundSources();
-
-        return this.permissionManager.canDeleteTransaction(currentUser.id, transaction.id, transactions, fundSources);
+        return this.transactionManager.canDeleteTransaction(transaction);
     }
 
+    // Fund source permission methods (delegated to FundSourceManager)
     canViewFundSource(fundSourceId) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return false;
-
-        const fundSources = this.storage.getFundSources();
-        return this.permissionManager.canViewFundSource(currentUser.id, fundSourceId, fundSources);
+        return this.fundSourceManager.canViewFundSource(fundSourceId);
     }
 
     canManageFundSource(fundSourceId) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return false;
-
-        const fundSources = this.storage.getFundSources();
-        return this.permissionManager.canManageFundSource(currentUser.id, fundSourceId, fundSources);
+        return this.fundSourceManager.canManageFundSource(fundSourceId);
     }
 
     canInviteUsers(fundSourceId) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return false;
-
-        const fundSources = this.storage.getFundSources();
-        return this.permissionManager.canInviteUsers(currentUser.id, fundSourceId, fundSources);
+        return this.fundSourceManager.canInviteUsers(fundSourceId);
     }
 
     getUserPermissions(fundSourceId) {
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
-        if (!currentUser) return null;
-
-        const fundSources = this.storage.getFundSources();
-        return this.permissionManager.getUserPermissions(currentUser.id, fundSourceId, fundSources);
+        return this.fundSourceManager.getUserPermissions(fundSourceId);
     }
 
     getUserPermissionLevel(fundSourceId) {
@@ -1179,12 +949,12 @@ class DataManager {
         }
 
         // Balance validation
-        if (data.initialBalance === undefined || data.initialBalance === null) {
-            errors.push('初期残高を入力してください');
-        } else if (typeof data.initialBalance !== 'number' || isNaN(data.initialBalance)) {
-            errors.push('有効な初期残高を入力してください');
-        } else if (Math.abs(data.initialBalance) > 10000000) {
-            errors.push('初期残高が範囲を超えています');
+        if (data.balance === undefined || data.balance === null) {
+            errors.push('残高を入力してください');
+        } else if (typeof data.balance !== 'number' || isNaN(data.balance)) {
+            errors.push('有効な残高を入力してください');
+        } else if (Math.abs(data.balance) > 10000000) {
+            errors.push('残高が範囲を超えています');
         }
 
         // Type validation
@@ -1325,14 +1095,14 @@ class DataManager {
 
         for (const fundSource of fundSources) {
             const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
-            const calculatedBalance = fundSource.initialBalance +
-                relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
+            // 残高は取引の累積で計算される（初期値は0として扱う）
+            const calculatedBalance = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-            if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
+            if (Math.abs(calculatedBalance - fundSource.balance) > 0.01) {
                 issues.push({
                     fundSourceId: fundSource.id,
                     name: fundSource.name,
-                    storedBalance: fundSource.currentBalance,
+                    storedBalance: fundSource.balance,
                     calculatedBalance: calculatedBalance
                 });
             }
@@ -1445,11 +1215,11 @@ class DataManager {
 
         for (const fundSource of fundSources) {
             const relatedTransactions = transactions.filter(t => t.fundSourceId === fundSource.id);
-            const calculatedBalance = fundSource.initialBalance +
-                relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
+            // 残高は取引の累積で計算される（初期値は0として扱う）
+            const calculatedBalance = relatedTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-            if (Math.abs(calculatedBalance - fundSource.currentBalance) > 0.01) {
-                fundSource.currentBalance = calculatedBalance;
+            if (Math.abs(calculatedBalance - fundSource.balance) > 0.01) {
+                fundSource.balance = calculatedBalance;
                 fundSource.updatedAt = new Date();
                 fixed++;
             }

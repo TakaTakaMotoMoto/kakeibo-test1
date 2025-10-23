@@ -16,6 +16,11 @@ class UIManager {
         this.formValidator = new FormValidator();
         this.renderer = new UIRenderer();
 
+        // Initialize UI update manager
+        if (!window.uiUpdateManager) {
+            window.uiUpdateManager = new UIUpdateManager();
+        }
+
         this.initialize();
     }
 
@@ -375,8 +380,9 @@ class UIManager {
             }
 
             this.modalManager.closeModal('transaction-modal');
-            this.renderTransactions();
-            this.renderFundSources();
+            
+            // UI updates are now handled automatically by the update system
+            // No need to manually call render methods
 
             if (this.currentTransactionView === 'calendar' && window.calendarManager) {
                 window.calendarManager.renderCalendar();
@@ -443,7 +449,7 @@ class UIManager {
 
             const fundSourceData = {
                 name: name,
-                initialBalance: parseFloat(balance),
+                balance: parseFloat(balance),
                 type: formData.get('type') || 'bank'
             };
 
@@ -467,8 +473,9 @@ class UIManager {
             }
 
             this.modalManager.closeModal('fundsource-modal');
-            this.renderFundSources();
-            this.populateSelects();
+            
+            // UI updates are now handled automatically by the update system
+            // No need to manually call render methods
         } catch (error) {
             console.error('Error handling fund source submit:', error);
             UIUtils.showNotification('資金元の保存に失敗しました: ' + error.message, 'error');
@@ -570,7 +577,7 @@ class UIManager {
                 if (fundSource) {
                     title.textContent = '資金元を編集';
                     document.getElementById('fs-name').value = fundSource.name;
-                    document.getElementById('fs-balance').value = fundSource.initialBalance;
+                    document.getElementById('fs-balance').value = fundSource.balance;
                 }
             } else {
                 title.textContent = '資金元を追加';
@@ -690,8 +697,7 @@ class UIManager {
             try {
                 const result = window.dataManager.deleteTransaction(id);
                 if (result) {
-                    this.renderTransactions();
-                    this.renderFundSources();
+                    // UI updates are now handled automatically by the update system
                     UIUtils.showNotification('取引を削除しました', 'success');
                 } else {
                     UIUtils.showNotification('取引の削除に失敗しました', 'error');
@@ -708,8 +714,7 @@ class UIManager {
             try {
                 const result = window.dataManager.deleteFundSource(id);
                 if (result) {
-                    this.renderFundSources();
-                    this.populateSelects();
+                    // UI updates are now handled automatically by the update system
                     UIUtils.showNotification('資金元を削除しました', 'success');
                 } else {
                     UIUtils.showNotification('資金元の削除に失敗しました', 'error');
@@ -834,7 +839,7 @@ class UIManager {
             this.modalManager.closeModal('info-modal');
             setTimeout(() => {
                 this.openSubcategoryModal(categoryId);
-                this.populateSelects();
+                // UI updates are now handled automatically by the update system
             }, 100);
 
         } catch (error) {
@@ -866,7 +871,7 @@ class UIManager {
                 this.modalManager.closeModal('info-modal');
                 setTimeout(() => {
                     this.openSubcategoryModal(subcategory.categoryId);
-                    this.populateSelects();
+                    // UI updates are now handled automatically by the update system
                 }, 100);
             }
 
@@ -894,7 +899,7 @@ class UIManager {
                 this.modalManager.closeModal('info-modal');
                 setTimeout(() => {
                     this.openSubcategoryModal(subcategory.categoryId);
-                    this.populateSelects();
+                    // UI updates are now handled automatically by the update system
                 }, 100);
             }
 
@@ -948,7 +953,11 @@ class UIManager {
 
             window.dataManager.setAdvancedFilters(filters);
             this.updateFilterButtonState();
-            this.renderTransactions();
+            
+            // Trigger immediate update for filter changes
+            if (window.uiUpdateManager) {
+                window.uiUpdateManager.immediateUpdate('transactions');
+            }
             this.modalManager.closeModal('filter-modal');
 
             // Show notification about active filters
@@ -979,7 +988,11 @@ class UIManager {
             // Clear filters in data manager
             window.dataManager.clearFilters();
             this.updateFilterButtonState();
-            this.renderTransactions();
+            
+            // Trigger immediate update for filter changes
+            if (window.uiUpdateManager) {
+                window.uiUpdateManager.immediateUpdate('transactions');
+            }
             this.modalManager.closeModal('filter-modal');
 
             UIUtils.showNotification('フィルターをクリアしました', 'info');

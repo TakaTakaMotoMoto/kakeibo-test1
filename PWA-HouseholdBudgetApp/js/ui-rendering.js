@@ -166,7 +166,7 @@ class UIRenderer {
                             </div>
                             <div class="fundsource-actions">
                                 <div class="fundsource-balance">
-                                    ${UIUtils.formatCurrency(fundSource.currentBalance)}
+                                    ${UIUtils.formatCurrency(fundSource.balance)}
                                 </div>
                                 ${canManage ? `
                                     <button class="delete-btn ${canDelete ? '' : 'disabled'}" 

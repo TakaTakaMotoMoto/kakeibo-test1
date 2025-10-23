@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リアルタイム更新テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .test-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-btn.primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .test-btn.success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .test-btn.danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .test-btn.warning {
+            background-color: #ffc107;
+            color: black;
+        }
+        
+        .test-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .status-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-display {
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .data-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>リアルタイム更新システム テスト</h1>
+    
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="status-display">
+            システム初期化中...
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h3>取引データテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="addTestTransaction()">取引追加</button>
+                <button class="test-btn warning" onclick="updateLastTransaction()">最新取引更新</button>
+                <button class="test-btn danger" onclick="deleteLastTransaction()">最新取引削除</button>
+                <button class="test-btn success" onclick="addMultipleTransactions()">複数取引追加</button>
+            </div>
+            <div id="transaction-status" class="status-display">
+                取引数: 読み込み中...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>資金元データテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="addTestFundSource()">資金元追加</button>
+                <button class="test-btn warning" onclick="updateLastFundSource()">最新資金元更新</button>
+                <button class="test-btn danger" onclick="deleteLastFundSource()">最新資金元削除</button>
+            </div>
+            <div id="fundsource-status" class="status-display">
+                資金元数: 読み込み中...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>サブカテゴリテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="addTestSubcategory()">サブカテゴリ追加</button>
+                <button class="test-btn warning" onclick="updateLastSubcategory()">最新サブカテゴリ更新</button>
+                <button class="test-btn danger" onclick="deleteLastSubcategory()">最新サブカテゴリ削除</button>
+            </div>
+            <div id="subcategory-status" class="status-display">
+                サブカテゴリ数: 読み込み中...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>UI更新システムテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn success" onclick="forceFullUpdate()">全UI強制更新</button>
+                <button class="test-btn warning" onclick="testDebouncedUpdate()">デバウンス更新テスト</button>
+                <button class="test-btn info" onclick="showUpdateQueue()">更新キュー表示</button>
+                <button class="test-btn danger" onclick="clearUpdateQueue()">更新キュークリア</button>
+            </div>
+            <div id="ui-update-status" class="status-display">
+                UI更新システム: 読み込み中...
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>リアルタイムログ</h2>
+        <div id="log-display" class="log-display"></div>
+        <button class="test-btn warning" onclick="clearLog()">ログクリア</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>現在のデータ状態</h2>
+        <div class="test-buttons">
+            <button class="test-btn info" onclick="refreshDataDisplay()">データ表示更新</button>
+        </div>
+        <div id="data-display" class="data-display"></div>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-update-manager.js"></script>
+    <script src="js/ui-utils.js"></script>
+
+    <script>
+        // Test variables
+        let testCounter = 0;
+        let logContainer;
+        
+        // Initialize test environment
+        function initializeTest() {
+            logContainer = document.getElementById('log-display');
+            
+            // Initialize managers
+            if (!window.storage) {
+                window.storage = new StorageManager();
+            }
+            
+            if (!window.authManager) {
+                window.authManager = new AuthManager();
+            }
+            
+            if (!window.dataManager) {
+                window.dataManager = new DataManager(window.storage);
+            }
+            
+            if (!window.uiUpdateManager) {
+                window.uiUpdateManager = new UIUpdateManager();
+            }
+            
+            // Set up update monitoring
+            setupUpdateMonitoring();
+            
+            // Initial status update
+            updateSystemStatus();
+            updateDataCounts();
+            refreshDataDisplay();
+            
+            log('テスト環境初期化完了', 'success');
+        }
+        
+        // Set up monitoring for UI updates
+        function setupUpdateMonitoring() {
+            // Monitor data changes
+            document.addEventListener('dataChanged', (e) => {
+                const { type, action, data } = e.detail;
+                log(`データ変更検出: ${type} ${action}`, 'info');
+                
+                // Update counters
+                setTimeout(() => {
+                    updateDataCounts();
+                }, 100);
+            });
+            
+            // Register update callbacks
+            if (window.uiUpdateManager) {
+                window.uiUpdateManager.registerUpdateCallback('transactions', () => {
+                    log('取引UI更新実行', 'success');
+                });
+                
+                window.uiUpdateManager.registerUpdateCallback('fundSources', () => {
+                    log('資金元UI更新実行', 'success');
+                });
+                
+                window.uiUpdateManager.registerUpdateCallback('selects', () => {
+                    log('セレクトボックスUI更新実行', 'success');
+                });
+            }
+        }
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Update system status
+        function updateSystemStatus() {
+            const status = document.getElementById('system-status');
+            const uiUpdateStatus = document.getElementById('ui-update-status');
+            
+            const systemInfo = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                dataManager: !!window.dataManager,
+                uiUpdateManager: !!window.uiUpdateManager
+            };
+            
+            status.innerHTML = `
+                <strong>システム状態:</strong><br>
+                Storage: ${systemInfo.storage ? '✓' : '✗'}<br>
+                AuthManager: ${systemInfo.authManager ? '✓' : '✗'}<br>
+                DataManager: ${systemInfo.dataManager ? '✓' : '✗'}<br>
+                UIUpdateManager: ${systemInfo.uiUpdateManager ? '✓' : '✗'}
+            `;
+            
+            if (window.uiUpdateManager) {
+                const updateStatus = window.uiUpdateManager.getStatus();
+                uiUpdateStatus.innerHTML = `
+                    <strong>UI更新システム:</strong><br>
+                    更新中: ${updateStatus.isUpdating ? 'はい' : 'いいえ'}<br>
+                    キュー長: ${updateStatus.queueLength}<br>
+                    登録コールバック: ${updateStatus.registeredCallbacks.join(', ')}
+                `;
+            }
+        }
+        
+        // Update data counts
+        function updateDataCounts() {
+            try {
+                const transactions = window.storage.getTransactions();
+                const fundSources = window.storage.getFundSources();
+                const subcategories = window.storage.getSubcategories();
+                
+                document.getElementById('transaction-status').textContent = 
+                    `取引数: ${transactions.length}`;
+                document.getElementById('fundsource-status').textContent = 
+                    `資金元数: ${fundSources.length}`;
+                document.getElementById('subcategory-status').textContent = 
+                    `サブカテゴリ数: ${subcategories.length}`;
+                    
+            } catch (error) {
+                log(`データカウント更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test functions for transactions
+        function addTestTransaction() {
+            try {
+                testCounter++;
+                const fundSources = window.storage.getFundSources();
+                const categories = window.storage.getCategories();
+                
+                if (fundSources.length === 0 || categories.length === 0) {
+                    log('テスト用の資金元またはカテゴリが不足しています', 'warning');
+                    return;
+                }
+                
+                const transaction = {
+                    amount: Math.floor(Math.random() * 10000) - 5000,
+                    categoryId: categories[0].id,
+                    fundSourceId: fundSources[0].id,
+                    date: new Date(),
+                    note: `テスト取引 #${testCounter}`
+                };
+                
+                window.storage.addTransaction(transaction);
+                log(`テスト取引追加: ${transaction.amount}円`, 'success');
+                
+            } catch (error) {
+                log(`取引追加エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateLastTransaction() {
+            try {
+                const transactions = window.storage.getTransactions();
+                if (transactions.length === 0) {
+                    log('更新する取引がありません', 'warning');
+                    return;
+                }
+                
+                const lastTransaction = transactions[transactions.length - 1];
+                const newAmount = Math.floor(Math.random() * 10000) - 5000;
+                
+                window.storage.updateTransaction(lastTransaction.id, {
+                    amount: newAmount,
+                    note: `更新済み取引 #${testCounter++}`
+                });
+                
+                log(`取引更新: ${newAmount}円`, 'success');
+                
+            } catch (error) {
+                log(`取引更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function deleteLastTransaction() {
+            try {
+                const transactions = window.storage.getTransactions();
+                if (transactions.length === 0) {
+                    log('削除する取引がありません', 'warning');
+                    return;
+                }
+                
+                const lastTransaction = transactions[transactions.length - 1];
+                window.storage.deleteTransaction(lastTransaction.id);
+                log('最新取引削除完了', 'success');
+                
+            } catch (error) {
+                log(`取引削除エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function addMultipleTransactions() {
+            try {
+                const count = 5;
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        addTestTransaction();
+                    }, i * 200);
+                }
+                log(`${count}件の取引を順次追加開始`, 'info');
+                
+            } catch (error) {
+                log(`複数取引追加エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test functions for fund sources
+        function addTestFundSource() {
+            try {
+                testCounter++;
+                const fundSource = {
+                    name: `テスト資金元 #${testCounter}`,
+                    balance: Math.floor(Math.random() * 100000),
+                    type: 'bank'
+                };
+                
+                window.storage.addFundSource(fundSource);
+                log(`テスト資金元追加: ${fundSource.name}`, 'success');
+                
+            } catch (error) {
+                log(`資金元追加エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateLastFundSource() {
+            try {
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    log('更新する資金元がありません', 'warning');
+                    return;
+                }
+                
+                const lastFundSource = fundSources[fundSources.length - 1];
+                const newBalance = Math.floor(Math.random() * 100000);
+                
+                const updatedFundSources = [...fundSources];
+                const index = updatedFundSources.findIndex(fs => fs.id === lastFundSource.id);
+                updatedFundSources[index] = {
+                    ...lastFundSource,
+                    balance: newBalance,
+                    name: `更新済み資金元 #${testCounter++}`,
+                    updatedAt: new Date()
+                };
+                
+                window.storage.setFundSources(updatedFundSources);
+                window.storage.notifyDataChange('fundSource', 'update', updatedFundSources[index]);
+                
+                log(`資金元更新: 残高 ${newBalance}円`, 'success');
+                
+            } catch (error) {
+                log(`資金元更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function deleteLastFundSource() {
+            try {
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length <= 1) {
+                    log('削除する資金元がありません（最低1つは必要）', 'warning');
+                    return;
+                }
+                
+                const lastFundSource = fundSources[fundSources.length - 1];
+                window.storage.deleteFundSource(lastFundSource.id);
+                log('最新資金元削除完了', 'success');
+                
+            } catch (error) {
+                log(`資金元削除エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test functions for subcategories
+        function addTestSubcategory() {
+            try {
+                const categories = window.storage.getCategories();
+                if (categories.length === 0) {
+                    log('サブカテゴリを追加するカテゴリがありません', 'warning');
+                    return;
+                }
+                
+                testCounter++;
+                const subcategory = {
+                    name: `テストサブカテゴリ #${testCounter}`,
+                    categoryId: categories[0].id
+                };
+                
+                window.storage.addSubcategory(subcategory);
+                log(`テストサブカテゴリ追加: ${subcategory.name}`, 'success');
+                
+            } catch (error) {
+                log(`サブカテゴリ追加エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateLastSubcategory() {
+            try {
+                const subcategories = window.storage.getSubcategories();
+                if (subcategories.length === 0) {
+                    log('更新するサブカテゴリがありません', 'warning');
+                    return;
+                }
+                
+                const lastSubcategory = subcategories[subcategories.length - 1];
+                window.storage.updateSubcategory(lastSubcategory.id, {
+                    name: `更新済みサブカテゴリ #${testCounter++}`
+                });
+                
+                log('サブカテゴリ更新完了', 'success');
+                
+            } catch (error) {
+                log(`サブカテゴリ更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function deleteLastSubcategory() {
+            try {
+                const subcategories = window.storage.getSubcategories();
+                if (subcategories.length === 0) {
+                    log('削除するサブカテゴリがありません', 'warning');
+                    return;
+                }
+                
+                const lastSubcategory = subcategories[subcategories.length - 1];
+                window.storage.deleteSubcategory(lastSubcategory.id);
+                log('最新サブカテゴリ削除完了', 'success');
+                
+            } catch (error) {
+                log(`サブカテゴリ削除エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // UI update system tests
+        function forceFullUpdate() {
+            try {
+                if (window.uiUpdateManager) {
+                    window.uiUpdateManager.forceRefresh();
+                    log('全UI強制更新実行', 'success');
+                } else {
+                    log('UIUpdateManagerが利用できません', 'error');
+                }
+            } catch (error) {
+                log(`強制更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testDebouncedUpdate() {
+            try {
+                if (window.uiUpdateManager) {
+                    // Rapid updates to test debouncing
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            window.uiUpdateManager.debouncedUpdate('transactions', 500);
+                            log(`デバウンス更新 #${i + 1} スケジュール`, 'info');
+                        }, i * 50);
+                    }
+                } else {
+                    log('UIUpdateManagerが利用できません', 'error');
+                }
+            } catch (error) {
+                log(`デバウンス更新テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function showUpdateQueue() {
+            try {
+                if (window.uiUpdateManager) {
+                    const status = window.uiUpdateManager.getStatus();
+                    log(`更新キュー状態: 長さ=${status.queueLength}, 更新中=${status.isUpdating}`, 'info');
+                    updateSystemStatus();
+                } else {
+                    log('UIUpdateManagerが利用できません', 'error');
+                }
+            } catch (error) {
+                log(`キュー表示エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearUpdateQueue() {
+            try {
+                if (window.uiUpdateManager) {
+                    // Clear queue by creating new instance (for testing)
+                    window.uiUpdateManager.updateQueue = [];
+                    log('更新キューをクリアしました', 'warning');
+                    updateSystemStatus();
+                } else {
+                    log('UIUpdateManagerが利用できません', 'error');
+                }
+            } catch (error) {
+                log(`キュークリアエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Utility functions
+        function clearLog() {
+            logContainer.innerHTML = '';
+            log('ログクリア完了', 'info');
+        }
+        
+        function refreshDataDisplay() {
+            try {
+                const dataDisplay = document.getElementById('data-display');
+                
+                const data = {
+                    transactions: window.storage.getTransactions().length,
+                    fundSources: window.storage.getFundSources().map(fs => ({
+                        id: fs.id,
+                        name: fs.name,
+                        balance: fs.balance
+                    })),
+                    categories: window.storage.getCategories().length,
+                    subcategories: window.storage.getSubcategories().length
+                };
+                
+                dataDisplay.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                log(`データ表示更新エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTest, 100);
+        });
+        
+        // Auto-refresh status every 5 seconds
+        setInterval(() => {
+            updateSystemStatus();
+            updateDataCounts();
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -24,6 +24,9 @@
     
     <!-- Chart.js for charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- QR Code library (optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -297,7 +300,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="fs-balance">初期残高</label>
+                        <label for="fs-balance">残高</label>
                         <input type="number" id="fs-balance" name="balance" required step="0.01" placeholder="0">
                     </div>
                     
@@ -588,6 +591,9 @@
     <!-- Load scripts directly -->
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/transaction-manager.js"></script>
+    <script src="js/fund-source-manager.js"></script>
+    <script src="js/subcategory-manager.js"></script>
     <script src="js/data.js"></script>
     <script src="js/data-integrity.js"></script>
     
@@ -605,6 +611,8 @@
     <script src="js/sharing-init.js"></script>
     
     <!-- UI Components -->
+    <script src="js/ui-update-manager.js"></script>
+    <script src="js/invitation-token-display.js"></script>
     <script src="js/ui-utils.js"></script>
     <script src="js/ui-modals.js"></script>
     <script src="js/ui-forms.js"></script>

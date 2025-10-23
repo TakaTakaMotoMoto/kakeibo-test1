@@ -9,12 +9,20 @@ class SharingUIManager {
         this.currentFundSourceId = null;
         this.currentInvitationToken = null;
 
+        // Initialize invitation token display manager
+        this.invitationTokenDisplay = new InvitationTokenDisplayManager();
+
         // Enhanced UI responsiveness (Task 12.2)
         this.uiEnhancer = window.UIResponsivenessEnhancer ? new UIResponsivenessEnhancer() : null;
         this.loadingStates = new Map();
 
         this.initializeEventListeners();
         this.initializeEnhancedUI();
+        
+        // Process URL invitation if present
+        setTimeout(() => {
+            this.invitationTokenDisplay.processUrlInvitation();
+        }, 1000);
     }
 
     // Initialize enhanced UI features (Task 12.2)
@@ -198,7 +206,7 @@ class SharingUIManager {
                 <div class="fund-source-info-header">
                     <div class="fund-source-details">
                         <h4>${UIUtils.getFundSourceIcon(fundSource.type)} ${UIUtils.escapeHtml(fundSource.name)}</h4>
-                        <p>現在の残高: ${UIUtils.formatCurrency(fundSource.currentBalance || 0)}</p>
+                        <p>現在の残高: ${UIUtils.formatCurrency(fundSource.balance || 0)}</p>
                     </div>
                 </div>
 
@@ -369,24 +377,22 @@ class SharingUIManager {
                 canDelete: document.getElementById('perm-delete').checked
             };
 
-            // Send invitation
-            const invitation = this.sharingManager.sendInvitation(
+            // Generate and display invitation token
+            const invitation = this.invitationTokenDisplay.generateAndDisplayInvitation(
                 this.currentFundSourceId,
                 email,
                 permissions
             );
-
-            UIUtils.showNotification(`${email} に招待を送信しました`, 'success');
 
             // Clear form
             emailInput.value = '';
             document.getElementById('perm-edit').checked = true;
             document.getElementById('perm-delete').checked = false;
 
-            // Refresh modal
-            setTimeout(() => {
-                this.openFundSourceSharingModal(this.currentFundSourceId);
-            }, 1000);
+            // Close current modal
+            if (this.uiManager && this.uiManager.modalManager) {
+                this.uiManager.modalManager.closeModal('info-modal');
+            }
 
         } catch (error) {
             console.error('Error sending invitation:', error);
@@ -671,7 +677,7 @@ class SharingUIManager {
                                                 所有者: ${UIUtils.escapeHtml(owner.username)}
                                             </div>
                                             <div class="fund-source-balance">
-                                                残高: ${UIUtils.formatCurrency(fs.currentBalance || 0)}
+                                                残高: ${UIUtils.formatCurrency(fs.balance || 0)}
                                             </div>
                                             ${userInfo ? `
                                                 <div class="user-permissions">
@@ -948,7 +954,7 @@ class SharingUIManager {
                                     <div class="fund-source-name">${UIUtils.escapeHtml(fundSource.name)}</div>
                                     <div class="fund-source-type">${UIUtils.getFundSourceTypeName(fundSource.type)}</div>
                                     <div class="fund-source-balance">
-                                        現在の残高: ${UIUtils.formatCurrency(fundSource.currentBalance)}
+                                        現在の残高: ${UIUtils.formatCurrency(fundSource.balance)}
                                     </div>
                                 </div>
                             </div>

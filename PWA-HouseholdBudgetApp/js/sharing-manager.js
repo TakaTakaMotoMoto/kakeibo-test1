@@ -761,7 +761,7 @@ class SharingManager {
                     id: fundSource.id,
                     name: fundSource.name,
                     type: fundSource.type,
-                    currentBalance: fundSource.currentBalance
+                    balance: fundSource.balance
                 }
             };
 
@@ -1508,7 +1508,7 @@ class SharingManager {
             const fundSourceIndex = fundSources.findIndex(fs => fs.id === fundSourceId);
             
             if (fundSourceIndex !== -1) {
-                fundSources[fundSourceIndex].currentBalance += transactionAmount;
+                fundSources[fundSourceIndex].balance += transactionAmount;
                 fundSources[fundSourceIndex].updatedAt = new Date();
                 this.storage.setFundSources(fundSources);
             }

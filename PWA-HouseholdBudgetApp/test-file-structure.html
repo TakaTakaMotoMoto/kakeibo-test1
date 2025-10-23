@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイル構造テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .test-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-btn.primary { background-color: #007bff; color: white; }
+        .test-btn.success { background-color: #28a745; color: white; }
+        .test-btn.danger { background-color: #dc3545; color: white; }
+        .test-btn.warning { background-color: #ffc107; color: black; }
+        
+        .status-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-display {
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>ファイル構造整理テスト</h1>
+    
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="status-display">初期化中...</div>
+    </div>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h3>TransactionManagerテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testTransactionManager()">基本機能テスト</button>
+                <button class="test-btn success" onclick="testTransactionValidation()">バリデーションテスト</button>
+                <button class="test-btn warning" onclick="testTransactionPermissions()">権限テスト</button>
+            </div>
+            <div id="transaction-status" class="status-display">TransactionManager: 未テスト</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>FundSourceManagerテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testFundSourceManager()">基本機能テスト</button>
+                <button class="test-btn success" onclick="testFundSourceValidation()">バリデーションテスト</button>
+                <button class="test-btn warning" onclick="testFundSourceSharing()">共有機能テスト</button>
+            </div>
+            <div id="fundsource-status" class="status-display">FundSourceManager: 未テスト</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>SubcategoryManagerテスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testSubcategoryManager()">基本機能テスト</button>
+                <button class="test-btn success" onclick="testSubcategoryValidation()">バリデーションテスト</button>
+                <button class="test-btn warning" onclick="testSubcategoryBulkOps()">一括操作テスト</button>
+            </div>
+            <div id="subcategory-status" class="status-display">SubcategoryManager: 未テスト</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>DataManager統合テスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testDataManagerIntegration()">統合テスト</button>
+                <button class="test-btn success" onclick="testDelegationMethods()">委譲メソッドテスト</button>
+                <button class="test-btn danger" onclick="testBackwardCompatibility()">後方互換性テスト</button>
+            </div>
+            <div id="integration-status" class="status-display">統合テスト: 未実行</div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>テストログ</h2>
+        <div id="log-display" class="log-display"></div>
+        <button class="test-btn warning" onclick="clearLog()">ログクリア</button>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/transaction-manager.js"></script>
+    <script src="js/fund-source-manager.js"></script>
+    <script src="js/subcategory-manager.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-utils.js"></script>
+
+    <script>
+        let logContainer;
+        let testCounter = 0;
+        
+        function initializeTest() {
+            logContainer = document.getElementById('log-display');
+            
+            // Initialize managers
+            if (!window.storage) window.storage = new StorageManager();
+            if (!window.authManager) window.authManager = new AuthManager();
+            if (!window.permissionManager) window.permissionManager = new PermissionManager();
+            if (!window.dataManager) window.dataManager = new DataManager(window.storage);
+            
+            updateSystemStatus();
+            log('テスト環境初期化完了', 'success');
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateSystemStatus() {
+            const status = document.getElementById('system-status');
+            
+            const systemInfo = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                dataManager: !!window.dataManager,
+                transactionManager: !!window.dataManager?.transactionManager,
+                fundSourceManager: !!window.dataManager?.fundSourceManager,
+                subcategoryManager: !!window.dataManager?.subcategoryManager
+            };
+            
+            status.innerHTML = `
+                <strong>システム状態:</strong><br>
+                Storage: ${systemInfo.storage ? '✓' : '✗'}<br>
+                AuthManager: ${systemInfo.authManager ? '✓' : '✗'}<br>
+                DataManager: ${systemInfo.dataManager ? '✓' : '✗'}<br>
+                TransactionManager: ${systemInfo.transactionManager ? '✓' : '✗'}<br>
+                FundSourceManager: ${systemInfo.fundSourceManager ? '✓' : '✗'}<br>
+                SubcategoryManager: ${systemInfo.subcategoryManager ? '✓' : '✗'}
+            `;
+        }
+        
+        // TransactionManager tests
+        function testTransactionManager() {
+            try {
+                const tm = window.dataManager.transactionManager;
+                let passed = 0;
+                let total = 0;
+                
+                // Test 1: Get transactions
+                total++;
+                const transactions = tm.getTransactions();
+                if (Array.isArray(transactions)) {
+                    passed++;
+                    log('✓ getTransactions() 正常動作', 'success');
+                } else {
+                    log('✗ getTransactions() 失敗', 'error');
+                }
+                
+                // Test 2: Add transaction
+                total++;
+                try {
+                    const fundSources = window.storage.getFundSources();
+                    const categories = window.storage.getCategories();
+                    
+                    if (fundSources.length > 0 && categories.length > 0) {
+                        const testTransaction = {
+                            amount: 1000,
+                            categoryId: categories[0].id,
+                            fundSourceId: fundSources[0].id,
+                            date: new Date(),
+                            note: 'テスト取引'
+                        };
+                        
+                        const result = tm.addTransaction(testTransaction);
+                        if (result && result.id) {
+                            passed++;
+                            log('✓ addTransaction() 正常動作', 'success');
+                        } else {
+                            log('✗ addTransaction() 失敗', 'error');
+                        }
+                    } else {
+                        log('⚠ addTransaction() スキップ（データ不足）', 'warning');
+                    }
+                } catch (error) {
+                    log(`✗ addTransaction() エラー: ${error.message}`, 'error');
+                }
+                
+                // Test 3: Validation
+                total++;
+                try {
+                    const invalidTransaction = { amount: 'invalid' };
+                    tm.addTransaction(invalidTransaction);
+                    log('✗ バリデーション失敗（無効データが通った）', 'error');
+                } catch (error) {
+                    passed++;
+                    log('✓ バリデーション正常動作', 'success');
+                }
+                
+                document.getElementById('transaction-status').textContent = 
+                    `TransactionManager: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`TransactionManagerテストエラー: ${error.message}`, 'error');
+                document.getElementById('transaction-status').textContent = 
+                    'TransactionManager: テストエラー';
+            }
+        }
+        
+        function testTransactionValidation() {
+            try {
+                const tm = window.dataManager.transactionManager;
+                let passed = 0;
+                let total = 0;
+                
+                const testCases = [
+                    { data: {}, expectedError: true, name: '空データ' },
+                    { data: { amount: 'invalid' }, expectedError: true, name: '無効金額' },
+                    { data: { amount: 0 }, expectedError: true, name: 'ゼロ金額' },
+                    { data: { amount: 1000 }, expectedError: true, name: 'カテゴリなし' }
+                ];
+                
+                testCases.forEach(testCase => {
+                    total++;
+                    try {
+                        tm.addTransaction(testCase.data);
+                        if (testCase.expectedError) {
+                            log(`✗ ${testCase.name}: エラーが発生すべき`, 'error');
+                        } else {
+                            passed++;
+                            log(`✓ ${testCase.name}: 正常処理`, 'success');
+                        }
+                    } catch (error) {
+                        if (testCase.expectedError) {
+                            passed++;
+                            log(`✓ ${testCase.name}: 期待通りエラー`, 'success');
+                        } else {
+                            log(`✗ ${testCase.name}: 予期しないエラー`, 'error');
+                        }
+                    }
+                });
+                
+                document.getElementById('transaction-status').textContent = 
+                    `TransactionManager バリデーション: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`バリデーションテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testTransactionPermissions() {
+            try {
+                const tm = window.dataManager.transactionManager;
+                log('権限テスト開始（ログイン状態に依存）', 'info');
+                
+                // Test permission checking methods
+                const transactions = tm.getTransactions();
+                if (transactions.length > 0) {
+                    const testTransaction = transactions[0];
+                    
+                    const canEdit = tm.canEditTransaction(testTransaction);
+                    const canDelete = tm.canDeleteTransaction(testTransaction);
+                    
+                    log(`権限チェック結果: 編集=${canEdit}, 削除=${canDelete}`, 'info');
+                    document.getElementById('transaction-status').textContent = 
+                        'TransactionManager 権限: テスト完了';
+                } else {
+                    log('権限テスト: 取引データなし', 'warning');
+                    document.getElementById('transaction-status').textContent = 
+                        'TransactionManager 権限: データなし';
+                }
+                
+            } catch (error) {
+                log(`権限テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // FundSourceManager tests
+        function testFundSourceManager() {
+            try {
+                const fsm = window.dataManager.fundSourceManager;
+                let passed = 0;
+                let total = 0;
+                
+                // Test 1: Get fund sources
+                total++;
+                const fundSources = fsm.getFundSources();
+                if (Array.isArray(fundSources)) {
+                    passed++;
+                    log('✓ getFundSources() 正常動作', 'success');
+                } else {
+                    log('✗ getFundSources() 失敗', 'error');
+                }
+                
+                // Test 2: Add fund source
+                total++;
+                try {
+                    const testFundSource = {
+                        name: `テスト資金元_${Date.now()}`,
+                        balance: 10000,
+                        type: 'bank'
+                    };
+                    
+                    const result = fsm.addFundSource(testFundSource);
+                    if (result && result.id) {
+                        passed++;
+                        log('✓ addFundSource() 正常動作', 'success');
+                    } else {
+                        log('✗ addFundSource() 失敗', 'error');
+                    }
+                } catch (error) {
+                    log(`✗ addFundSource() エラー: ${error.message}`, 'error');
+                }
+                
+                document.getElementById('fundsource-status').textContent = 
+                    `FundSourceManager: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`FundSourceManagerテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testFundSourceValidation() {
+            try {
+                const fsm = window.dataManager.fundSourceManager;
+                let passed = 0;
+                let total = 0;
+                
+                const testCases = [
+                    { data: {}, expectedError: true, name: '空データ' },
+                    { data: { name: '' }, expectedError: true, name: '空名前' },
+                    { data: { name: 'テスト', balance: 'invalid' }, expectedError: true, name: '無効残高' }
+                ];
+                
+                testCases.forEach(testCase => {
+                    total++;
+                    try {
+                        fsm.addFundSource(testCase.data);
+                        if (testCase.expectedError) {
+                            log(`✗ ${testCase.name}: エラーが発生すべき`, 'error');
+                        } else {
+                            passed++;
+                            log(`✓ ${testCase.name}: 正常処理`, 'success');
+                        }
+                    } catch (error) {
+                        if (testCase.expectedError) {
+                            passed++;
+                            log(`✓ ${testCase.name}: 期待通りエラー`, 'success');
+                        } else {
+                            log(`✗ ${testCase.name}: 予期しないエラー`, 'error');
+                        }
+                    }
+                });
+                
+                document.getElementById('fundsource-status').textContent = 
+                    `FundSourceManager バリデーション: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`バリデーションテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testFundSourceSharing() {
+            try {
+                const fsm = window.dataManager.fundSourceManager;
+                log('共有機能テスト開始', 'info');
+                
+                // Test sharing status methods
+                const fundSources = fsm.getFundSources();
+                if (fundSources.length > 0) {
+                    const testFundSource = fundSources[0];
+                    const sharingStatus = fsm.getFundSourceSharingStatus(testFundSource.id);
+                    
+                    log(`共有状態: ${JSON.stringify(sharingStatus)}`, 'info');
+                    document.getElementById('fundsource-status').textContent = 
+                        'FundSourceManager 共有: テスト完了';
+                } else {
+                    log('共有テスト: 資金元データなし', 'warning');
+                }
+                
+            } catch (error) {
+                log(`共有テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // SubcategoryManager tests
+        function testSubcategoryManager() {
+            try {
+                const scm = window.dataManager.subcategoryManager;
+                let passed = 0;
+                let total = 0;
+                
+                // Test 1: Get subcategories
+                total++;
+                const subcategories = scm.getSubcategories();
+                if (Array.isArray(subcategories)) {
+                    passed++;
+                    log('✓ getSubcategories() 正常動作', 'success');
+                } else {
+                    log('✗ getSubcategories() 失敗', 'error');
+                }
+                
+                // Test 2: Add subcategory
+                total++;
+                try {
+                    const categories = window.storage.getCategories();
+                    if (categories.length > 0) {
+                        const testSubcategory = {
+                            name: `テストサブカテゴリ_${Date.now()}`,
+                            categoryId: categories[0].id
+                        };
+                        
+                        const result = scm.addSubcategory(testSubcategory);
+                        if (result && result.id) {
+                            passed++;
+                            log('✓ addSubcategory() 正常動作', 'success');
+                        } else {
+                            log('✗ addSubcategory() 失敗', 'error');
+                        }
+                    } else {
+                        log('⚠ addSubcategory() スキップ（カテゴリなし）', 'warning');
+                    }
+                } catch (error) {
+                    log(`✗ addSubcategory() エラー: ${error.message}`, 'error');
+                }
+                
+                document.getElementById('subcategory-status').textContent = 
+                    `SubcategoryManager: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`SubcategoryManagerテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testSubcategoryValidation() {
+            try {
+                const scm = window.dataManager.subcategoryManager;
+                let passed = 0;
+                let total = 0;
+                
+                const testCases = [
+                    { data: {}, expectedError: true, name: '空データ' },
+                    { data: { name: '' }, expectedError: true, name: '空名前' },
+                    { data: { name: 'テスト' }, expectedError: true, name: 'カテゴリIDなし' }
+                ];
+                
+                testCases.forEach(testCase => {
+                    total++;
+                    try {
+                        scm.addSubcategory(testCase.data);
+                        if (testCase.expectedError) {
+                            log(`✗ ${testCase.name}: エラーが発生すべき`, 'error');
+                        } else {
+                            passed++;
+                            log(`✓ ${testCase.name}: 正常処理`, 'success');
+                        }
+                    } catch (error) {
+                        if (testCase.expectedError) {
+                            passed++;
+                            log(`✓ ${testCase.name}: 期待通りエラー`, 'success');
+                        } else {
+                            log(`✗ ${testCase.name}: 予期しないエラー`, 'error');
+                        }
+                    }
+                });
+                
+                document.getElementById('subcategory-status').textContent = 
+                    `SubcategoryManager バリデーション: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`バリデーションテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testSubcategoryBulkOps() {
+            try {
+                const scm = window.dataManager.subcategoryManager;
+                log('一括操作テスト開始', 'info');
+                
+                // Test statistics
+                const stats = scm.getSubcategoryStatistics();
+                log(`統計情報: 総数=${stats.total}, 未使用=${stats.unused.length}`, 'info');
+                
+                // Test integrity validation
+                const integrity = scm.validateSubcategoryIntegrity();
+                log(`整合性チェック: 有効=${integrity.isValid}, 問題=${integrity.issues.length}`, 'info');
+                
+                document.getElementById('subcategory-status').textContent = 
+                    'SubcategoryManager 一括操作: テスト完了';
+                    
+            } catch (error) {
+                log(`一括操作テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // Integration tests
+        function testDataManagerIntegration() {
+            try {
+                const dm = window.dataManager;
+                let passed = 0;
+                let total = 0;
+                
+                // Test that DataManager has all specialized managers
+                total++;
+                if (dm.transactionManager && dm.fundSourceManager && dm.subcategoryManager) {
+                    passed++;
+                    log('✓ 専用マネージャー初期化完了', 'success');
+                } else {
+                    log('✗ 専用マネージャー初期化失敗', 'error');
+                }
+                
+                // Test that old methods still work (delegation)
+                total++;
+                try {
+                    const transactions = dm.getTransactions();
+                    if (Array.isArray(transactions)) {
+                        passed++;
+                        log('✓ 委譲メソッド動作確認', 'success');
+                    } else {
+                        log('✗ 委譲メソッド失敗', 'error');
+                    }
+                } catch (error) {
+                    log(`✗ 委譲メソッドエラー: ${error.message}`, 'error');
+                }
+                
+                document.getElementById('integration-status').textContent = 
+                    `統合テスト: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`統合テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testDelegationMethods() {
+            try {
+                const dm = window.dataManager;
+                let passed = 0;
+                let total = 0;
+                
+                const delegationTests = [
+                    { method: 'getTransactions', manager: 'transactionManager' },
+                    { method: 'getSubcategories', manager: 'subcategoryManager' },
+                    { method: 'canDeleteFundSource', manager: 'fundSourceManager' }
+                ];
+                
+                delegationTests.forEach(test => {
+                    total++;
+                    try {
+                        if (typeof dm[test.method] === 'function') {
+                            passed++;
+                            log(`✓ ${test.method} 委譲メソッド存在`, 'success');
+                        } else {
+                            log(`✗ ${test.method} 委譲メソッド不存在`, 'error');
+                        }
+                    } catch (error) {
+                        log(`✗ ${test.method} テストエラー: ${error.message}`, 'error');
+                    }
+                });
+                
+                document.getElementById('integration-status').textContent = 
+                    `委譲メソッドテスト: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`委譲メソッドテストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function testBackwardCompatibility() {
+            try {
+                log('後方互換性テスト開始', 'info');
+                
+                // Test that existing code still works
+                const dm = window.dataManager;
+                let passed = 0;
+                let total = 0;
+                
+                // Test old API methods
+                const oldApiMethods = [
+                    'getTransactions',
+                    'addTransaction',
+                    'updateTransaction',
+                    'deleteTransaction',
+                    'getSubcategories',
+                    'addSubcategory',
+                    'canDeleteFundSource'
+                ];
+                
+                oldApiMethods.forEach(method => {
+                    total++;
+                    if (typeof dm[method] === 'function') {
+                        passed++;
+                        log(`✓ ${method} 後方互換性OK`, 'success');
+                    } else {
+                        log(`✗ ${method} 後方互換性NG`, 'error');
+                    }
+                });
+                
+                document.getElementById('integration-status').textContent = 
+                    `後方互換性: ${passed}/${total} テスト通過`;
+                    
+            } catch (error) {
+                log(`後方互換性テストエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearLog() {
+            logContainer.innerHTML = '';
+            log('ログクリア完了', 'info');
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTest, 100);
+        });
+        
+        setInterval(updateSystemStatus, 5000);
+    </script>
+</body>
+</html>

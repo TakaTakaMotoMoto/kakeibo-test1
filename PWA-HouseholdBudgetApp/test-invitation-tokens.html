@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招待トークン機能テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .test-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-btn.primary { background-color: #007bff; color: white; }
+        .test-btn.success { background-color: #28a745; color: white; }
+        .test-btn.danger { background-color: #dc3545; color: white; }
+        .test-btn.warning { background-color: #ffc107; color: black; }
+        
+        .status-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-display {
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>招待トークン機能テスト</h1>
+    
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="status-display">初期化中...</div>
+    </div>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h3>招待生成テスト</h3>
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="generateTestInvitation()">テスト招待生成</button>
+                <button class="test-btn success" onclick="generateMultipleInvitations()">複数招待生成</button>
+            </div>
+            <div id="invitation-status" class="status-display">招待数: 0</div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>ログ</h2>
+        <div id="log-display" class="log-display"></div>
+        <button class="test-btn warning" onclick="clearLog()">ログクリア</button>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/ui-modals.js"></script>
+
+    <script>
+        let logContainer;
+        let testCounter = 0;
+        
+        function initializeTest() {
+            logContainer = document.getElementById('log-display');
+            
+            // Initialize managers
+            if (!window.storage) window.storage = new StorageManager();
+            if (!window.authManager) window.authManager = new AuthManager();
+            if (!window.dataManager) window.dataManager = new DataManager(window.storage);
+            if (!window.permissionManager) window.permissionManager = new PermissionManager();
+            if (!window.invitationManager) window.invitationManager = new InvitationManager(window.storage);
+            if (!window.sharingManager) window.sharingManager = new SharingManager(window.storage, window.authManager);
+            if (!window.invitationTokenDisplay) window.invitationTokenDisplay = new InvitationTokenDisplayManager();
+            
+            // Initialize sharing manager
+            window.sharingManager.initialize(window.invitationManager, window.permissionManager);
+            
+            updateSystemStatus();
+            log('テスト環境初期化完了', 'success');
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateSystemStatus() {
+            const status = document.getElementById('system-status');
+            const invitationStatus = document.getElementById('invitation-status');
+            
+            const systemInfo = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                sharingManager: !!window.sharingManager,
+                invitationTokenDisplay: !!window.invitationTokenDisplay
+            };
+            
+            status.innerHTML = `
+                Storage: ${systemInfo.storage ? '✓' : '✗'}<br>
+                AuthManager: ${systemInfo.authManager ? '✓' : '✗'}<br>
+                SharingManager: ${systemInfo.sharingManager ? '✓' : '✗'}<br>
+                InvitationTokenDisplay: ${systemInfo.invitationTokenDisplay ? '✓' : '✗'}
+            `;
+            
+            try {
+                const invitations = window.invitationManager.getInvitations();
+                invitationStatus.textContent = `招待数: ${invitations.length}`;
+            } catch (error) {
+                invitationStatus.textContent = '招待数: エラー';
+            }
+        }
+        
+        function generateTestInvitation() {
+            try {
+                testCounter++;
+                const fundSources = window.storage.getFundSources();
+                
+                if (fundSources.length === 0) {
+                    log('テスト用の資金元がありません', 'warning');
+                    return;
+                }
+                
+                const testEmail = `test${testCounter}@example.com`;
+                const fundSourceId = fundSources[0].id;
+                
+                window.invitationTokenDisplay.generateAndDisplayInvitation(
+                    fundSourceId,
+                    testEmail,
+                    { canView: true, canEdit: true, canDelete: false }
+                );
+                
+                log(`テスト招待生成: ${testEmail}`, 'success');
+                updateSystemStatus();
+                
+            } catch (error) {
+                log(`招待生成エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function generateMultipleInvitations() {
+            try {
+                const count = 3;
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        generateTestInvitation();
+                    }, i * 500);
+                }
+                log(`${count}件の招待を順次生成開始`, 'info');
+                
+            } catch (error) {
+                log(`複数招待生成エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearLog() {
+            logContainer.innerHTML = '';
+            log('ログクリア完了', 'info');
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTest, 100);
+        });
+        
+        setInterval(updateSystemStatus, 5000);
+    </script>
+</body>
+</html>
