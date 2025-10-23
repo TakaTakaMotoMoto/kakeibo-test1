@@ -357,35 +357,53 @@ class SharingSystem {
 
 // Initialize sharing system when dependencies are ready
 function initializeSharingSystem() {
-    // Check if dependencies are available
-    if (!window.storage || !window.authManager) {
-        console.log('Waiting for dependencies before initializing sharing system...');
-        setTimeout(initializeSharingSystem, 100);
-        return;
-    }
-
-    // Check if sharing classes are loaded
-    if (!window.SharingManager || !window.InvitationManager || !window.PermissionManager) {
-        console.log('Waiting for sharing classes to load...');
-        setTimeout(initializeSharingSystem, 100);
-        return;
-    }
-
-    // Initialize sharing system
-    const sharingSystem = new SharingSystem();
-    const success = sharingSystem.initialize();
-
-    if (success) {
-        console.log('Sharing system ready');
+    try {
+        console.log('Attempting to initialize sharing system...');
         
-        // Trigger event for other components
-        if (typeof window.CustomEvent !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('sharingSystemReady', {
-                detail: { sharingSystem }
-            }));
+        // Check if dependencies are available
+        if (!window.storage || !window.authManager) {
+            console.log('Dependencies not ready:', {
+                storage: !!window.storage,
+                authManager: !!window.authManager
+            });
+            setTimeout(initializeSharingSystem, 100);
+            return false;
         }
-    } else {
-        console.error('Failed to initialize sharing system');
+
+        // Check if sharing classes are loaded
+        if (!window.SharingManager || !window.InvitationManager || !window.PermissionManager) {
+            console.log('Sharing classes not loaded:', {
+                SharingManager: !!window.SharingManager,
+                InvitationManager: !!window.InvitationManager,
+                PermissionManager: !!window.PermissionManager
+            });
+            setTimeout(initializeSharingSystem, 100);
+            return false;
+        }
+
+        // Initialize sharing system
+        console.log('All dependencies ready, creating sharing system...');
+        const sharingSystem = new SharingSystem();
+        const success = sharingSystem.initialize();
+
+        if (success) {
+            console.log('Sharing system initialized successfully');
+            
+            // Trigger event for other components
+            if (typeof window.CustomEvent !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('sharingSystemReady', {
+                    detail: { sharingSystem }
+                }));
+            }
+            return true;
+        } else {
+            console.error('Failed to initialize sharing system');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error during sharing system initialization:', error);
+        setTimeout(initializeSharingSystem, 1000);
+        return false;
     }
 }
 
@@ -399,19 +417,29 @@ if (document.readyState === 'loading') {
 // Initialize sharing UI system
 function initializeSharingUI() {
     try {
-        console.log('Initializing sharing UI...');
+        console.log('Attempting to initialize sharing UI...');
         
         // Check if SharingUIManager class is available
         if (!window.SharingUIManager) {
             console.log('SharingUIManager class not available, retrying...');
             setTimeout(initializeSharingUI, 200);
-            return;
+            return false;
         }
         
-        // Wait for UI manager to be available
-        if (window.uiManager && window.sharingManager && window.invitationManager && window.permissionManager) {
-            console.log('Creating SharingUIManager instance...');
+        // Wait for all dependencies to be available
+        const dependencies = {
+            uiManager: !!window.uiManager,
+            sharingManager: !!window.sharingManager,
+            invitationManager: !!window.invitationManager,
+            permissionManager: !!window.permissionManager
+        };
+        
+        console.log('Checking UI dependencies:', dependencies);
+        
+        if (Object.values(dependencies).every(dep => dep)) {
+            console.log('All UI dependencies ready, creating SharingUIManager instance...');
             
+            // Create the instance
             window.sharingUIManager = new SharingUIManager(
                 window.uiManager,
                 window.sharingManager,
@@ -420,47 +448,66 @@ function initializeSharingUI() {
             );
             
             // Verify the instance was created correctly
-            console.log('SharingUIManager created:', {
+            const verification = {
                 instance: !!window.sharingUIManager,
                 hasOpenSharingManagementModal: typeof window.sharingUIManager.openSharingManagementModal,
-                hasOpenSharedUsersModal: typeof window.sharingUIManager.openSharedUsersModal
-            });
+                hasOpenSharedUsersModal: typeof window.sharingUIManager.openSharedUsersModal,
+                hasUpdateAuthDependentUI: typeof window.sharingUIManager.updateAuthDependentUI
+            };
             
-            // Add invitation acceptance button to settings
-            if (typeof window.sharingUIManager.addInvitationAcceptanceButton === 'function') {
-                window.sharingUIManager.addInvitationAcceptanceButton();
-            }
+            console.log('SharingUIManager verification:', verification);
             
-            // Check for pending invitation tokens after login
-            if (window.authManager && window.authManager.getIsLoggedIn()) {
-                if (typeof window.sharingUIManager.checkPendingInvitationToken === 'function') {
-                    window.sharingUIManager.checkPendingInvitationToken();
+            if (verification.instance && 
+                verification.hasOpenSharingManagementModal === 'function' && 
+                verification.hasOpenSharedUsersModal === 'function') {
+                
+                console.log('SharingUIManager created successfully');
+                
+                // Add invitation acceptance button to settings
+                try {
+                    if (typeof window.sharingUIManager.addInvitationAcceptanceButton === 'function') {
+                        window.sharingUIManager.addInvitationAcceptanceButton();
+                    }
+                } catch (error) {
+                    console.warn('Error adding invitation acceptance button:', error);
                 }
+                
+                // Check for pending invitation tokens after login
+                try {
+                    if (window.authManager && window.authManager.getIsLoggedIn()) {
+                        if (typeof window.sharingUIManager.checkPendingInvitationToken === 'function') {
+                            window.sharingUIManager.checkPendingInvitationToken();
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error checking pending invitation token:', error);
+                }
+                
+                // Trigger event for other components
+                if (typeof window.CustomEvent !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('sharingUIReady', {
+                        detail: { sharingUIManager: window.sharingUIManager }
+                    }));
+                }
+                
+                console.log('Sharing UI initialization completed successfully');
+                return true;
+                
+            } else {
+                console.error('SharingUIManager instance verification failed');
+                return false;
             }
             
-            console.log('Sharing UI initialized successfully');
-            
-            // Trigger event for other components
-            if (typeof window.CustomEvent !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('sharingUIReady', {
-                    detail: { sharingUIManager: window.sharingUIManager }
-                }));
-            }
         } else {
-            console.log('Dependencies not ready:', {
-                uiManager: !!window.uiManager,
-                sharingManager: !!window.sharingManager,
-                invitationManager: !!window.invitationManager,
-                permissionManager: !!window.permissionManager
-            });
-            // Retry after a short delay
+            console.log('UI dependencies not ready, retrying...', dependencies);
             setTimeout(initializeSharingUI, 500);
+            return false;
         }
         
     } catch (error) {
         console.error('Error initializing sharing UI:', error);
-        // Retry on error
         setTimeout(initializeSharingUI, 1000);
+        return false;
     }
 }
 
@@ -494,5 +541,73 @@ setTimeout(() => {
     }
 }, 5000);
 
-// Export initialization function for manual triggering
+// Force initialization when auth state changes
+window.addEventListener('authStateChange', (event) => {
+    console.log('Auth state changed, checking sharing UI initialization...');
+    setTimeout(() => {
+        if (!window.sharingUIManager) {
+            console.log('Initializing sharing UI after auth state change...');
+            initializeSharingUI();
+        } else if (window.sharingUIManager.updateAuthDependentUI) {
+            window.sharingUIManager.updateAuthDependentUI();
+        }
+    }, 100);
+});
+
+// Export initialization functions for manual triggering
+window.initializeSharingSystem = initializeSharingSystem;
 window.initializeSharingUI = initializeSharingUI;
+
+// Global function to force complete reinitialization
+window.reinitializeSharing = function() {
+    console.log('Force reinitializing sharing system...');
+    
+    // Clear existing instances
+    window.sharingManager = null;
+    window.invitationManager = null;
+    window.permissionManager = null;
+    window.sharingUIManager = null;
+    
+    // Reinitialize
+    const systemSuccess = initializeSharingSystem();
+    if (systemSuccess) {
+        setTimeout(() => {
+            initializeSharingUI();
+        }, 100);
+    }
+};
+
+// Debug function to check all sharing components
+window.debugSharingSystem = function() {
+    console.log('=== Sharing System Debug Info ===');
+    console.log('Classes loaded:', {
+        SharingManager: !!window.SharingManager,
+        InvitationManager: !!window.InvitationManager,
+        PermissionManager: !!window.PermissionManager,
+        SharingUIManager: !!window.SharingUIManager
+    });
+    
+    console.log('Instances created:', {
+        sharingManager: !!window.sharingManager,
+        invitationManager: !!window.invitationManager,
+        permissionManager: !!window.permissionManager,
+        sharingUIManager: !!window.sharingUIManager
+    });
+    
+    console.log('Dependencies:', {
+        storage: !!window.storage,
+        authManager: !!window.authManager,
+        uiManager: !!window.uiManager,
+        isLoggedIn: window.authManager ? window.authManager.getIsLoggedIn() : false
+    });
+    
+    if (window.sharingUIManager) {
+        console.log('SharingUIManager methods:', {
+            openSharingManagementModal: typeof window.sharingUIManager.openSharingManagementModal,
+            openSharedUsersModal: typeof window.sharingUIManager.openSharedUsersModal,
+            updateAuthDependentUI: typeof window.sharingUIManager.updateAuthDependentUI
+        });
+    }
+    
+    console.log('=== End Debug Info ===');
+};

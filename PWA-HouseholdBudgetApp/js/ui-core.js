@@ -1063,18 +1063,29 @@ class UIManager {
             }
 
             // Try to initialize sharing UI if not available
-            if (!window.sharingUIManager && window.initializeSharingUI) {
-                console.log('Attempting to initialize sharing UI...');
-                window.initializeSharingUI();
+            if (!window.sharingUIManager) {
+                console.log('SharingUIManager not available, attempting initialization...');
+                
+                if (window.initializeSharingUI) {
+                    const success = window.initializeSharingUI();
+                    if (!success) {
+                        // Try force reinitialization
+                        if (window.reinitializeSharing) {
+                            console.log('Attempting force reinitialization...');
+                            window.reinitializeSharing();
+                        }
+                    }
+                }
                 
                 // Wait a moment and try again
                 setTimeout(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharingManagementModal === 'function') {
                         window.sharingUIManager.openSharingManagementModal();
                     } else {
-                        UIUtils.showNotification('共有管理機能の初期化に失敗しました。ページを再読み込みしてください。', 'error');
+                        console.log('Initialization failed. Run debugSharingSystem() for details.');
+                        UIUtils.showNotification('共有管理機能の初期化に失敗しました。コンソールでdebugSharingSystem()を実行してください。', 'error');
                     }
-                }, 500);
+                }, 1000);
                 return;
             }
 
@@ -1109,18 +1120,29 @@ class UIManager {
             }
 
             // Try to initialize sharing UI if not available
-            if (!window.sharingUIManager && window.initializeSharingUI) {
-                console.log('Attempting to initialize sharing UI...');
-                window.initializeSharingUI();
+            if (!window.sharingUIManager) {
+                console.log('SharingUIManager not available, attempting initialization...');
+                
+                if (window.initializeSharingUI) {
+                    const success = window.initializeSharingUI();
+                    if (!success) {
+                        // Try force reinitialization
+                        if (window.reinitializeSharing) {
+                            console.log('Attempting force reinitialization...');
+                            window.reinitializeSharing();
+                        }
+                    }
+                }
                 
                 // Wait a moment and try again
                 setTimeout(() => {
                     if (window.sharingUIManager && typeof window.sharingUIManager.openSharedUsersModal === 'function') {
                         window.sharingUIManager.openSharedUsersModal();
                     } else {
-                        UIUtils.showNotification('共有ユーザー管理機能の初期化に失敗しました。ページを再読み込みしてください。', 'error');
+                        console.log('Initialization failed. Run debugSharingSystem() for details.');
+                        UIUtils.showNotification('共有ユーザー管理機能の初期化に失敗しました。コンソールでdebugSharingSystem()を実行してください。', 'error');
                     }
-                }, 500);
+                }, 1000);
                 return;
             }
 
