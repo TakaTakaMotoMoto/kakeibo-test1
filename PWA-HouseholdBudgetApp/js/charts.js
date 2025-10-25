@@ -4,11 +4,80 @@ class ChartManager {
         this.currentChart = null;
         this.currentChartType = 'category';
         this.currentDataType = 'expense'; // 'expense' or 'income'
-        this.initializeEventListeners();
+        this.isInitialized = false;
+        
+        // Wait for DOM to be ready before initializing
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initialize();
+            });
+        } else {
+            // DOM is already ready
+            setTimeout(() => {
+                this.initialize();
+            }, 100);
+        }
+    }
+
+    initialize() {
+        try {
+            // Wait for Chart.js to be available
+            this.waitForChartJS().then(() => {
+                this.initializeEventListeners();
+                this.isInitialized = true;
+                console.log('ChartManager initialized successfully');
+            }).catch((error) => {
+                console.error('Failed to initialize ChartManager:', error);
+                this.showChartError('チャートライブラリの読み込みに失敗しました');
+            });
+        } catch (error) {
+            console.error('Error initializing ChartManager:', error);
+        }
+    }
+
+    waitForChartJS(maxAttempts = 10, delay = 500) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            
+            const checkChart = () => {
+                attempts++;
+                
+                if (typeof Chart !== 'undefined') {
+                    console.log(`Chart.js loaded successfully after ${attempts} attempts`);
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error(`Chart.js not loaded after ${maxAttempts} attempts`));
+                } else {
+                    console.log(`Waiting for Chart.js... attempt ${attempts}/${maxAttempts}`);
+                    setTimeout(checkChart, delay);
+                }
+            };
+            
+            checkChart();
+        });
+    }
+
+    showChartError(message) {
+        const container = document.querySelector('.chart-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="chart-error">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-message">${message}</div>
+                    <button onclick="location.reload()" class="retry-btn">再読み込み</button>
+                </div>
+            `;
+        }
     }
 
     initializeEventListeners() {
-        document.querySelectorAll('.chart-btn').forEach(btn => {
+        // Check if required elements exist
+        const chartButtons = document.querySelectorAll('.chart-btn');
+        const dataTypeButtons = document.querySelectorAll('.data-type-btn');
+        
+        console.log(`Found ${chartButtons.length} chart buttons and ${dataTypeButtons.length} data type buttons`);
+
+        chartButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const chartType = e.currentTarget.dataset.chart;
                 this.switchChart(chartType);
@@ -16,12 +85,20 @@ class ChartManager {
         });
 
         // Add event listeners for income/expense tabs
-        document.querySelectorAll('.data-type-btn').forEach(btn => {
+        dataTypeButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const dataType = e.currentTarget.dataset.dataType;
                 this.switchDataType(dataType);
             });
         });
+
+        // Check if canvas element exists
+        const canvas = document.getElementById('main-chart');
+        if (!canvas) {
+            console.warn('Chart canvas element not found during initialization');
+        } else {
+            console.log('Chart canvas element found successfully');
+        }
     }
 
     switchChart(chartType) {
@@ -43,10 +120,33 @@ class ChartManager {
     }
 
     renderCurrentChart() {
-        if (this.currentChartType === 'category') {
-            this.renderCategoryChart();
-        } else if (this.currentChartType === 'monthly') {
-            this.renderMonthlyChart();
+        if (!this.isInitialized) {
+            console.warn('ChartManager not initialized yet, skipping chart render');
+            return;
+        }
+
+        // Check if required dependencies are available
+        if (!window.dataManager) {
+            console.error('DataManager not available, cannot render chart');
+            this.renderEmptyChart('データマネージャーが初期化されていません');
+            return;
+        }
+
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js library not loaded');
+            this.renderEmptyChart('チャートライブラリが読み込まれていません');
+            return;
+        }
+
+        try {
+            if (this.currentChartType === 'category') {
+                this.renderCategoryChart();
+            } else if (this.currentChartType === 'monthly') {
+                this.renderMonthlyChart();
+            }
+        } catch (error) {
+            console.error('Error rendering chart:', error);
+            this.renderEmptyChart('チャートの描画中にエラーが発生しました');
         }
     }
 
@@ -158,19 +258,48 @@ class ChartManager {
 
     renderChart(type, data, options) {
         const canvas = document.getElementById('main-chart');
-        const ctx = canvas.getContext('2d');
+        
+        if (!canvas) {
+            console.error('Chart canvas element not found. Canvas with id "main-chart" does not exist.');
+            this.renderEmptyChart('チャート表示エリアが見つかりません');
+            return;
+        }
+
+        let ctx;
+        try {
+            ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('Failed to get 2D context from canvas element');
+                this.renderEmptyChart('チャートの描画コンテキストを取得できませんでした');
+                return;
+            }
+        } catch (error) {
+            console.error('Error getting canvas context:', error);
+            this.renderEmptyChart('チャートの初期化に失敗しました');
+            return;
+        }
 
         // Destroy existing chart
         if (this.currentChart) {
-            this.currentChart.destroy();
+            try {
+                this.currentChart.destroy();
+            } catch (error) {
+                console.warn('Error destroying existing chart:', error);
+            }
+            this.currentChart = null;
         }
 
         // Create new chart
-        this.currentChart = new Chart(ctx, {
-            type: type,
-            data: data,
-            options: options
-        });
+        try {
+            this.currentChart = new Chart(ctx, {
+                type: type,
+                data: data,
+                options: options
+            });
+        } catch (error) {
+            console.error('Error creating chart:', error);
+            this.renderEmptyChart('チャートの作成に失敗しました');
+        }
     }
 
     renderEmptyChart(message) {
@@ -271,19 +400,55 @@ class ChartManager {
 }
 
 // Initialize Chart Manager when dependencies are ready
-document.addEventListener('DOMContentLoaded', () => {
-    const initCharts = () => {
-        if (window.dataManager && typeof Chart !== 'undefined') {
+function initializeChartManager() {
+    console.log('Attempting to initialize ChartManager...');
+    console.log('DataManager available:', !!window.dataManager);
+    console.log('Chart.js available:', typeof Chart !== 'undefined');
+    
+    if (window.chartManager) {
+        console.log('ChartManager already initialized');
+        return;
+    }
+    
+    // Check if all dependencies are available
+    const dependenciesReady = window.dataManager && typeof Chart !== 'undefined';
+    
+    if (dependenciesReady) {
+        try {
+            console.log('Creating new ChartManager instance...');
             window.chartManager = new ChartManager();
             
             // Set initial active state for data type buttons
-            const expenseBtn = document.querySelector('.data-type-btn[data-data-type="expense"]');
-            if (expenseBtn) {
-                expenseBtn.classList.add('active');
-            }
-        } else {
-            setTimeout(initCharts, 100);
+            setTimeout(() => {
+                const expenseBtn = document.querySelector('.data-type-btn[data-data-type="expense"]');
+                if (expenseBtn) {
+                    expenseBtn.classList.add('active');
+                    console.log('Set initial active state for expense button');
+                }
+            }, 500);
+            
+            console.log('ChartManager initialization completed');
+        } catch (error) {
+            console.error('Error creating ChartManager:', error);
         }
-    };
-    initCharts();
+    } else {
+        console.log('Dependencies not ready, retrying in 200ms...');
+        setTimeout(initializeChartManager, 200);
+    }
+}
+
+// Try to initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeChartManager);
+} else {
+    // DOM is already ready
+    setTimeout(initializeChartManager, 100);
+}
+
+// Also try to initialize when window loads (fallback)
+window.addEventListener('load', () => {
+    if (!window.chartManager) {
+        console.log('Fallback initialization on window load');
+        setTimeout(initializeChartManager, 500);
+    }
 });

@@ -238,10 +238,10 @@ class SharingUIManager {
             const content = this.generateFundSourceSharingContent(fundSource, sharedUsers, pendingInvitations);
             this.uiManager.modalManager.showInfoModal(`${fundSource.name} の共有設定`, content);
 
-            // Add event listeners after modal is shown
+            // Add event listeners after modal is shown with longer delay to ensure DOM is ready
             setTimeout(() => {
                 this.attachFundSourceSharingListeners();
-            }, 100);
+            }, 300);
 
         } catch (error) {
             console.error('Error opening fund source sharing modal:', error);
@@ -415,10 +415,35 @@ class SharingUIManager {
             }
             
             // Validate DOM elements exist to prevent null object errors
-            const emailInput = document.getElementById('invite-email');
+            let emailInput = document.getElementById('invite-email');
             if (!emailInput) {
-                UIUtils.showNotification('メール入力フィールドが見つかりません', 'error');
-                return;
+                // Wait a bit more for DOM to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+                emailInput = document.getElementById('invite-email');
+                
+                if (!emailInput) {
+                    // Try alternative selectors for email input
+                    const alternativeEmailInput = document.querySelector('input[type="email"]') || 
+                                                document.querySelector('input[placeholder*="email"]') ||
+                                                document.querySelector('input[placeholder*="メール"]');
+                    
+                    if (!alternativeEmailInput) {
+                        UIUtils.showNotification('メール入力フィールドが見つかりません。モーダルを閉じて再度開いてください。', 'error');
+                        console.error('Email input field not found. Available inputs:', 
+                            Array.from(document.querySelectorAll('input')).map(input => ({
+                                id: input.id,
+                                type: input.type,
+                                placeholder: input.placeholder,
+                                className: input.className
+                            }))
+                        );
+                        return;
+                    }
+                    
+                    // Use alternative input if found
+                    console.warn('Using alternative email input field');
+                    emailInput = alternativeEmailInput;
+                }
             }
 
             const email = emailInput.value ? emailInput.value.trim() : '';
@@ -724,11 +749,36 @@ class SharingUIManager {
                 return;
             }
 
+            console.log('Opening shared users modal for user:', currentUser.email);
+
+            // Ensure sharing manager is available
+            if (!this.sharingManager) {
+                UIUtils.showNotification('共有管理システムが初期化されていません', 'error');
+                return;
+            }
+
             // Get shared fund sources (where current user is a shared user)
             const sharedFundSources = this.sharingManager.getSharedFundSources();
+            console.log('Shared fund sources found:', sharedFundSources.length);
 
-            // Get received invitations
-            const receivedInvitations = this.sharingManager.getReceivedInvitations('pending');
+            // Get received invitations with enhanced error handling
+            let receivedInvitations = [];
+            try {
+                receivedInvitations = this.sharingManager.getReceivedInvitations('pending');
+                console.log('Received invitations found:', receivedInvitations.length);
+            } catch (invitationError) {
+                console.error('Error getting received invitations:', invitationError);
+                // Continue with empty array rather than failing completely
+                receivedInvitations = [];
+            }
+
+            // Also get all invitations for debugging
+            try {
+                const allInvitations = this.sharingManager.getReceivedInvitations();
+                console.log('All received invitations:', allInvitations.length, allInvitations);
+            } catch (debugError) {
+                console.error('Error getting all invitations for debugging:', debugError);
+            }
 
             const content = this.generateSharedUsersContent(sharedFundSources, receivedInvitations);
             this.uiManager.modalManager.showInfoModal('共有ユーザー管理', content);
@@ -740,11 +790,16 @@ class SharingUIManager {
 
         } catch (error) {
             console.error('Error opening shared users modal:', error);
-            UIUtils.showNotification('共有ユーザー画面を開けませんでした', 'error');
+            UIUtils.showNotification('共有ユーザー画面を開けませんでした: ' + error.message, 'error');
         }
     }
 
     generateSharedUsersContent(sharedFundSources, receivedInvitations) {
+        console.log('Generating shared users content:', { 
+            sharedFundSources: sharedFundSources.length, 
+            receivedInvitations: receivedInvitations.length 
+        });
+
         return `
             <div class="shared-users-management">
                 <!-- 受信した招待 -->
@@ -753,15 +808,25 @@ class SharingUIManager {
                         <h5>受信した招待 (${receivedInvitations.length}件)</h5>
                         <div class="received-invitations-list">
                             ${receivedInvitations.map(invitation => {
-            const details = this.sharingManager.getInvitationDetails(invitation.token);
+            console.log('Processing invitation:', invitation);
+            
+            let details;
+            try {
+                details = this.sharingManager.getInvitationDetails(invitation.token);
+                console.log('Invitation details:', details);
+            } catch (detailError) {
+                console.error('Error getting invitation details:', detailError);
+                details = { valid: false, error: 'エラーが発生しました' };
+            }
+            
             return `
                                     <div class="received-invitation-item" data-invitation-token="${invitation.token}">
                                         <div class="invitation-info">
                                             <div class="invitation-from">
-                                                <strong>${UIUtils.escapeHtml(invitation.inviterUsername)}</strong> からの招待
+                                                <strong>${UIUtils.escapeHtml(invitation.inviterUsername || '不明なユーザー')}</strong> からの招待
                                             </div>
                                             <div class="invitation-fund-source">
-                                                資金元: ${details.valid ? UIUtils.escapeHtml(details.fundSource.name) : '不明'}
+                                                資金元: ${details.valid ? UIUtils.escapeHtml(details.fundSource.name) : (details.error || '不明')}
                                             </div>
                                             <div class="invitation-date">
                                                 受信日: ${UIUtils.formatDate(invitation.createdAt)}
@@ -769,12 +834,20 @@ class SharingUIManager {
                                             <div class="invitation-expires">
                                                 期限: ${UIUtils.formatDate(invitation.expiresAt)}
                                             </div>
+                                            ${!details.valid ? `
+                                                <div class="invitation-error">
+                                                    <small style="color: #e74c3c;">⚠️ ${details.error || 'この招待は無効です'}</small>
+                                                </div>
+                                            ` : ''}
                                         </div>
                                         <div class="invitation-actions">
-                                            <button class="btn primary small accept-invitation-btn" data-invitation-token="${invitation.token}">
+                                            <button class="btn primary small accept-invitation-btn" 
+                                                    data-invitation-token="${invitation.token}"
+                                                    ${!details.valid ? 'disabled' : ''}>
                                                 受諾
                                             </button>
-                                            <button class="btn secondary small decline-invitation-btn" data-invitation-token="${invitation.token}">
+                                            <button class="btn secondary small decline-invitation-btn" 
+                                                    data-invitation-token="${invitation.token}">
                                                 拒否
                                             </button>
                                         </div>
@@ -783,7 +856,16 @@ class SharingUIManager {
         }).join('')}
                         </div>
                     </div>
-                ` : ''}
+                ` : `
+                    <div class="no-invitations-section">
+                        <p>現在、受信した招待はありません。</p>
+                        <small style="color: #666;">
+                            デバッグ情報: 
+                            ユーザー=${window.authManager ? window.authManager.getCurrentUser()?.email : 'なし'}, 
+                            招待総数=${receivedInvitations.length}
+                        </small>
+                    </div>
+                `}
 
                 <!-- 共有中の資金元 -->
                 ${sharedFundSources.length > 0 ? `
@@ -1031,8 +1113,12 @@ class SharingUIManager {
             // Get invitation details
             const details = this.sharingManager.getInvitationDetails(token);
 
+            console.log('Invitation details result:', details);
+
             if (!details.valid) {
-                UIUtils.showNotification(details.error || '無効な招待トークンです', 'error');
+                const errorMessage = details.error || '無効な招待トークンです';
+                console.log('Token validation failed in UI:', errorMessage);
+                UIUtils.showNotification(errorMessage, 'error');
                 this.hideInvitationDetails();
                 return;
             }

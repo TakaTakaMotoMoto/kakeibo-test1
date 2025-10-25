@@ -13,16 +13,16 @@ class InvitationManager {
             const randomPart1 = Math.random().toString(36).substr(2, 9);
             const randomPart2 = Math.random().toString(36).substr(2, 9);
             const token = `inv_${timestamp}_${randomPart1}_${randomPart2}`;
-            
+
             // Ensure token uniqueness by checking existing tokens
             const existingInvitations = this.getAllInvitations();
             const existingToken = existingInvitations.find(inv => inv.token === token);
-            
+
             if (existingToken) {
                 // Recursively generate new token if collision occurs
                 return this.generateInvitationToken(fundSourceId, inviterUserId, inviteeEmail);
             }
-            
+
             return token;
         } catch (error) {
             console.error('Error generating invitation token:', error);
@@ -30,9 +30,75 @@ class InvitationManager {
         }
     }
 
+    // Read-only token validation (doesn't modify invitation status)
+    checkTokenValidity(token) {
+        try {
+            if (!token || typeof token !== 'string') {
+                return { valid: false, reason: 'Invalid token format' };
+            }
+
+            if (!token.startsWith('inv_')) {
+                return { valid: false, reason: 'Invalid token prefix' };
+            }
+
+            const invitations = this.getAllInvitations();
+            const invitation = invitations.find(inv => inv.token === token);
+
+            if (!invitation) {
+                return { valid: false, reason: 'Invitation not found' };
+            }
+
+            if (invitation.status !== 'pending') {
+                return { valid: false, reason: `Invitation status is ${invitation.status}` };
+            }
+
+            // Check expiration without modifying the invitation
+            const now = new Date();
+            let expiresAt;
+
+            if (invitation.expiresAt instanceof Date) {
+                expiresAt = invitation.expiresAt;
+            } else {
+                expiresAt = new Date(invitation.expiresAt);
+            }
+
+            if (isNaN(expiresAt.getTime())) {
+                return { valid: false, reason: 'Invalid expiration date' };
+            }
+
+            const nowTime = now.getTime();
+            const expiresTime = expiresAt.getTime();
+
+            if (nowTime > (expiresTime + 1000)) {
+                return {
+                    valid: false,
+                    reason: 'Invitation expired',
+                    expiredBy: nowTime - expiresTime
+                };
+            }
+
+            return {
+                valid: true,
+                invitation: invitation,
+                timeRemaining: expiresTime - nowTime
+            };
+
+        } catch (error) {
+            console.error('Error checking token validity:', error);
+            return { valid: false, reason: 'Validation error: ' + error.message };
+        }
+    }
+
     validateToken(token) {
         try {
             if (!token || typeof token !== 'string') {
+                console.log('Token validation failed: invalid token format', { token: typeof token });
+                return null;
+            }
+
+            // Validate token format
+            if (!token.startsWith('inv_')) {
+                console.log('Token validation failed: invalid token prefix', { token });
                 return null;
             }
 
@@ -40,23 +106,75 @@ class InvitationManager {
             const invitation = invitations.find(inv => inv.token === token);
 
             if (!invitation) {
+                console.log('Token validation failed: invitation not found', { token, totalInvitations: invitations.length });
                 return null;
             }
 
             // Check if invitation is still valid
             if (invitation.status !== 'pending') {
+                console.log('Token validation failed: invitation not pending', {
+                    token,
+                    status: invitation.status,
+                    invitationId: invitation.id
+                });
                 return null;
             }
 
-            // Check if invitation has expired
+            // Check if invitation has expired with more detailed logging
             const now = new Date();
-            const expiresAt = new Date(invitation.expiresAt);
-            
-            if (now > expiresAt) {
+            let expiresAt;
+
+            // Handle both Date objects and string dates
+            if (invitation.expiresAt instanceof Date) {
+                expiresAt = invitation.expiresAt;
+            } else {
+                expiresAt = new Date(invitation.expiresAt);
+            }
+
+            // Validate that expiresAt is a valid date
+            if (isNaN(expiresAt.getTime())) {
+                console.error('Token validation failed: invalid expiration date', {
+                    token,
+                    expiresAt: invitation.expiresAt
+                });
+                return null;
+            }
+
+            // Use getTime() for more reliable comparison
+            const nowTime = now.getTime();
+            const expiresTime = expiresAt.getTime();
+            const timeRemaining = expiresTime - nowTime;
+
+            console.log('Token expiration check:', {
+                token,
+                now: now.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+                nowTime,
+                expiresTime,
+                isExpired: nowTime > expiresTime,
+                timeRemaining: timeRemaining,
+                timeRemainingMinutes: Math.round(timeRemaining / (1000 * 60))
+            });
+
+            // Add a small buffer (1 second) to account for timing differences
+            if (nowTime > (expiresTime + 1000)) {
+                console.log('Token validation failed: invitation expired', {
+                    token,
+                    expiresAt: expiresAt.toISOString(),
+                    now: now.toISOString(),
+                    timeExpiredBy: nowTime - expiresTime
+                });
                 // Mark as expired
                 this.updateInvitationStatus(invitation.id, 'expired');
                 return null;
             }
+
+            console.log('Token validation successful', {
+                token,
+                invitationId: invitation.id,
+                inviteeEmail: invitation.inviteeEmail,
+                timeRemaining: Math.round((expiresAt.getTime() - now.getTime()) / 1000) + ' seconds'
+            });
 
             return invitation;
 
@@ -88,7 +206,7 @@ class InvitationManager {
         try {
             // Enhanced validation with detailed security checks
             const validationResult = this.validateInvitationDataDetailed(invitationData);
-            
+
             if (!validationResult.isValid) {
                 throw new Error(validationResult.errors[0] || '招待データが無効です');
             }
@@ -107,16 +225,16 @@ class InvitationManager {
             if (window.SharingSecurityValidator) {
                 const securityValidator = new window.SharingSecurityValidator();
                 const securityResult = securityValidator.validateInvitationSecurity(invitationData);
-                
+
                 if (!securityResult.isSecure) {
                     throw new Error(securityResult.violations[0] || 'セキュリティ検証に失敗しました');
                 }
             }
 
             const invitations = this.getAllInvitations();
-            
+
             // Check for duplicate pending invitations
-            const existingInvitation = invitations.find(inv => 
+            const existingInvitation = invitations.find(inv =>
                 inv.fundSourceId === invitationData.fundSourceId &&
                 inv.inviteeEmail === invitationData.inviteeEmail &&
                 inv.status === 'pending'
@@ -153,8 +271,8 @@ class InvitationManager {
             const invitation = {
                 id: this.storage.generateId(),
                 token: this.generateInvitationToken(
-                    invitationData.fundSourceId, 
-                    invitationData.inviterUserId, 
+                    invitationData.fundSourceId,
+                    invitationData.inviterUserId,
                     invitationData.inviteeEmail
                 ),
                 fundSourceId: invitationData.fundSourceId,
@@ -168,7 +286,7 @@ class InvitationManager {
                 },
                 status: 'pending',
                 createdAt: now,
-                expiresAt: new Date(now.getTime() + 10 * 60 * 1000), // 10 minutes instead of 24 hours
+                expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24 hours for better usability
                 acceptedAt: null,
                 updatedAt: now
             };
@@ -184,12 +302,12 @@ class InvitationManager {
                 fundSourceId: invitationData.fundSourceId,
                 inviteeEmail: invitationData.inviteeEmail
             });
-            
+
             // Re-throw if not recoverable
             if (!errorResult.recovery.successful) {
                 throw error;
             }
-            
+
             return errorResult;
         }
     }
@@ -250,11 +368,11 @@ class InvitationManager {
     getInvitations(status = null) {
         try {
             const invitations = this.getAllInvitations();
-            
+
             if (status) {
                 return invitations.filter(inv => inv.status === status);
             }
-            
+
             return invitations;
 
         } catch (error) {
@@ -278,7 +396,24 @@ class InvitationManager {
     getInvitationsByEmail(email) {
         try {
             const invitations = this.getAllInvitations();
-            return invitations.filter(inv => inv.inviteeEmail === email);
+            console.log('getInvitationsByEmail: Searching for email:', email);
+            console.log('getInvitationsByEmail: Total invitations:', invitations.length);
+
+            // Case-insensitive email matching
+            const normalizedEmail = email.toLowerCase().trim();
+            const matchingInvitations = invitations.filter(inv => {
+                const inviteeEmail = inv.inviteeEmail ? inv.inviteeEmail.toLowerCase().trim() : '';
+                const matches = inviteeEmail === normalizedEmail;
+
+                if (matches) {
+                    console.log('getInvitationsByEmail: Found matching invitation:', inv);
+                }
+
+                return matches;
+            });
+
+            console.log('getInvitationsByEmail: Matching invitations found:', matchingInvitations.length);
+            return matchingInvitations;
         } catch (error) {
             console.error('Error getting invitations by email:', error);
             return [];
@@ -331,7 +466,7 @@ class InvitationManager {
         try {
             const invitations = this.getAllInvitations();
             const cutoffDate = new Date(Date.now() - (daysOld * 24 * 60 * 60 * 1000));
-            
+
             const filteredInvitations = invitations.filter(invitation => {
                 const createdAt = new Date(invitation.createdAt);
                 return createdAt > cutoffDate;
@@ -355,7 +490,7 @@ class InvitationManager {
     // Get invitation statistics
     getInvitationStats(userId = null) {
         try {
-            const invitations = userId 
+            const invitations = userId
                 ? this.getInvitationsBySender(userId)
                 : this.getAllInvitations();
 
@@ -438,7 +573,7 @@ class InvitationManager {
         if (window.SharingSecurityValidator) {
             const securityValidator = new window.SharingSecurityValidator();
             const securityResult = securityValidator.validateInvitationSecurity(data);
-            
+
             if (!securityResult.isSecure) {
                 errors.push(...securityResult.violations);
                 warnings.push(...securityResult.warnings);
@@ -451,7 +586,7 @@ class InvitationManager {
     // Enhanced validation with detailed results
     validateInvitationDataDetailed(data) {
         const result = this.validateInvitationData(data);
-        
+
         return {
             isValid: result.errors.length === 0,
             errors: result.errors,
@@ -521,12 +656,12 @@ class InvitationManager {
         try {
             const invitations = this.getAllInvitations();
             const filteredInvitations = invitations.filter(inv => inv.id !== invitationId);
-            
+
             if (filteredInvitations.length < invitations.length) {
                 this.setAllInvitations(filteredInvitations);
                 return true;
             }
-            
+
             return false;
 
         } catch (error) {
@@ -539,9 +674,9 @@ class InvitationManager {
     canInviteUser(fundSourceId, userEmail) {
         try {
             const invitations = this.getAllInvitations();
-            
+
             // Check for existing pending invitation
-            const existingInvitation = invitations.find(inv => 
+            const existingInvitation = invitations.find(inv =>
                 inv.fundSourceId === fundSourceId &&
                 inv.inviteeEmail === userEmail &&
                 inv.status === 'pending'
@@ -555,7 +690,7 @@ class InvitationManager {
             }
 
             // Check for already accepted invitation
-            const acceptedInvitation = invitations.find(inv => 
+            const acceptedInvitation = invitations.find(inv =>
                 inv.fundSourceId === fundSourceId &&
                 inv.inviteeEmail === userEmail &&
                 inv.status === 'accepted'
@@ -586,7 +721,7 @@ class InvitationManager {
     getInvitationSummary(fundSourceId) {
         try {
             const invitations = this.getInvitationsByFundSource(fundSourceId);
-            
+
             const summary = {
                 total: invitations.length,
                 pending: 0,
@@ -623,13 +758,13 @@ class InvitationManager {
     performMaintenance() {
         try {
             console.log('Performing invitation maintenance...');
-            
+
             // Clean up expired invitations
             const expiredCleaned = this.cleanupExpiredInvitations();
-            
+
             // Delete old invitations (older than 30 days)
             const oldDeleted = this.deleteOldInvitations(30);
-            
+
             console.log('Invitation maintenance completed', {
                 expiredCleaned,
                 oldDeleted

@@ -762,13 +762,24 @@ class SharingManager {
         try {
             const currentUser = this.authManager.getCurrentUser();
             if (!currentUser) {
+                console.log('getReceivedInvitations: No current user');
+                return [];
+            }
+
+            console.log('getReceivedInvitations: Current user email:', currentUser.email);
+
+            if (!this.invitationManager) {
+                console.error('getReceivedInvitations: Invitation manager not available');
                 return [];
             }
 
             const allInvitations = this.invitationManager.getInvitationsByEmail(currentUser.email);
+            console.log('getReceivedInvitations: All invitations for user:', allInvitations.length, allInvitations);
             
             if (status) {
-                return allInvitations.filter(inv => inv.status === status);
+                const filteredInvitations = allInvitations.filter(inv => inv.status === status);
+                console.log(`getReceivedInvitations: Filtered invitations (status=${status}):`, filteredInvitations.length, filteredInvitations);
+                return filteredInvitations;
             }
             
             return allInvitations;
@@ -969,13 +980,19 @@ class SharingManager {
     // Get invitation details for display (without sensitive information)
     getInvitationDetails(invitationToken) {
         try {
-            const invitation = this.invitationManager.validateToken(invitationToken);
-            if (!invitation) {
+            // Use read-only validation to avoid side effects
+            const validationResult = this.invitationManager.checkTokenValidity(invitationToken);
+            if (!validationResult.valid) {
+                console.log('getInvitationDetails: Token validation failed:', validationResult.reason);
                 return {
                     valid: false,
-                    error: '無効または期限切れの招待トークンです'
+                    error: validationResult.reason === 'Invitation expired' ? 
+                        '招待の有効期限が切れています' : 
+                        '無効な招待トークンです'
                 };
             }
+            
+            const invitation = validationResult.invitation;
 
             // Get fund source details
             const fundSources = this.storage.getFundSources();
