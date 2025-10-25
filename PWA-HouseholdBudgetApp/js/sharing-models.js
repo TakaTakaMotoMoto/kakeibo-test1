@@ -49,7 +49,7 @@ class SharingModels {
             },
             status: data.status || 'pending',
             createdAt: data.createdAt || new Date(),
-            expiresAt: data.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000),
+            expiresAt: data.expiresAt || new Date(Date.now() + 10 * 60 * 1000), // 10 minutes instead of 24 hours
             acceptedAt: data.acceptedAt || null,
             updatedAt: data.updatedAt || new Date()
         };

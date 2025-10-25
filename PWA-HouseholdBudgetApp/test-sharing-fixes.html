@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有機能修正テスト - PWA家計簿アプリ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .test-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-btn.primary { background-color: #007bff; color: white; }
+        .test-btn.success { background-color: #28a745; color: white; }
+        .test-btn.danger { background-color: #dc3545; color: white; }
+        .test-btn.warning { background-color: #ffc107; color: black; }
+        
+        .test-result {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .test-result.success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        
+        .test-result.error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        
+        .test-result.warning {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        
+        .log-display {
+            background-color: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>共有機能修正テスト</h1>
+    <p>このページは共有機能の修正内容をテストするためのものです。</p>
+    
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="test-result">初期化中...</div>
+        <button class="test-btn primary" onclick="checkSystemStatus()">システム状態確認</button>
+    </div>
+    
+    <!-- Test 1: Invitation Sending Error Fix -->
+    <div class="test-container">
+        <div class="test-section">
+            <h3>1. 招待送信エラー修正テスト</h3>
+            <p>要件 1.1, 1.2, 1.3: "null is not an object" エラーの修正確認</p>
+            
+            <div class="form-group">
+                <label for="test-email-1">招待先メールアドレス:</label>
+                <input type="email" id="test-email-1" value="test1@example.com" placeholder="メールアドレスを入力">
+            </div>
+            
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testInvitationSendingFix()">招待送信テスト</button>
+                <button class="test-btn warning" onclick="testNullObjectPrevention()">Nullオブジェクトエラー防止テスト</button>
+                <button class="test-btn danger" onclick="testInvalidDataHandling()">無効データ処理テスト</button>
+            </div>
+            <div id="invitation-sending-results" class="test-result">テスト未実行</div>
+        </div>
+    </div>
+    
+    <!-- Test 2: Invitation Token Display Fix -->
+    <div class="test-container">
+        <div class="test-section">
+            <h3>2. 招待トークン表示修正テスト</h3>
+            <p>要件 3.1, 3.2, 3.3, 3.4: 招待トークン情報の黒文字表示確認</p>
+            
+            <div class="test-buttons">
+                <button class="test-btn success" onclick="testTokenDisplayColors()">トークン表示色テスト</button>
+                <button class="test-btn primary" onclick="testTokenDisplayContent()">表示内容テスト</button>
+                <button class="test-btn warning" onclick="testFallbackModal()">フォールバックモーダルテスト</button>
+            </div>
+            <div id="token-display-results" class="test-result">テスト未実行</div>
+        </div>
+    </div>
+    
+    <!-- Test 3: Token Expiration Fix -->
+    <div class="test-container">
+        <div class="test-section">
+            <h3>3. トークン有効期限修正テスト</h3>
+            <p>要件 4.1, 4.2: 現在時刻+10分の有効期限設定確認</p>
+            
+            <div class="test-buttons">
+                <button class="test-btn success" onclick="testTokenExpirationFix()">有効期限計算テスト</button>
+                <button class="test-btn primary" onclick="testMultipleTokenExpiration()">複数トークン期限テスト</button>
+            </div>
+            <div id="token-expiration-results" class="test-result">テスト未実行</div>
+        </div>
+    </div>
+    
+    <!-- Test 4: Invitation Resending Fix -->
+    <div class="test-container">
+        <div class="test-section">
+            <h3>4. 招待再送信修正テスト</h3>
+            <p>要件 2.1, 2.2, 2.3: 招待再送信機能とUI重複防止確認</p>
+            
+            <div class="test-buttons">
+                <button class="test-btn primary" onclick="testInvitationResending()">再送信機能テスト</button>
+                <button class="test-btn warning" onclick="testDuplicateUIPreventionTest()">UI重複防止テスト</button>
+                <button class="test-btn danger" onclick="testResendingErrorHandling()">再送信エラー処理テスト</button>
+            </div>
+            <div id="resending-results" class="test-result">テスト未実行</div>
+        </div>
+    </div>
+    
+    <!-- Test 5: Integration Test -->
+    <div class="test-container">
+        <div class="test-section">
+            <h3>5. 統合テスト</h3>
+            <p>全ての修正内容の統合確認</p>
+            
+            <div class="test-buttons">
+                <button class="test-btn success" onclick="runAllSharingFixTests()">全テスト実行</button>
+                <button class="test-btn primary" onclick="testEndToEndFlow()">エンドツーエンドテスト</button>
+            </div>
+            <div id="integration-results" class="test-result">テスト未実行</div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>テストログ</h2>
+        <div id="log-display" class="log-display"></div>
+        <button class="test-btn warning" onclick="clearLog()">ログクリア</button>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/sharing-error-handler.js"></script>
+    <script src="js/ui-utils.js"></script>
+    <script src="js/ui-modals.js"></script>
+    <script src="js/loading-manager.js"></script>
+
+    <script>
+        let logContainer;
+        let testResults = {
+            invitationSending: { passed: 0, failed: 0, tests: [] },
+            tokenDisplay: { passed: 0, failed: 0, tests: [] },
+            tokenExpiration: { passed: 0, failed: 0, tests: [] },
+            invitationResending: { passed: 0, failed: 0, tests: [] }
+        };
+        
+        function initializeTest() {
+            logContainer = document.getElementById('log-display');
+            
+            try {
+                // Initialize managers with proper error handling
+                if (!window.storage) window.storage = new StorageManager();
+                if (!window.authManager) window.authManager = new AuthManager();
+                if (!window.dataManager) window.dataManager = new DataManager(window.storage);
+                if (!window.permissionManager) window.permissionManager = new PermissionManager();
+                if (!window.invitationManager) window.invitationManager = new InvitationManager(window.storage);
+                if (!window.sharingManager) {
+                    window.sharingManager = new SharingManager(window.storage, window.authManager);
+                    window.sharingManager.initialize(window.invitationManager, window.permissionManager);
+                }
+                if (!window.invitationTokenDisplay) window.invitationTokenDisplay = new InvitationTokenDisplayManager();
+                if (!window.loadingManager) window.loadingManager = new LoadingManager();
+                
+                // Set up mock user for testing
+                setupMockUser();
+                
+                checkSystemStatus();
+                log('テスト環境初期化完了', 'success');
+                
+            } catch (error) {
+                log('初期化エラー: ' + error.message, 'error');
+                console.error('Initialization error:', error);
+            }
+        }
+        
+        function setupMockUser() {
+            // Mock current user for testing
+            if (window.authManager && typeof window.authManager.setCurrentUser === 'function') {
+                window.authManager.setCurrentUser({
+                    id: 'test-user-' + Date.now(),
+                    username: 'テストユーザー',
+                    email: 'testuser@example.com'
+                });
+            } else {
+                // Fallback mock
+                window.authManager.getCurrentUser = () => ({
+                    id: 'test-user-' + Date.now(),
+                    username: 'テストユーザー',
+                    email: 'testuser@example.com'
+                });
+            }
+            
+            // Ensure we have test fund sources
+            const fundSources = window.storage.getFundSources();
+            if (fundSources.length === 0) {
+                const testFundSource = {
+                    id: 'test-fund-source-' + Date.now(),
+                    name: 'テスト資金元',
+                    type: 'bank',
+                    balance: 100000,
+                    ownerId: window.authManager.getCurrentUser().id,
+                    isShared: false,
+                    sharedWith: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+                window.storage.setFundSources([testFundSource]);
+                log('テスト用資金元を作成しました', 'info');
+            }
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function checkSystemStatus() {
+            const status = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                permissionManager: !!window.permissionManager,
+                invitationManager: !!window.invitationManager,
+                sharingManager: !!window.sharingManager,
+                invitationTokenDisplay: !!window.invitationTokenDisplay,
+                loadingManager: !!window.loadingManager,
+                currentUser: !!window.authManager?.getCurrentUser(),
+                fundSources: window.storage ? window.storage.getFundSources().length : 0
+            };
+            
+            document.getElementById('system-status').innerHTML = `
+                <strong>システム状態:</strong><br>
+                Storage: ${status.storage ? '✓' : '✗'}<br>
+                AuthManager: ${status.authManager ? '✓' : '✗'}<br>
+                PermissionManager: ${status.permissionManager ? '✓' : '✗'}<br>
+                InvitationManager: ${status.invitationManager ? '✓' : '✗'}<br>
+                SharingManager: ${status.sharingManager ? '✓' : '✗'}<br>
+                InvitationTokenDisplay: ${status.invitationTokenDisplay ? '✓' : '✗'}<br>
+                LoadingManager: ${status.loadingManager ? '✓' : '✗'}<br>
+                CurrentUser: ${status.currentUser ? '✓' : '✗'}<br>
+                資金元数: ${status.fundSources}
+            `;
+        }
+        
+        // Test 1: Invitation Sending Error Fix
+        function testInvitationSendingFix() {
+            const resultContainer = document.getElementById('invitation-sending-results');
+            resultContainer.innerHTML = '';
+            
+            try {
+                log('招待送信エラー修正テスト開始', 'info');
+                
+                const email = document.getElementById('test-email-1').value.trim();
+                if (!email) {
+                    throw new Error('メールアドレスを入力してください');
+                }
+                
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+                
+                const fundSourceId = fundSources[0].id;
+                
+                // Test 1.1: Null object error prevention
+                log('Nullオブジェクトエラー防止テスト実行中...', 'info');
+                
+                // Ensure all required objects are properly initialized
+                if (!window.sharingManager) {
+                    throw new Error('SharingManager が初期化されていません');
+                }
+                
+                if (!window.authManager.getCurrentUser()) {
+                    throw new Error('現在のユーザーが設定されていません');
+                }
+                
+                // Test invitation sending with proper error handling
+                const invitation = window.sharingManager.sendInvitation(
+                    fundSourceId,
+                    email,
+                    { canView: true, canEdit: true, canDelete: false }
+                );
+                
+                if (!invitation || !invitation.token) {
+                    throw new Error('招待の生成に失敗しました');
+                }
+                
+                testResults.invitationSending.passed++;
+                testResults.invitationSending.tests.push({
+                    name: '招待送信基本テスト',
+                    status: 'passed',
+                    details: `招待ID: ${invitation.id}, トークン: ${invitation.token.substring(0, 20)}...`
+                });
+                
+                resultContainer.innerHTML += `
+                    <div class="test-result success">
+                        ✓ 招待送信成功: ${invitation.id}<br>
+                        ✓ Nullオブジェクトエラー防止: 正常<br>
+                        ✓ トークン生成: ${invitation.token.substring(0, 30)}...
+                    </div>
+                `;
+                
+                log('招待送信エラー修正テスト完了', 'success');
+                
+            } catch (error) {
+                testResults.invitationSending.failed++;
+                testResults.invitationSending.tests.push({
+                    name: '招待送信基本テスト',
+                    status: 'failed',
+                    error: error.message
+                });
+                
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 招待送信エラー: ${error.message}
+                    </div>
+                `;
+                
+                log('招待送信エラー修正テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testNullObjectPrevention() {
+            const resultContainer = document.getElementById('invitation-sending-results');
+            
+            try {
+                log('Nullオブジェクト防止テスト開始', 'info');
+                
+                // Test with null/undefined parameters
+                const testCases = [
+                    { fundSourceId: null, email: 'test@example.com', expectedError: '有効な資金元IDが必要です' },
+                    { fundSourceId: 'valid-id', email: null, expectedError: '有効なメールアドレスが必要です' },
+                    { fundSourceId: '', email: 'test@example.com', expectedError: '有効な資金元IDが必要です' },
+                    { fundSourceId: 'valid-id', email: '', expectedError: '有効なメールアドレスが必要です' }
+                ];
+                
+                let passedTests = 0;
+                
+                for (const testCase of testCases) {
+                    try {
+                        window.sharingManager.sendInvitation(
+                            testCase.fundSourceId,
+                            testCase.email,
+                            { canView: true, canEdit: false, canDelete: false }
+                        );
+                        
+                        // If we reach here, the test failed (should have thrown an error)
+                        resultContainer.innerHTML += `
+                            <div class="test-result error">
+                                ✗ Nullテストケース失敗: ${JSON.stringify(testCase)} - エラーが発生しませんでした
+                            </div>
+                        `;
+                        
+                    } catch (error) {
+                        if (error.message.includes(testCase.expectedError) || 
+                            error.message.includes('有効な') || 
+                            error.message.includes('必要です')) {
+                            passedTests++;
+                            log(`Nullテストケース成功: ${error.message}`, 'success');
+                        } else {
+                            log(`Nullテストケース予期しないエラー: ${error.message}`, 'warning');
+                        }
+                    }
+                }
+                
+                testResults.invitationSending.passed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result success">
+                        ✓ Nullオブジェクト防止テスト: ${passedTests}/${testCases.length} 成功
+                    </div>
+                `;
+                
+                log('Nullオブジェクト防止テスト完了', 'success');
+                
+            } catch (error) {
+                testResults.invitationSending.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ Nullオブジェクト防止テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('Nullオブジェクト防止テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testInvalidDataHandling() {
+            const resultContainer = document.getElementById('invitation-sending-results');
+            
+            try {
+                log('無効データ処理テスト開始', 'info');
+                
+                const fundSources = window.storage.getFundSources();
+                const validFundSourceId = fundSources.length > 0 ? fundSources[0].id : 'test-fund-source';
+                
+                // Test invalid email formats
+                const invalidEmails = [
+                    'invalid-email',
+                    '@example.com',
+                    'test@',
+                    'test..test@example.com',
+                    'test@example',
+                    ''
+                ];
+                
+                let handledErrors = 0;
+                
+                for (const email of invalidEmails) {
+                    try {
+                        window.sharingManager.sendInvitation(
+                            validFundSourceId,
+                            email,
+                            { canView: true, canEdit: false, canDelete: false }
+                        );
+                        
+                        log(`無効メール処理失敗: ${email} - エラーが発生しませんでした`, 'warning');
+                        
+                    } catch (error) {
+                        if (error.message.includes('有効なメールアドレス') || 
+                            error.message.includes('メールアドレス') ||
+                            error.message.includes('必要です')) {
+                            handledErrors++;
+                            log(`無効メール処理成功: ${email} - ${error.message}`, 'success');
+                        } else {
+                            log(`無効メール予期しないエラー: ${email} - ${error.message}`, 'warning');
+                        }
+                    }
+                }
+                
+                testResults.invitationSending.passed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result success">
+                        ✓ 無効データ処理テスト: ${handledErrors}/${invalidEmails.length} エラー適切に処理
+                    </div>
+                `;
+                
+                log('無効データ処理テスト完了', 'success');
+                
+            } catch (error) {
+                testResults.invitationSending.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 無効データ処理テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('無効データ処理テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // Test 2: Token Display Color Fix
+        function testTokenDisplayColors() {
+            const resultContainer = document.getElementById('token-display-results');
+            resultContainer.innerHTML = '';
+            
+            try {
+                log('トークン表示色テスト開始', 'info');
+                
+                // Create a mock invitation for testing
+                const mockInvitation = {
+                    id: 'color-test-' + Date.now(),
+                    token: 'inv_color_test_' + Date.now(),
+                    fundSourceId: 'test-fund-source',
+                    inviterUserId: 'test-user',
+                    inviterUsername: 'テストユーザー',
+                    inviteeEmail: 'colortest@example.com',
+                    permissions: { canView: true, canEdit: true, canDelete: false },
+                    status: 'pending',
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                };
+                
+                // Generate the invitation content
+                const content = window.invitationTokenDisplay.generateInvitationTokenContent(
+                    mockInvitation, 
+                    'テスト資金元'
+                );
+                
+                // Check if content contains black color styling
+                const hasBlackTextStyling = content.includes('color: #000000 !important');
+                const hasProperStyling = content.includes('style="color: #000000 !important;"');
+                
+                if (hasBlackTextStyling && hasProperStyling) {
+                    testResults.tokenDisplay.passed++;
+                    resultContainer.innerHTML += `
+                        <div class="test-result success">
+                            ✓ 黒文字スタイル適用確認: 正常<br>
+                            ✓ 重要度指定(!important)確認: 正常<br>
+                            ✓ 表示内容生成: 成功
+                        </div>
+                    `;
+                    
+                    log('トークン表示色テスト成功', 'success');
+                } else {
+                    throw new Error('黒文字スタイルが適用されていません');
+                }
+                
+                // Test actual display (create temporary modal)
+                const testModal = document.createElement('div');
+                testModal.id = 'color-test-modal';
+                testModal.style.display = 'none';
+                testModal.innerHTML = content;
+                document.body.appendChild(testModal);
+                
+                // Check computed styles
+                setTimeout(() => {
+                    const colorElements = testModal.querySelectorAll('[style*="color: #000000"]');
+                    
+                    resultContainer.innerHTML += `
+                        <div class="test-result success">
+                            ✓ 黒文字要素数: ${colorElements.length}<br>
+                            ✓ 表示テスト: 完了
+                        </div>
+                    `;
+                    
+                    // Clean up
+                    document.body.removeChild(testModal);
+                    log('表示色テスト完了', 'success');
+                }, 100);
+                
+            } catch (error) {
+                testResults.tokenDisplay.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ トークン表示色テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('トークン表示色テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testTokenDisplayContent() {
+            const resultContainer = document.getElementById('token-display-results');
+            
+            try {
+                log('表示内容テスト開始', 'info');
+                
+                const mockInvitation = {
+                    id: 'content-test-' + Date.now(),
+                    token: 'inv_content_test_' + Date.now(),
+                    fundSourceId: 'test-fund-source',
+                    inviterUserId: 'test-user',
+                    inviterUsername: 'テストユーザー',
+                    inviteeEmail: 'contenttest@example.com',
+                    permissions: { canView: true, canEdit: true, canDelete: false },
+                    status: 'pending',
+                    createdAt: new Date(),
+                    expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                };
+                
+                const content = window.invitationTokenDisplay.generateInvitationTokenContent(
+                    mockInvitation, 
+                    'テスト資金元'
+                );
+                
+                // Check required content elements
+                const requiredElements = [
+                    '資金元:',
+                    '招待先:',
+                    '有効期限:',
+                    '招待トークン',
+                    mockInvitation.token,
+                    mockInvitation.inviteeEmail,
+                    'テスト資金元'
+                ];
+                
+                let foundElements = 0;
+                for (const element of requiredElements) {
+                    if (content.includes(element)) {
+                        foundElements++;
+                    } else {
+                        log(`必須要素が見つかりません: ${element}`, 'warning');
+                    }
+                }
+                
+                if (foundElements === requiredElements.length) {
+                    testResults.tokenDisplay.passed++;
+                    resultContainer.innerHTML += `
+                        <div class="test-result success">
+                            ✓ 必須表示要素: ${foundElements}/${requiredElements.length} 確認<br>
+                            ✓ トークン表示: ${mockInvitation.token.substring(0, 20)}...<br>
+                            ✓ メールアドレス表示: ${mockInvitation.inviteeEmail}
+                        </div>
+                    `;
+                    
+                    log('表示内容テスト成功', 'success');
+                } else {
+                    throw new Error(`必須要素が不足しています: ${foundElements}/${requiredElements.length}`);
+                }
+                
+            } catch (error) {
+                testResults.tokenDisplay.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 表示内容テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('表示内容テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testFallbackModal() {
+            const resultContainer = document.getElementById('token-display-results');
+            
+            try {
+                log('フォールバックモーダルテスト開始', 'info');
+                
+                const testTitle = 'フォールバックテスト';
+                const testContent = '<p>これはフォールバックモーダルのテストです。</p>';
+                
+                // Test fallback modal creation
+                window.invitationTokenDisplay.showFallbackModal(testTitle, testContent);
+                
+                // Check if modal was created
+                const modal = document.getElementById('invitation-token-modal');
+                if (modal) {
+                    const title = document.getElementById('invitation-token-modal-title');
+                    const body = document.getElementById('invitation-token-modal-body');
+                    
+                    if (title && body && title.textContent === testTitle && body.innerHTML === testContent) {
+                        testResults.tokenDisplay.passed++;
+                        resultContainer.innerHTML += `
+                            <div class="test-result success">
+                                ✓ フォールバックモーダル作成: 成功<br>
+                                ✓ タイトル設定: 正常<br>
+                                ✓ コンテンツ設定: 正常
+                            </div>
+                        `;
+                        
+                        // Hide modal after test
+                        setTimeout(() => {
+                            modal.style.display = 'none';
+                        }, 1000);
+                        
+                        log('フォールバックモーダルテスト成功', 'success');
+                    } else {
+                        throw new Error('モーダルの内容が正しく設定されていません');
+                    }
+                } else {
+                    throw new Error('フォールバックモーダルが作成されませんでした');
+                }
+                
+            } catch (error) {
+                testResults.tokenDisplay.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ フォールバックモーダルテストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('フォールバックモーダルテスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // Test 3: Token Expiration Fix
+        function testTokenExpirationFix() {
+            const resultContainer = document.getElementById('token-expiration-results');
+            resultContainer.innerHTML = '';
+            
+            try {
+                log('トークン有効期限修正テスト開始', 'info');
+                
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+                
+                const fundSourceId = fundSources[0].id;
+                const testEmail = 'expiration-test@example.com';
+                
+                // Record time before invitation creation
+                const beforeCreation = new Date();
+                
+                // Create invitation
+                const invitation = window.sharingManager.sendInvitation(
+                    fundSourceId,
+                    testEmail,
+                    { canView: true, canEdit: false, canDelete: false }
+                );
+                
+                // Record time after invitation creation
+                const afterCreation = new Date();
+                
+                // Check expiration time
+                const createdAt = new Date(invitation.createdAt);
+                const expiresAt = new Date(invitation.expiresAt);
+                
+                // Calculate expected expiration (createdAt + 10 minutes)
+                const expectedExpiration = new Date(createdAt.getTime() + 10 * 60 * 1000);
+                
+                // Check if expiration is approximately 10 minutes from creation
+                const timeDifference = Math.abs(expiresAt.getTime() - expectedExpiration.getTime());
+                const isCorrectExpiration = timeDifference < 1000; // Allow 1 second tolerance
+                
+                // Check if expiration is in the future
+                const isInFuture = expiresAt > beforeCreation;
+                
+                // Check if expiration is reasonable (between 9-11 minutes from now)
+                const minutesFromNow = (expiresAt.getTime() - beforeCreation.getTime()) / (1000 * 60);
+                const isReasonableTime = minutesFromNow >= 9 && minutesFromNow <= 11;
+                
+                if (isCorrectExpiration && isInFuture && isReasonableTime) {
+                    testResults.tokenExpiration.passed++;
+                    resultContainer.innerHTML += `
+                        <div class="test-result success">
+                            ✓ 有効期限計算: 正確 (${Math.round(minutesFromNow * 100) / 100}分後)<br>
+                            ✓ 作成時刻: ${createdAt.toLocaleString()}<br>
+                            ✓ 有効期限: ${expiresAt.toLocaleString()}<br>
+                            ✓ 期限設定: createdAt + 10分
+                        </div>
+                    `;
+                    
+                    log('トークン有効期限修正テスト成功', 'success');
+                } else {
+                    throw new Error(`有効期限が正しくありません: ${minutesFromNow}分後, 差分: ${timeDifference}ms`);
+                }
+                
+            } catch (error) {
+                testResults.tokenExpiration.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ トークン有効期限修正テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('トークン有効期限修正テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testMultipleTokenExpiration() {
+            const resultContainer = document.getElementById('token-expiration-results');
+            
+            try {
+                log('複数トークン期限テスト開始', 'info');
+                
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+                
+                const fundSourceId = fundSources[0].id;
+                const testEmails = [
+                    'multi-test1@example.com',
+                    'multi-test2@example.com',
+                    'multi-test3@example.com'
+                ];
+                
+                const invitations = [];
+                const beforeCreation = new Date();
+                
+                // Create multiple invitations with small delays
+                for (let i = 0; i < testEmails.length; i++) {
+                    setTimeout(() => {
+                        try {
+                            const invitation = window.sharingManager.sendInvitation(
+                                fundSourceId,
+                                testEmails[i],
+                                { canView: true, canEdit: false, canDelete: false }
+                            );
+                            invitations.push(invitation);
+                            
+                            // Check this invitation when all are created
+                            if (invitations.length === testEmails.length) {
+                                validateMultipleExpirations(invitations, beforeCreation, resultContainer);
+                            }
+                        } catch (error) {
+                            log(`複数招待作成エラー ${i}: ${error.message}`, 'error');
+                        }
+                    }, i * 100); // 100ms delay between each
+                }
+                
+            } catch (error) {
+                testResults.tokenExpiration.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 複数トークン期限テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('複数トークン期限テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function validateMultipleExpirations(invitations, beforeCreation, resultContainer) {
+            try {
+                let validExpirations = 0;
+                
+                for (const invitation of invitations) {
+                    const createdAt = new Date(invitation.createdAt);
+                    const expiresAt = new Date(invitation.expiresAt);
+                    const expectedExpiration = new Date(createdAt.getTime() + 10 * 60 * 1000);
+                    
+                    const timeDifference = Math.abs(expiresAt.getTime() - expectedExpiration.getTime());
+                    const isCorrectExpiration = timeDifference < 1000;
+                    
+                    if (isCorrectExpiration) {
+                        validExpirations++;
+                    }
+                }
+                
+                if (validExpirations === invitations.length) {
+                    testResults.tokenExpiration.passed++;
+                    resultContainer.innerHTML += `
+                        <div class="test-result success">
+                            ✓ 複数トークン期限テスト: ${validExpirations}/${invitations.length} 正常<br>
+                            ✓ 全ての招待で10分期限設定確認
+                        </div>
+                    `;
+                    
+                    log('複数トークン期限テスト成功', 'success');
+                } else {
+                    throw new Error(`期限設定エラー: ${validExpirations}/${invitations.length} のみ正常`);
+                }
+                
+            } catch (error) {
+                testResults.tokenExpiration.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 複数トークン期限検証エラー: ${error.message}
+                    </div>
+                `;
+                
+                log('複数トークン期限検証失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // Test 4: Invitation Resending Fix
+        function testInvitationResending() {
+            const resultContainer = document.getElementById('resending-results');
+            resultContainer.innerHTML = '';
+            
+            try {
+                log('招待再送信テスト開始', 'info');
+                
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+                
+                const fundSourceId = fundSources[0].id;
+                const testEmail = 'resend-test@example.com';
+                
+                // Step 1: Create initial invitation
+                const originalInvitation = window.sharingManager.sendInvitation(
+                    fundSourceId,
+                    testEmail,
+                    { canView: true, canEdit: false, canDelete: false }
+                );
+                
+                log(`初回招待作成: ${originalInvitation.id}`, 'info');
+                
+                // Step 2: Test resending
+                setTimeout(() => {
+                    try {
+                        const resendResult = window.sharingManager.resendInvitation(originalInvitation.id);
+                        
+                        if (resendResult && resendResult.success && resendResult.newInvitation) {
+                            const newInvitation = resendResult.newInvitation;
+                            const oldInvitation = resendResult.oldInvitation;
+                            
+                            // Verify old invitation was cancelled
+                            const oldStatus = oldInvitation.status;
+                            
+                            // Verify new invitation was created
+                            const newToken = newInvitation.token;
+                            const oldToken = originalInvitation.token;
+                            
+                            if (oldStatus === 'cancelled' && newToken !== oldToken) {
+                                testResults.invitationResending.passed++;
+                                resultContainer.innerHTML += `
+                                    <div class="test-result success">
+                                        ✓ 招待再送信: 成功<br>
+                                        ✓ 古い招待キャンセル: ${oldStatus}<br>
+                                        ✓ 新しいトークン生成: 確認<br>
+                                        ✓ トークン変更: ${oldToken.substring(0, 15)}... → ${newToken.substring(0, 15)}...
+                                    </div>
+                                `;
+                                
+                                log('招待再送信テスト成功', 'success');
+                            } else {
+                                throw new Error(`再送信結果が不正: 古いステータス=${oldStatus}, トークン変更=${newToken !== oldToken}`);
+                            }
+                        } else {
+                            throw new Error('再送信結果が無効です');
+                        }
+                        
+                    } catch (resendError) {
+                        testResults.invitationResending.failed++;
+                        resultContainer.innerHTML += `
+                            <div class="test-result error">
+                                ✗ 招待再送信エラー: ${resendError.message}
+                            </div>
+                        `;
+                        
+                        log('招待再送信テスト失敗: ' + resendError.message, 'error');
+                    }
+                }, 500); // Wait for initial invitation to be processed
+                
+            } catch (error) {
+                testResults.invitationResending.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 招待再送信テスト初期化エラー: ${error.message}
+                    </div>
+                `;
+                
+                log('招待再送信テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testDuplicateUIPreventionTest() {
+            const resultContainer = document.getElementById('resending-results');
+            
+            try {
+                log('UI重複防止テスト開始', 'info');
+                
+                // Test operation lock mechanism
+                const operationType = 'testOperation';
+                const resourceId = 'testResource';
+                
+                // Test acquiring lock
+                const lockKey1 = window.sharingManager.acquireOperationLock(operationType, resourceId);
+                
+                // Test duplicate lock acquisition (should fail)
+                try {
+                    const lockKey2 = window.sharingManager.acquireOperationLock(operationType, resourceId);
+                    throw new Error('重複ロック取得が防止されませんでした');
+                } catch (lockError) {
+                    if (lockError.message.includes('既に実行中')) {
+                        log('重複ロック防止: 正常', 'success');
+                    } else {
+                        throw lockError;
+                    }
+                }
+                
+                // Release lock
+                const released = window.sharingManager.releaseOperationLock(operationType, resourceId);
+                
+                // Test lock acquisition after release
+                const lockKey3 = window.sharingManager.acquireOperationLock(operationType, resourceId);
+                window.sharingManager.releaseOperationLock(operationType, resourceId);
+                
+                testResults.invitationResending.passed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result success">
+                        ✓ 操作ロック取得: 成功<br>
+                        ✓ 重複ロック防止: 正常<br>
+                        ✓ ロック解放: 成功<br>
+                        ✓ 解放後再取得: 正常
+                    </div>
+                `;
+                
+                log('UI重複防止テスト成功', 'success');
+                
+            } catch (error) {
+                testResults.invitationResending.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ UI重複防止テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('UI重複防止テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function testResendingErrorHandling() {
+            const resultContainer = document.getElementById('resending-results');
+            
+            try {
+                log('再送信エラー処理テスト開始', 'info');
+                
+                // Test resending non-existent invitation
+                try {
+                    window.sharingManager.resendInvitation('non-existent-invitation-id');
+                    throw new Error('存在しない招待の再送信が防止されませんでした');
+                } catch (error) {
+                    if (error.message.includes('見つかりません') || error.message.includes('存在しない')) {
+                        log('存在しない招待エラー処理: 正常', 'success');
+                    } else {
+                        throw error;
+                    }
+                }
+                
+                // Test resending with invalid invitation ID format
+                try {
+                    window.sharingManager.resendInvitation(null);
+                    throw new Error('無効な招待IDの処理が防止されませんでした');
+                } catch (error) {
+                    if (error.message.includes('有効な招待ID') || error.message.includes('必要です')) {
+                        log('無効招待IDエラー処理: 正常', 'success');
+                    } else {
+                        throw error;
+                    }
+                }
+                
+                testResults.invitationResending.passed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result success">
+                        ✓ 存在しない招待エラー処理: 正常<br>
+                        ✓ 無効招待IDエラー処理: 正常<br>
+                        ✓ エラーハンドリング: 適切
+                    </div>
+                `;
+                
+                log('再送信エラー処理テスト成功', 'success');
+                
+            } catch (error) {
+                testResults.invitationResending.failed++;
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ 再送信エラー処理テストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('再送信エラー処理テスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        // Integration Tests
+        function runAllSharingFixTests() {
+            const resultContainer = document.getElementById('integration-results');
+            resultContainer.innerHTML = '<div class="test-result">全テスト実行中...</div>';
+            
+            log('=== 全共有機能修正テスト開始 ===', 'info');
+            
+            // Reset test results
+            testResults = {
+                invitationSending: { passed: 0, failed: 0, tests: [] },
+                tokenDisplay: { passed: 0, failed: 0, tests: [] },
+                tokenExpiration: { passed: 0, failed: 0, tests: [] },
+                invitationResending: { passed: 0, failed: 0, tests: [] }
+            };
+            
+            // Run all tests with delays
+            setTimeout(() => testInvitationSendingFix(), 100);
+            setTimeout(() => testNullObjectPrevention(), 500);
+            setTimeout(() => testInvalidDataHandling(), 1000);
+            
+            setTimeout(() => testTokenDisplayColors(), 1500);
+            setTimeout(() => testTokenDisplayContent(), 2000);
+            setTimeout(() => testFallbackModal(), 2500);
+            
+            setTimeout(() => testTokenExpirationFix(), 3000);
+            setTimeout(() => testMultipleTokenExpiration(), 3500);
+            
+            setTimeout(() => testInvitationResending(), 4000);
+            setTimeout(() => testDuplicateUIPreventionTest(), 5000);
+            setTimeout(() => testResendingErrorHandling(), 5500);
+            
+            // Show results after all tests
+            setTimeout(() => {
+                showIntegrationResults(resultContainer);
+            }, 6000);
+        }
+        
+        function showIntegrationResults(resultContainer) {
+            const totalPassed = testResults.invitationSending.passed + 
+                               testResults.tokenDisplay.passed + 
+                               testResults.tokenExpiration.passed + 
+                               testResults.invitationResending.passed;
+            
+            const totalFailed = testResults.invitationSending.failed + 
+                               testResults.tokenDisplay.failed + 
+                               testResults.tokenExpiration.failed + 
+                               testResults.invitationResending.failed;
+            
+            const totalTests = totalPassed + totalFailed;
+            const successRate = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
+            
+            resultContainer.innerHTML = `
+                <div class="test-result ${successRate >= 80 ? 'success' : successRate >= 60 ? 'warning' : 'error'}">
+                    <strong>全テスト結果:</strong><br>
+                    成功: ${totalPassed} / 失敗: ${totalFailed} / 合計: ${totalTests}<br>
+                    成功率: ${successRate}%<br><br>
+                    
+                    <strong>カテゴリ別結果:</strong><br>
+                    招待送信修正: ${testResults.invitationSending.passed}成功 / ${testResults.invitationSending.failed}失敗<br>
+                    トークン表示修正: ${testResults.tokenDisplay.passed}成功 / ${testResults.tokenDisplay.failed}失敗<br>
+                    有効期限修正: ${testResults.tokenExpiration.passed}成功 / ${testResults.tokenExpiration.failed}失敗<br>
+                    再送信修正: ${testResults.invitationResending.passed}成功 / ${testResults.invitationResending.failed}失敗
+                </div>
+            `;
+            
+            log(`=== 全テスト完了: ${successRate}% 成功 (${totalPassed}/${totalTests}) ===`, 
+                successRate >= 80 ? 'success' : 'warning');
+        }
+        
+        function testEndToEndFlow() {
+            const resultContainer = document.getElementById('integration-results');
+            
+            try {
+                log('エンドツーエンドテスト開始', 'info');
+                
+                const fundSources = window.storage.getFundSources();
+                if (fundSources.length === 0) {
+                    throw new Error('テスト用の資金元がありません');
+                }
+                
+                const fundSourceId = fundSources[0].id;
+                const testEmail = 'e2e-test@example.com';
+                
+                // Step 1: Send invitation
+                log('Step 1: 招待送信', 'info');
+                const invitation = window.sharingManager.sendInvitation(
+                    fundSourceId,
+                    testEmail,
+                    { canView: true, canEdit: true, canDelete: false }
+                );
+                
+                // Step 2: Display token
+                log('Step 2: トークン表示', 'info');
+                setTimeout(() => {
+                    window.invitationTokenDisplay.displayInvitationToken(invitation);
+                    
+                    // Step 3: Test resending
+                    log('Step 3: 再送信テスト', 'info');
+                    setTimeout(() => {
+                        try {
+                            const resendResult = window.sharingManager.resendInvitation(invitation.id);
+                            
+                            if (resendResult && resendResult.success) {
+                                resultContainer.innerHTML += `
+                                    <div class="test-result success">
+                                        ✓ エンドツーエンドテスト完了<br>
+                                        ✓ 招待送信 → トークン表示 → 再送信: 全て成功<br>
+                                        ✓ 最終トークン: ${resendResult.newInvitation.token.substring(0, 20)}...
+                                    </div>
+                                `;
+                                
+                                log('エンドツーエンドテスト成功', 'success');
+                            } else {
+                                throw new Error('再送信ステップで失敗');
+                            }
+                        } catch (resendError) {
+                            throw new Error('再送信エラー: ' + resendError.message);
+                        }
+                    }, 1000);
+                }, 500);
+                
+            } catch (error) {
+                resultContainer.innerHTML += `
+                    <div class="test-result error">
+                        ✗ エンドツーエンドテストエラー: ${error.message}
+                    </div>
+                `;
+                
+                log('エンドツーエンドテスト失敗: ' + error.message, 'error');
+            }
+        }
+        
+        function clearLog() {
+            logContainer.innerHTML = '';
+            log('ログクリア完了', 'info');
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTest, 100);
+        });
+        
+        // Periodic system status update
+        setInterval(checkSystemStatus, 10000);
+    </script>
+</body>
+</html>

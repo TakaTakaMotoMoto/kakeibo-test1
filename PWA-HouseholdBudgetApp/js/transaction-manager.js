@@ -42,8 +42,19 @@ class TransactionManager {
     }
 
     addTransaction(transactionData) {
-        // Check permission to create transaction in the fund source
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const operationId = 'addTransaction';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '取引を追加中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Check permission to create transaction in the fund source
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
         if (currentUser && transactionData.fundSourceId) {
             const fundSources = this.storage.getFundSources();
             const fundSource = fundSources.find(fs => fs.id === transactionData.fundSourceId);
@@ -82,14 +93,38 @@ class TransactionManager {
             }
         }
 
-        // Direct storage operation
-        const transaction = this.storage.addTransaction(transactionData);
-        return transaction;
+            // Direct storage operation
+            const transaction = this.storage.addTransaction(transactionData);
+            
+            // Trigger UI update (requirement 6.1, 6.2, 6.3)
+            if (transaction && window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange('transaction', 'add', transaction);
+            }
+            
+            return transaction;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
+        }
     }
 
     updateTransaction(id, updates) {
-        // Check permission to edit transaction
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const operationId = 'updateTransaction';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '取引を更新中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Check permission to edit transaction
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
         const existingTransaction = this.storage.getTransactions().find(t => t.id === id);
         if (!existingTransaction) {
             throw new Error('Transaction not found');
@@ -116,13 +151,38 @@ class TransactionManager {
             updates.updatedBy = currentUser.id;
         }
 
-        // Direct storage operation
-        return this.storage.updateTransaction(id, updates);
+            // Direct storage operation
+            const result = this.storage.updateTransaction(id, updates);
+            
+            // Trigger UI update (requirement 6.1, 6.2, 6.3)
+            if (result && window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange('transaction', 'update', result);
+            }
+            
+            return result;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
+        }
     }
 
     deleteTransaction(id) {
-        // Check permission to delete transaction
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const operationId = 'deleteTransaction';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '取引を削除中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Check permission to delete transaction
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
         const transaction = this.storage.getTransactions().find(t => t.id === id);
         if (!transaction) {
             throw new Error('Transaction not found');
@@ -137,8 +197,22 @@ class TransactionManager {
             }
         }
 
-        // Direct storage operation
-        return this.storage.deleteTransaction(id);
+            // Direct storage operation
+            const result = this.storage.deleteTransaction(id);
+            
+            // Trigger UI update
+            if (result && window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange('transaction', 'delete', { id });
+            }
+            
+            return result;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
+        }
     }
 
     // Transaction validation

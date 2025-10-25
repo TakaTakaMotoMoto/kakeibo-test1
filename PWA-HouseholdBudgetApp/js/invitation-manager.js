@@ -127,6 +127,29 @@ class InvitationManager {
             }
 
             // Generate invitation
+            // Ensure all required data is properly initialized
+            if (!invitationData || typeof invitationData !== 'object') {
+                throw new Error('招待データが無効です');
+            }
+
+            if (!invitationData.fundSourceId) {
+                throw new Error('資金元IDが必要です');
+            }
+
+            if (!invitationData.inviterUserId) {
+                throw new Error('招待者IDが必要です');
+            }
+
+            if (!invitationData.inviteeEmail) {
+                throw new Error('招待先メールアドレスが必要です');
+            }
+
+            // Ensure storage is available and has required methods
+            if (!this.storage || typeof this.storage.generateId !== 'function') {
+                throw new Error('ストレージシステムが正しく初期化されていません');
+            }
+
+            const now = new Date();
             const invitation = {
                 id: this.storage.generateId(),
                 token: this.generateInvitationToken(
@@ -144,10 +167,10 @@ class InvitationManager {
                     canDelete: false
                 },
                 status: 'pending',
-                createdAt: new Date(),
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+                createdAt: now,
+                expiresAt: new Date(now.getTime() + 10 * 60 * 1000), // 10 minutes instead of 24 hours
                 acceptedAt: null,
-                updatedAt: new Date()
+                updatedAt: now
             };
 
             invitations.push(invitation);

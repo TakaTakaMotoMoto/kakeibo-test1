@@ -289,7 +289,7 @@ class UIManager {
 
             // Load view-specific data
             if (viewName === 'charts' && window.chartManager) {
-                window.chartManager.renderCategoryChart();
+                window.chartManager.renderCurrentChart();
             }
         } catch (error) {
             console.error('Error switching view:', error);
@@ -462,6 +462,10 @@ class UIManager {
                         return true;
                     }
                 },
+                'fs-type': {
+                    required: true,
+                    requiredMessage: '資金元タイプを選択してください'
+                },
                 'fs-balance': {
                     required: true,
                     requiredMessage: '初期残高を入力してください',
@@ -484,11 +488,17 @@ class UIManager {
 
             const formData = new FormData(e.target);
             const name = formData.get('name')?.trim();
+            const type = formData.get('type')?.trim();
             const balance = formData.get('balance');
 
             // Validation
             if (!name) {
                 UIUtils.showNotification('資金元名を入力してください', 'error');
+                return;
+            }
+
+            if (!type) {
+                UIUtils.showNotification('資金元タイプを選択してください', 'error');
                 return;
             }
 
@@ -499,8 +509,8 @@ class UIManager {
 
             const fundSourceData = {
                 name: name,
-                balance: parseFloat(balance),
-                type: formData.get('type') || 'bank'
+                type: type,
+                balance: parseFloat(balance)
             };
 
             if (this.editingFundSource) {
@@ -510,21 +520,34 @@ class UIManager {
                     return;
                 }
 
-                const fundSources = window.storage.getFundSources();
-                const index = fundSources.findIndex(fs => fs.id === this.editingFundSource);
-                if (index !== -1) {
-                    fundSources[index] = { ...fundSources[index], ...fundSourceData, updatedAt: new Date() };
-                    window.storage.setFundSources(fundSources);
+                // Use fund source manager for updates
+                if (window.fundSourceManager) {
+                    window.fundSourceManager.updateFundSource(this.editingFundSource, fundSourceData);
                     UIUtils.showNotification('資金元を更新しました', 'success');
+                } else {
+                    // Fallback to direct storage
+                    const fundSources = window.storage.getFundSources();
+                    const index = fundSources.findIndex(fs => fs.id === this.editingFundSource);
+                    if (index !== -1) {
+                        fundSources[index] = { ...fundSources[index], ...fundSourceData, updatedAt: new Date() };
+                        window.storage.setFundSources(fundSources);
+                        UIUtils.showNotification('資金元を更新しました', 'success');
+                    }
                 }
             } else {
-                window.storage.addFundSource(fundSourceData);
+                // Use fund source manager for additions (requirement 5.1, 5.2, 5.3)
+                if (window.fundSourceManager) {
+                    window.fundSourceManager.addFundSource(fundSourceData);
+                } else {
+                    // Fallback to direct storage
+                    window.storage.addFundSource(fundSourceData);
+                }
                 UIUtils.showNotification('資金元を追加しました', 'success');
             }
 
             this.modalManager.closeModal('fundsource-modal');
 
-            // UI updates are now handled automatically by the update system
+            // UI updates are now handled automatically by the update system (requirement 6.1, 6.2, 6.3)
             // No need to manually call render methods
         } catch (error) {
             console.error('Error handling fund source submit:', error);
@@ -645,11 +668,14 @@ class UIManager {
                 if (fundSource) {
                     title.textContent = '資金元を編集';
                     document.getElementById('fs-name').value = fundSource.name;
+                    document.getElementById('fs-type').value = fundSource.type || 'bank';
                     document.getElementById('fs-balance').value = fundSource.balance;
                 }
             } else {
                 title.textContent = '資金元を追加';
                 form.reset();
+                // Set default type to empty to force user selection
+                document.getElementById('fs-type').value = '';
             }
 
             this.modalManager.showModal('fundsource-modal');

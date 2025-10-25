@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有バグ修正テストデバッグ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .test-result.passed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .test-result.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .debug-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>共有バグ修正テストデバッグ</h1>
+        <p>共有機能のバグ修正が正しく実装されているかを詳細にテストします。</p>
+        
+        <div>
+            <button class="btn primary" onclick="runDebugTests()">デバッグテスト実行</button>
+            <button class="btn secondary" onclick="checkSystemStatus()">システム状態確認</button>
+            <button class="btn secondary" onclick="initializeSystem()">システム初期化</button>
+        </div>
+        
+        <div id="debug-output"></div>
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Include app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/sharing-error-handler.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/loading-manager.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Create a simple UIUtils replacement for testing
+        window.UIUtils = {
+            showNotification: function(message, type) {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            },
+            escapeHtml: function(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+
+        let testResults = [];
+
+        function logResult(testName, status, message, details = null) {
+            const result = {
+                name: testName,
+                status: status,
+                message: message,
+                details: details,
+                timestamp: new Date().toISOString()
+            };
+            
+            testResults.push(result);
+            displayResult(result);
+        }
+
+        function displayResult(result) {
+            const container = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${result.status}`;
+            
+            const statusIcon = result.status === 'passed' ? '✅' : 
+                              result.status === 'warning' ? '⚠️' : '❌';
+            
+            div.innerHTML = `
+                <div><strong>${statusIcon} ${result.name}</strong></div>
+                <div>${result.message}</div>
+                ${result.details ? `<div class="debug-info">${result.details}</div>` : ''}
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    ${new Date(result.timestamp).toLocaleString('ja-JP')}
+                </div>
+            `;
+            
+            container.appendChild(div);
+        }
+
+        function logDebug(message) {
+            const container = document.getElementById('debug-output');
+            const div = document.createElement('div');
+            div.className = 'debug-info';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(div);
+            console.log(message);
+        }
+
+        function checkSystemStatus() {
+            logDebug('システム状態を確認中...');
+            
+            const status = {
+                storage: !!window.storage,
+                authManager: !!window.authManager,
+                invitationManager: !!window.invitationManager,
+                sharingManager: !!window.sharingManager,
+                invitationTokenDisplay: !!window.invitationTokenDisplay,
+                loadingManager: !!window.loadingManager
+            };
+            
+            logDebug('システム状態: ' + JSON.stringify(status, null, 2));
+            
+            // Check class availability
+            const classes = {
+                StorageManager: typeof window.StorageManager,
+                AuthManager: typeof window.AuthManager,
+                InvitationManager: typeof window.InvitationManager,
+                SharingManager: typeof window.SharingManager,
+                InvitationTokenDisplayManager: typeof window.InvitationTokenDisplayManager,
+                LoadingManager: typeof window.LoadingManager
+            };
+            
+            logDebug('クラス可用性: ' + JSON.stringify(classes, null, 2));
+            
+            return { status, classes };
+        }
+
+        function initializeSystem() {
+            logDebug('システムを手動初期化中...');
+            
+            try {
+                if (!window.storage) {
+                    window.storage = new StorageManager();
+                    logDebug('StorageManager初期化完了');
+                }
+                
+                if (!window.authManager) {
+                    window.authManager = new AuthManager();
+                    logDebug('AuthManager初期化完了');
+                }
+                
+                if (!window.permissionManager) {
+                    window.permissionManager = new PermissionManager();
+                    logDebug('PermissionManager初期化完了');
+                }
+                
+                if (!window.invitationManager) {
+                    window.invitationManager = new InvitationManager(window.storage);
+                    logDebug('InvitationManager初期化完了');
+                }
+                
+                if (!window.sharingManager) {
+                    window.sharingManager = new SharingManager(window.storage, window.authManager);
+                    window.sharingManager.initialize(window.invitationManager, window.permissionManager);
+                    logDebug('SharingManager初期化完了');
+                }
+                
+                if (!window.invitationTokenDisplay) {
+                    window.invitationTokenDisplay = new InvitationTokenDisplayManager();
+                    logDebug('InvitationTokenDisplayManager初期化完了');
+                }
+                
+                if (!window.loadingManager) {
+                    window.loadingManager = new LoadingManager();
+                    logDebug('LoadingManager初期化完了');
+                }
+                
+                logDebug('システム初期化完了');
+                return true;
+                
+            } catch (error) {
+                logDebug('システム初期化エラー: ' + error.message);
+                return false;
+            }
+        }
+
+        async function runDebugTests() {
+            testResults = [];
+            document.getElementById('test-results').innerHTML = '';
+            
+            logDebug('デバッグテスト開始...');
+            
+            // Initialize system first
+            const initResult = initializeSystem();
+            if (!initResult) {
+                logResult('システム初期化', 'failed', 'システムの初期化に失敗しました');
+                return;
+            }
+            
+            // Test 1: SharingManager existence and sendInvitation method
+            if (window.sharingManager && typeof window.sharingManager.sendInvitation === 'function') {
+                logResult('SharingManager存在確認', 'passed', 'SharingManagerとsendInvitationメソッドが利用可能です');
+                
+                // Test null parameter validation
+                try {
+                    const result = window.sharingManager.sendInvitation(null, null);
+                    logResult('nullパラメータテスト', 'warning', 'nullパラメータでもエラーが発生しませんでした', 
+                        'Result: ' + JSON.stringify(result));
+                } catch (error) {
+                    if (error.message.includes('有効な') || error.message.includes('null') || error.message.includes('undefined')) {
+                        logResult('nullパラメータテスト', 'passed', '適切なバリデーションエラーが発生しました', 
+                            'Error: ' + error.message);
+                    } else {
+                        logResult('nullパラメータテスト', 'failed', '予期しないエラーが発生しました', 
+                            'Error: ' + error.message);
+                    }
+                }
+            } else {
+                logResult('SharingManager存在確認', 'failed', 'SharingManagerまたはsendInvitationメソッドが存在しません');
+            }
+            
+            // Test 2: InvitationTokenDisplayManager
+            if (window.InvitationTokenDisplayManager) {
+                logResult('InvitationTokenDisplayManagerクラス', 'passed', 'InvitationTokenDisplayManagerクラスが利用可能です');
+                
+                if (window.invitationTokenDisplay && typeof window.invitationTokenDisplay.generateInvitationTokenContent === 'function') {
+                    logResult('InvitationTokenDisplayManagerインスタンス', 'passed', 'InvitationTokenDisplayManagerインスタンスが利用可能です');
+                    
+                    // Test black text styling
+                    const mockInvitation = {
+                        id: 'test-invitation',
+                        token: 'test-token-123',
+                        fundSourceId: 'test-fund',
+                        inviteeEmail: 'test@example.com',
+                        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                    };
+                    
+                    try {
+                        const content = window.invitationTokenDisplay.generateInvitationTokenContent(mockInvitation, 'テスト資金元');
+                        
+                        if (content.includes('color: #000000') || content.includes('color: black')) {
+                            logResult('招待トークン表示色修正', 'passed', '招待トークン情報が黒文字で表示されるように修正されています');
+                        } else {
+                            logResult('招待トークン表示色修正', 'warning', '黒文字スタイルが確認できませんでした', 
+                                'Content preview: ' + content.substring(0, 500) + '...');
+                        }
+                    } catch (error) {
+                        logResult('招待トークン表示色修正', 'failed', 'コンテンツ生成でエラーが発生しました', 
+                            'Error: ' + error.message);
+                    }
+                } else {
+                    logResult('InvitationTokenDisplayManagerインスタンス', 'failed', 'InvitationTokenDisplayManagerインスタンスまたはメソッドが存在しません');
+                }
+            } else {
+                logResult('InvitationTokenDisplayManagerクラス', 'failed', 'InvitationTokenDisplayManagerクラスが存在しません');
+            }
+            
+            // Test 3: InvitationManager and expiration time
+            if (window.invitationManager && typeof window.invitationManager.createInvitation === 'function') {
+                logResult('InvitationManager存在確認', 'passed', 'InvitationManagerが利用可能です');
+                
+                // Test invitation creation and expiration time
+                const testInvitation = {
+                    fundSourceId: 'test-fund',
+                    inviterUserId: 'test-user',
+                    inviteeEmail: 'test@example.com',
+                    permissions: { canView: true }
+                };
+                
+                try {
+                    const invitation = window.invitationManager.createInvitation(testInvitation);
+                    if (invitation && invitation.expiresAt) {
+                        const now = new Date();
+                        const expiresAt = new Date(invitation.expiresAt);
+                        const diffMinutes = (expiresAt - now) / (1000 * 60);
+                        
+                        if (diffMinutes >= 9 && diffMinutes <= 11) { // 10分±1分の許容範囲
+                            logResult('有効期限計算修正', 'passed', `有効期限が正しく設定されています (${diffMinutes.toFixed(1)}分)`,
+                                'Invitation: ' + JSON.stringify(invitation, null, 2));
+                        } else {
+                            logResult('有効期限計算修正', 'warning', `有効期限が期待値と異なります (${diffMinutes.toFixed(1)}分)`,
+                                'Expected: 10分, Actual: ' + diffMinutes.toFixed(1) + '分');
+                        }
+                    } else {
+                        logResult('有効期限計算修正', 'failed', '招待の作成に失敗しました', 
+                            'Result: ' + JSON.stringify(invitation));
+                    }
+                } catch (error) {
+                    logResult('有効期限計算修正', 'failed', '招待作成エラーが発生しました', 
+                        'Error: ' + error.message);
+                }
+            } else {
+                logResult('InvitationManager存在確認', 'failed', 'InvitationManagerが存在しません');
+            }
+            
+            // Test 4: Resend invitation functionality
+            if (window.sharingManager && typeof window.sharingManager.resendInvitation === 'function') {
+                logResult('招待再送信機能', 'passed', 'resendInvitationメソッドが実装されています');
+            } else {
+                logResult('招待再送信機能', 'failed', 'resendInvitationメソッドが存在しません');
+            }
+            
+            logDebug('デバッグテスト完了');
+            
+            // Summary
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.status === 'passed').length;
+            const failed = testResults.filter(r => r.status === 'failed').length;
+            const warnings = testResults.filter(r => r.status === 'warning').length;
+            
+            logDebug(`テスト結果サマリー: 総数=${total}, 成功=${passed}, 失敗=${failed}, 警告=${warnings}`);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            logDebug('ページ読み込み完了');
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

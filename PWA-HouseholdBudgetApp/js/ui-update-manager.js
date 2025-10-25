@@ -235,19 +235,57 @@ class UIUpdateManager {
 
     // Update methods
     async updateTransactions() {
-        if (window.uiManager && window.uiManager.renderer) {
-            window.uiManager.renderer.renderTransactions();
-        }
+        const operationId = 'updateTransactions';
         
-        // Update calendar if visible
-        if (window.uiManager && window.uiManager.currentTransactionView === 'calendar' && window.calendarManager) {
-            window.calendarManager.renderCalendar();
+        try {
+            // Show loading for data-intensive operations
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '取引データを更新中...',
+                    showOverlay: false,
+                    targetElement: document.getElementById('transactions-view')
+                });
+            }
+            
+            if (window.uiManager && window.uiManager.renderer) {
+                window.uiManager.renderer.renderTransactions();
+            }
+            
+            // Update calendar if visible
+            if (window.uiManager && window.uiManager.currentTransactionView === 'calendar' && window.calendarManager) {
+                window.calendarManager.renderCalendar();
+            }
+            
+        } finally {
+            // Hide loading
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
         }
     }
 
     async updateFundSources() {
-        if (window.uiManager && window.uiManager.renderer) {
-            window.uiManager.renderer.renderFundSources();
+        const operationId = 'updateFundSources';
+        
+        try {
+            // Show loading for data-intensive operations
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '資金元データを更新中...',
+                    showOverlay: false,
+                    targetElement: document.getElementById('fundsources-view')
+                });
+            }
+            
+            if (window.uiManager && window.uiManager.renderer) {
+                window.uiManager.renderer.renderFundSources();
+            }
+            
+        } finally {
+            // Hide loading
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
         }
     }
 
@@ -259,13 +297,31 @@ class UIUpdateManager {
 
     async updateCharts() {
         if (window.chartManager && window.uiManager && window.uiManager.currentView === 'charts') {
-            window.chartManager.renderCategoryChart();
+            window.chartManager.renderCurrentChart();
         }
     }
 
     async updateSharing() {
-        if (window.uiSharing) {
-            window.uiSharing.updateSharingIndicators();
+        const operationId = 'updateSharing';
+        
+        try {
+            // Show loading for sharing operations
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '共有データを更新中...',
+                    showOverlay: false
+                });
+            }
+            
+            if (window.uiSharing) {
+                window.uiSharing.updateSharingIndicators();
+            }
+            
+        } finally {
+            // Hide loading
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
         }
     }
 

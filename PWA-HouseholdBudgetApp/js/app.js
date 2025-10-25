@@ -425,6 +425,12 @@ window.addEventListener('unhandledrejection', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     const initApp = () => {
         if (window.storage && window.authManager && window.dataManager && window.uiManager && window.dataIntegrityManager) {
+            // Initialize LoadingManager first
+            if (window.LoadingManager && !window.loadingManager) {
+                window.loadingManager = new LoadingManager();
+                console.log('LoadingManager initialized');
+            }
+            
             window.budgetApp = new BudgetApp();
         } else {
             setTimeout(initApp, 200);

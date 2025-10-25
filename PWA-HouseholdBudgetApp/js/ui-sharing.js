@@ -15,6 +15,10 @@ class SharingUIManager {
         // Enhanced UI responsiveness (Task 12.2)
         this.uiEnhancer = window.UIResponsivenessEnhancer ? new UIResponsivenessEnhancer() : null;
         this.loadingStates = new Map();
+        
+        // UI operation state management to prevent duplicate operations
+        this.uiOperationStates = new Map();
+        this.buttonStates = new Map();
 
         this.initializeEventListeners();
         this.initializeEnhancedUI();
@@ -23,6 +27,51 @@ class SharingUIManager {
         setTimeout(() => {
             this.invitationTokenDisplay.processUrlInvitation();
         }, 1000);
+    }
+
+    // UI state management methods
+    setButtonProcessing(buttonElement, isProcessing = true) {
+        if (!buttonElement) return;
+        
+        const buttonId = buttonElement.id || buttonElement.dataset.invitationId || 'unknown';
+        
+        if (isProcessing) {
+            this.buttonStates.set(buttonId, {
+                originalText: buttonElement.textContent,
+                originalDisabled: buttonElement.disabled
+            });
+            
+            buttonElement.disabled = true;
+            buttonElement.textContent = '処理中...';
+            buttonElement.classList.add('processing');
+        } else {
+            const originalState = this.buttonStates.get(buttonId);
+            if (originalState) {
+                buttonElement.textContent = originalState.originalText;
+                buttonElement.disabled = originalState.originalDisabled;
+                buttonElement.classList.remove('processing');
+                this.buttonStates.delete(buttonId);
+            }
+        }
+    }
+
+    isUIOperationInProgress(operationType, resourceId) {
+        const key = `${operationType}_${resourceId}`;
+        return this.uiOperationStates.has(key);
+    }
+
+    setUIOperationInProgress(operationType, resourceId, metadata = {}) {
+        const key = `${operationType}_${resourceId}`;
+        this.uiOperationStates.set(key, {
+            startTime: new Date(),
+            metadata: metadata
+        });
+        return key;
+    }
+
+    clearUIOperationInProgress(operationType, resourceId) {
+        const key = `${operationType}_${resourceId}`;
+        return this.uiOperationStates.delete(key);
     }
 
     // Initialize enhanced UI features (Task 12.2)
@@ -356,9 +405,23 @@ class SharingUIManager {
     }
 
     async handleSendInvitation() {
+        const sendButton = document.getElementById('send-invitation-btn');
+        let buttonLoadingId = null;
+        
         try {
+            // Show button loading state
+            if (window.loadingManager && sendButton) {
+                buttonLoadingId = window.loadingManager.showButtonLoading(sendButton);
+            }
+            
+            // Validate DOM elements exist to prevent null object errors
             const emailInput = document.getElementById('invite-email');
-            const email = emailInput.value.trim();
+            if (!emailInput) {
+                UIUtils.showNotification('メール入力フィールドが見つかりません', 'error');
+                return;
+            }
+
+            const email = emailInput.value ? emailInput.value.trim() : '';
 
             if (!email) {
                 UIUtils.showNotification('メールアドレスを入力してください', 'warning');
@@ -370,11 +433,20 @@ class SharingUIManager {
                 return;
             }
 
-            // Get permissions
+            // Validate current fund source ID
+            if (!this.currentFundSourceId) {
+                UIUtils.showNotification('資金元が選択されていません', 'error');
+                return;
+            }
+
+            // Get permissions with null safety checks
+            const permEditElement = document.getElementById('perm-edit');
+            const permDeleteElement = document.getElementById('perm-delete');
+            
             const permissions = {
                 canView: true, // Always true
-                canEdit: document.getElementById('perm-edit').checked,
-                canDelete: document.getElementById('perm-delete').checked
+                canEdit: permEditElement ? permEditElement.checked : true,
+                canDelete: permDeleteElement ? permDeleteElement.checked : false
             };
 
             console.log('Sending invitation...', { 
@@ -412,6 +484,11 @@ class SharingUIManager {
         } catch (error) {
             console.error('Error sending invitation:', error);
             UIUtils.showNotification(error.message || '招待の送信に失敗しました', 'error');
+        } finally {
+            // Always hide button loading state
+            if (window.loadingManager && buttonLoadingId) {
+                window.loadingManager.hideButtonLoading();
+            }
         }
     }
 
@@ -525,21 +602,58 @@ class SharingUIManager {
         }
     }
 
-    handleResendInvitation(invitationId) {
+    async handleResendInvitation(invitationId) {
+        // Check if operation is already in progress
+        if (this.isUIOperationInProgress('resendInvitation', invitationId)) {
+            UIUtils.showNotification('招待の再送信は既に実行中です', 'warning');
+            return;
+        }
+
+        const buttonElement = document.querySelector(`[data-invitation-id="${invitationId}"].resend-invitation-btn`);
+        let buttonLoadingId = null;
+        
         try {
-            if (confirm('この招待を再送信しますか？')) {
-                const result = this.sharingManager.resendInvitation(invitationId);
+            if (!confirm('この招待を再送信しますか？')) {
+                return;
+            }
+
+            // Set operation in progress
+            this.setUIOperationInProgress('resendInvitation', invitationId);
+            
+            // Update button state with LoadingManager
+            if (window.loadingManager && buttonElement) {
+                buttonLoadingId = window.loadingManager.showButtonLoading(buttonElement);
+            } else {
+                // Fallback to existing method
+                this.setButtonProcessing(buttonElement, true);
+            }
+
+            const result = this.sharingManager.resendInvitation(invitationId);
+            
+            if (result && result.success) {
                 UIUtils.showNotification('招待を再送信しました', 'success');
 
-                // Refresh modal
+                // Refresh modal after a short delay
                 setTimeout(() => {
                     this.openFundSourceSharingModal(this.currentFundSourceId);
                 }, 1000);
+            } else {
+                throw new Error('招待の再送信に失敗しました');
             }
 
         } catch (error) {
             console.error('Error resending invitation:', error);
             UIUtils.showNotification(error.message || '招待の再送信に失敗しました', 'error');
+        } finally {
+            // Always clear operation state and restore button
+            this.clearUIOperationInProgress('resendInvitation', invitationId);
+            
+            if (window.loadingManager && buttonLoadingId) {
+                window.loadingManager.hideButtonLoading();
+            } else {
+                // Fallback to existing method
+                this.setButtonProcessing(buttonElement, false);
+            }
         }
     }
 

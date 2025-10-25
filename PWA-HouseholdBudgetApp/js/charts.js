@@ -3,6 +3,7 @@ class ChartManager {
     constructor() {
         this.currentChart = null;
         this.currentChartType = 'category';
+        this.currentDataType = 'expense'; // 'expense' or 'income'
         this.initializeEventListeners();
     }
 
@@ -13,6 +14,14 @@ class ChartManager {
                 this.switchChart(chartType);
             });
         });
+
+        // Add event listeners for income/expense tabs
+        document.querySelectorAll('.data-type-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const dataType = e.currentTarget.dataset.dataType;
+                this.switchDataType(dataType);
+            });
+        });
     }
 
     switchChart(chartType) {
@@ -21,20 +30,39 @@ class ChartManager {
         });
 
         this.currentChartType = chartType;
+        this.renderCurrentChart();
+    }
 
-        if (chartType === 'category') {
+    switchDataType(dataType) {
+        document.querySelectorAll('.data-type-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.dataType === dataType);
+        });
+
+        this.currentDataType = dataType;
+        this.renderCurrentChart();
+    }
+
+    renderCurrentChart() {
+        if (this.currentChartType === 'category') {
             this.renderCategoryChart();
-        } else if (chartType === 'monthly') {
+        } else if (this.currentChartType === 'monthly') {
             this.renderMonthlyChart();
         }
     }
 
     renderCategoryChart() {
-        const transactions = window.dataManager.getTransactions();
-        const categoryTotals = window.dataManager.getCategoryTotals(transactions);
+        const allTransactions = window.dataManager.getTransactions();
+        
+        // Filter transactions based on current data type (income or expense)
+        const filteredTransactions = this.currentDataType === 'income' 
+            ? allTransactions.filter(t => t.amount > 0)
+            : allTransactions.filter(t => t.amount < 0);
+
+        const categoryTotals = window.dataManager.getCategoryTotals(filteredTransactions);
 
         if (categoryTotals.length === 0) {
-            this.renderEmptyChart('カテゴリ別の支出データがありません');
+            const dataTypeLabel = this.currentDataType === 'income' ? '収入' : '支出';
+            this.renderEmptyChart(`カテゴリ別の${dataTypeLabel}データがありません`);
             return;
         }
 
@@ -72,20 +100,25 @@ class ChartManager {
     }
 
     renderMonthlyChart() {
-        const monthlyData = window.dataManager.getMonthlyTotals(6);
+        const monthlyData = this.getMonthlyTotalsByType(6);
 
         if (monthlyData.every(item => item.total === 0)) {
-            this.renderEmptyChart('月次の支出データがありません');
+            const dataTypeLabel = this.currentDataType === 'income' ? '収入' : '支出';
+            this.renderEmptyChart(`月次の${dataTypeLabel}データがありません`);
             return;
         }
+
+        const dataTypeLabel = this.currentDataType === 'income' ? '収入' : '支出';
+        const color = this.currentDataType === 'income' ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)';
+        const backgroundColor = this.currentDataType === 'income' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
 
         const data = {
             labels: monthlyData.map(item => item.month),
             datasets: [{
-                label: '支出',
+                label: dataTypeLabel,
                 data: monthlyData.map(item => item.total),
-                backgroundColor: 'rgba(0, 122, 255, 0.2)',
-                borderColor: 'rgba(0, 122, 255, 1)',
+                backgroundColor: backgroundColor,
+                borderColor: color,
                 borderWidth: 2,
                 fill: true,
                 tension: 0.4
@@ -102,7 +135,7 @@ class ChartManager {
                 tooltip: {
                     callbacks: {
                         label: (context) => {
-                            return `支出: ${window.dataManager.formatCurrency(context.raw)}`;
+                            return `${dataTypeLabel}: ${window.dataManager.formatCurrency(context.raw)}`;
                         }
                     }
                 }
@@ -197,6 +230,31 @@ class ChartManager {
         legendContainer.innerHTML = html;
     }
 
+    // Get monthly totals filtered by income/expense type
+    getMonthlyTotalsByType(months = 6) {
+        const now = new Date();
+        const result = [];
+
+        for (let i = months - 1; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const transactions = window.dataManager.getTransactionsByMonth(date.getFullYear(), date.getMonth());
+            
+            // Filter by current data type
+            const filteredTransactions = this.currentDataType === 'income' 
+                ? transactions.filter(t => t.amount > 0)
+                : transactions.filter(t => t.amount < 0);
+
+            const total = filteredTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            result.push({
+                month: `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`,
+                total: total
+            });
+        }
+
+        return result;
+    }
+
     // Utility method to generate colors
     generateColors(count) {
         const colors = [
@@ -217,6 +275,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const initCharts = () => {
         if (window.dataManager && typeof Chart !== 'undefined') {
             window.chartManager = new ChartManager();
+            
+            // Set initial active state for data type buttons
+            const expenseBtn = document.querySelector('.data-type-btn[data-data-type="expense"]');
+            if (expenseBtn) {
+                expenseBtn.classList.add('active');
+            }
         } else {
             setTimeout(initCharts, 100);
         }

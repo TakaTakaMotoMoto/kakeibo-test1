@@ -6,6 +6,10 @@ class SharingManager {
         this.invitationManager = null;
         this.permissionManager = null;
         
+        // Processing state management to prevent duplicate operations
+        this.processingStates = new Map();
+        this.operationLocks = new Map();
+        
         // Initialize optional performance optimizations
         try {
             this.cache = window.PerformanceCache ? new PerformanceCache() : null;
@@ -42,6 +46,55 @@ class SharingManager {
         
         // Initialize performance optimizations
         this.initializePerformanceOptimizations();
+    }
+
+    // Processing state management methods
+    isOperationInProgress(operationType, resourceId) {
+        const key = `${operationType}_${resourceId}`;
+        return this.processingStates.has(key);
+    }
+
+    setOperationInProgress(operationType, resourceId, metadata = {}) {
+        const key = `${operationType}_${resourceId}`;
+        this.processingStates.set(key, {
+            startTime: new Date(),
+            metadata: metadata
+        });
+        return key;
+    }
+
+    clearOperationInProgress(operationType, resourceId) {
+        const key = `${operationType}_${resourceId}`;
+        return this.processingStates.delete(key);
+    }
+
+    acquireOperationLock(operationType, resourceId, timeout = 30000) {
+        const key = `${operationType}_${resourceId}`;
+        
+        if (this.operationLocks.has(key)) {
+            const lock = this.operationLocks.get(key);
+            const now = Date.now();
+            
+            // Check if lock has expired
+            if (now - lock.timestamp > timeout) {
+                console.warn(`Operation lock expired for ${key}, releasing...`);
+                this.operationLocks.delete(key);
+            } else {
+                throw new Error('この操作は既に実行中です。しばらくお待ちください。');
+            }
+        }
+
+        this.operationLocks.set(key, {
+            timestamp: Date.now(),
+            timeout: timeout
+        });
+        
+        return key;
+    }
+
+    releaseOperationLock(operationType, resourceId) {
+        const key = `${operationType}_${resourceId}`;
+        return this.operationLocks.delete(key);
     }
 
     // Initialize performance optimizations
@@ -285,10 +338,47 @@ class SharingManager {
 
     // 招待管理 (Enhanced with detailed validation)
     sendInvitation(fundSourceId, userEmail, permissions = null) {
+        const operationId = `sendInvitation_${fundSourceId}_${Date.now()}`;
+        
         try {
+            // Show loading indicator for server communication
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading('sendInvitation', {
+                    message: '招待を送信中...',
+                    showOverlay: true
+                });
+            }
+            
+            // Validate input parameters to prevent null object errors
+            if (!fundSourceId || typeof fundSourceId !== 'string') {
+                throw new Error('有効な資金元IDが必要です');
+            }
+
+            if (!userEmail || typeof userEmail !== 'string') {
+                throw new Error('有効なメールアドレスが必要です');
+            }
+
+            // Ensure required managers are initialized
+            if (!this.authManager || typeof this.authManager.getCurrentUser !== 'function') {
+                throw new Error('認証マネージャーが正しく初期化されていません');
+            }
+
+            if (!this.invitationManager || typeof this.invitationManager.createInvitation !== 'function') {
+                throw new Error('招待マネージャーが正しく初期化されていません');
+            }
+
+            if (!this.storage || typeof this.storage.getFundSources !== 'function') {
+                throw new Error('ストレージシステムが正しく初期化されていません');
+            }
+
             const currentUser = this.authManager.getCurrentUser();
             if (!currentUser) {
                 throw new Error('ログインが必要です');
+            }
+
+            // Ensure currentUser has required properties
+            if (!currentUser.id || !currentUser.email) {
+                throw new Error('ユーザー情報が不完全です');
             }
 
             // Enhanced email validation
@@ -348,9 +438,19 @@ class SharingManager {
             // Log invitation sending
             console.log(`Invitation sent to ${userEmail} for fund source ${fundSource.name}`);
 
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('sendInvitation');
+            }
+
             return invitation;
 
         } catch (error) {
+            // Hide loading indicator on error
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('sendInvitation');
+            }
+            
             const errorResult = this.errorHandler.handleError(error, {
                 operation: 'sendInvitation',
                 fundSourceId: fundSourceId,
@@ -405,10 +505,33 @@ class SharingManager {
 
     // Resend invitation (creates new invitation and cancels old one)
     resendInvitation(invitationId) {
+        let lockKey = null;
+        
         try {
+            // Show loading indicator for server communication
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading('resendInvitation', {
+                    message: '招待を再送信中...',
+                    showOverlay: true
+                });
+            }
+            
+            // Validate input parameters
+            if (!invitationId || typeof invitationId !== 'string') {
+                throw new Error('有効な招待IDが必要です');
+            }
+
+            // Acquire operation lock to prevent duplicate execution
+            lockKey = this.acquireOperationLock('resendInvitation', invitationId);
+
             const currentUser = this.authManager.getCurrentUser();
             if (!currentUser) {
                 throw new Error('ログインが必要です');
+            }
+
+            // Ensure required managers are initialized
+            if (!this.invitationManager || typeof this.invitationManager.getInvitationById !== 'function') {
+                throw new Error('招待マネージャーが正しく初期化されていません');
             }
 
             const oldInvitation = this.invitationManager.getInvitationById(invitationId);
@@ -421,26 +544,105 @@ class SharingManager {
                 throw new Error('この招待を再送信する権限がありません');
             }
 
-            // Cancel old invitation
-            this.invitationManager.updateInvitationStatus(invitationId, 'cancelled');
+            // Validate invitation status - only allow resending pending invitations
+            if (oldInvitation.status !== 'pending') {
+                throw new Error('この招待は再送信できません（ステータス: ' + oldInvitation.status + '）');
+            }
 
-            // Create new invitation
-            const newInvitation = this.sendInvitation(
-                oldInvitation.fundSourceId,
-                oldInvitation.inviteeEmail,
-                oldInvitation.permissions
-            );
+            // Check if invitation has expired
+            const now = new Date();
+            const expiresAt = new Date(oldInvitation.expiresAt);
+            if (now > expiresAt) {
+                // Mark as expired first
+                this.invitationManager.updateInvitationStatus(invitationId, 'expired');
+                throw new Error('期限切れの招待は再送信できません');
+            }
 
-            console.log(`Invitation resent to ${oldInvitation.inviteeEmail}`);
+            // Step 1: First invalidate the old token to prevent race conditions
+            let cancelledInvitation;
+            try {
+                cancelledInvitation = this.invitationManager.updateInvitationStatus(invitationId, 'cancelled');
+                console.log(`Old invitation ${invitationId} cancelled for resend`);
+            } catch (cancelError) {
+                console.error('Error cancelling old invitation:', cancelError);
+                throw new Error('古い招待の無効化に失敗しました: ' + cancelError.message);
+            }
+
+            // Step 2: Create new invitation with enhanced error handling
+            let newInvitation;
+            try {
+                // Ensure all required data is available for new invitation
+                if (!oldInvitation.fundSourceId) {
+                    throw new Error('資金元IDが見つかりません');
+                }
+                if (!oldInvitation.inviteeEmail) {
+                    throw new Error('招待先メールアドレスが見つかりません');
+                }
+
+                newInvitation = this.sendInvitation(
+                    oldInvitation.fundSourceId,
+                    oldInvitation.inviteeEmail,
+                    oldInvitation.permissions
+                );
+
+                if (!newInvitation || !newInvitation.token) {
+                    throw new Error('新しい招待トークンの生成に失敗しました');
+                }
+
+                console.log(`New invitation ${newInvitation.id} created for resend to ${oldInvitation.inviteeEmail}`);
+
+            } catch (createError) {
+                console.error('Error creating new invitation:', createError);
+                
+                // Attempt to restore old invitation if new creation failed
+                try {
+                    this.invitationManager.updateInvitationStatus(invitationId, 'pending');
+                    console.log('Restored old invitation status due to new invitation creation failure');
+                } catch (restoreError) {
+                    console.error('Failed to restore old invitation:', restoreError);
+                }
+                
+                throw new Error('新しい招待の作成に失敗しました: ' + createError.message);
+            }
+
+            console.log(`Invitation successfully resent to ${oldInvitation.inviteeEmail}`);
+
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('resendInvitation');
+            }
 
             return {
-                oldInvitation: oldInvitation,
-                newInvitation: newInvitation
+                oldInvitation: cancelledInvitation,
+                newInvitation: newInvitation,
+                success: true
             };
 
         } catch (error) {
+            // Hide loading indicator on error
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('resendInvitation');
+            }
+            
+            const errorResult = this.errorHandler ? this.errorHandler.handleError(error, {
+                operation: 'resendInvitation',
+                invitationId: invitationId,
+                userId: this.authManager.getCurrentUser()?.id
+            }) : null;
+            
             console.error('Error resending invitation:', error);
-            throw error;
+            
+            // Re-throw if not recoverable
+            if (!errorResult || !errorResult.recovery.successful) {
+                throw error;
+            }
+            
+            return errorResult;
+        } finally {
+            // Always release the operation lock
+            if (lockKey) {
+                this.releaseOperationLock('resendInvitation', invitationId);
+            }
         }
     }
 
@@ -617,6 +819,14 @@ class SharingManager {
     // 受諾管理
     acceptInvitation(invitationToken) {
         try {
+            // Show loading indicator for server communication
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading('acceptInvitation', {
+                    message: '招待を受諾中...',
+                    showOverlay: true
+                });
+            }
+            
             const currentUser = this.authManager.getCurrentUser();
             if (!currentUser) {
                 throw new Error('招待を受諾するにはログインが必要です');
@@ -683,6 +893,11 @@ class SharingManager {
 
             console.log(`Invitation accepted by ${currentUser.email} for fund source ${fundSource.name}`);
 
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('acceptInvitation');
+            }
+
             return {
                 fundSource: fundSource,
                 invitation: acceptedInvitation,
@@ -690,6 +905,11 @@ class SharingManager {
             };
 
         } catch (error) {
+            // Hide loading indicator on error
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading('acceptInvitation');
+            }
+            
             const errorResult = this.errorHandler.handleError(error, {
                 operation: 'acceptInvitation',
                 invitationToken: invitationToken,

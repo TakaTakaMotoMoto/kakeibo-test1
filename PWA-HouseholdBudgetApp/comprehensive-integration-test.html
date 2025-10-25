@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>包括的統合テスト - アプリ改善機能</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .test-result.passed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .test-result.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn.primary { background: #007bff; color: white; }
+        .btn.success { background: #28a745; color: white; }
+        .btn.danger { background: #dc3545; color: white; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007AFF, #34C759);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>    <div cla
+ss="test-container">
+        <h1>包括的統合テスト - アプリ改善機能</h1>
+        <p>このテストは、実装されたすべてのアプリ改善機能を包括的に検証します。</p>
+        
+        <div class="test-section">
+            <h2>テスト制御</h2>
+            <button class="btn primary" onclick="runComprehensiveTest()">包括的テスト実行</button>
+            <button class="btn success" onclick="runQuickTest()">クイックテスト</button>
+            <button class="btn danger" onclick="clearAllResults()">結果クリア</button>
+            
+            <div class="progress-bar" id="test-progress" style="display: none;">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div id="progress-text" style="text-align: center; margin: 10px 0; display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>テスト結果サマリー</h2>
+            <div id="test-summary" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div style="font-size: 2em; font-weight: bold;" id="total-tests">0</div>
+                        <div>総テスト数</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div style="font-size: 2em; font-weight: bold; color: #28a745;" id="passed-tests">0</div>
+                        <div>成功</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div style="font-size: 2em; font-weight: bold; color: #dc3545;" id="failed-tests">0</div>
+                        <div>失敗</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div style="font-size: 2em; font-weight: bold; color: #ffc107;" id="warning-tests">0</div>
+                        <div>警告</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <div style="font-size: 2em; font-weight: bold;" id="success-rate">0%</div>
+                        <div>成功率</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>1. 共有機能バグ修正テスト</h2>
+            <div id="sharing-bug-fix-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. 招待再送信機能テスト</h2>
+            <div id="invitation-resend-results"></div>
+        </div>   
+     <div class="test-section">
+            <h2>3. 資金元タイプ選択機能テスト</h2>
+            <div id="fund-source-type-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. ローディング表示機能テスト</h2>
+            <div id="loading-display-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. グラフ表示改善テスト</h2>
+            <div id="chart-improvement-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. UI更新同期テスト</h2>
+            <div id="ui-sync-results"></div>
+        </div>
+    </div>
+
+    <!-- Include app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-core.js"></script>
+    <script src="js/loading-manager.js"></script>
+    <script src="js/fund-source-type-selector.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/ui-update-manager.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Test state management
+        let testResults = [];
+        let isTestRunning = false;
+        
+        // Test result logging
+        function logTestResult(category, testName, status, message, details = []) {
+            const result = {
+                category,
+                name: testName,
+                status, // 'passed', 'failed', 'warning'
+                message,
+                details,
+                timestamp: new Date().toISOString()
+            };
+            
+            testResults.push(result);
+            displayTestResult(category, result);
+            updateTestSummary();
+        }
+        
+        function displayTestResult(category, result) {
+            const container = document.getElementById(`${category}-results`);
+            if (!container) return;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${result.status}`;
+            
+            const statusIcon = result.status === 'passed' ? '✅' : 
+                              result.status === 'warning' ? '⚠️' : '❌';
+            
+            resultDiv.innerHTML = `
+                <div style="font-weight: bold;">${statusIcon} ${result.name}</div>
+                <div style="margin: 5px 0;">${result.message}</div>
+                ${result.details.length > 0 ? `
+                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-family: monospace; font-size: 0.9em;">
+                        ${result.details.map(detail => `• ${detail}`).join('<br>')}
+                    </div>
+                ` : ''}
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    ${new Date(result.timestamp).toLocaleString('ja-JP')}
+                </div>
+            `;
+            
+            container.appendChild(resultDiv);
+        }     
+   
+        function updateTestSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.status === 'passed').length;
+            const failed = testResults.filter(r => r.status === 'failed').length;
+            const warnings = testResults.filter(r => r.status === 'warning').length;
+            const successRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            document.getElementById('total-tests').textContent = total;
+            document.getElementById('passed-tests').textContent = passed;
+            document.getElementById('failed-tests').textContent = failed;
+            document.getElementById('warning-tests').textContent = warnings;
+            document.getElementById('success-rate').textContent = successRate + '%';
+            
+            if (total > 0) {
+                document.getElementById('test-summary').style.display = 'block';
+            }
+        }
+        
+        function updateProgress(percentage, text) {
+            const progressBar = document.getElementById('test-progress');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            if (percentage > 0) {
+                progressBar.style.display = 'block';
+                progressText.style.display = 'block';
+            }
+            
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = text;
+            
+            if (percentage >= 100) {
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressText.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        function clearAllResults() {
+            testResults = [];
+            document.querySelectorAll('[id$="-results"]').forEach(container => {
+                container.innerHTML = '';
+            });
+            document.getElementById('test-summary').style.display = 'none';
+            updateProgress(0, '');
+        }
+
+        // Main test execution functions
+        async function runComprehensiveTest() {
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            clearAllResults();
+            updateProgress(0, 'テスト開始...');
+            
+            const testSuites = [
+                { name: 'sharing-bug-fix', func: testSharingBugFixes, weight: 20 },
+                { name: 'invitation-resend', func: testInvitationResending, weight: 15 },
+                { name: 'fund-source-type', func: testFundSourceTypeSelection, weight: 15 },
+                { name: 'loading-display', func: testLoadingDisplay, weight: 15 },
+                { name: 'chart-improvement', func: testChartImprovements, weight: 20 },
+                { name: 'ui-sync', func: testUISync, weight: 15 }
+            ];
+            
+            let completedWeight = 0;
+            const totalWeight = testSuites.reduce((sum, suite) => sum + suite.weight, 0);
+            
+            for (const suite of testSuites) {
+                updateProgress((completedWeight / totalWeight) * 100, `実行中: ${suite.name}テスト`);
+                
+                try {
+                    await suite.func();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    logTestResult(suite.name, 'テスト実行', 'failed', `エラー: ${error.message}`);
+                }
+                
+                completedWeight += suite.weight;
+            }
+            
+            updateProgress(100, 'すべてのテスト完了');
+            isTestRunning = false;
+        }        
+
+        async function runQuickTest() {
+            if (isTestRunning) return;
+            
+            isTestRunning = true;
+            clearAllResults();
+            updateProgress(0, 'クイックテスト開始...');
+            
+            // Run essential tests only
+            await testSharingBugFixes();
+            updateProgress(50, 'ローディング機能テスト中...');
+            await testLoadingDisplay();
+            
+            updateProgress(100, 'クイックテスト完了');
+            isTestRunning = false;
+        }
+
+        // Test Suite 1: 共有機能バグ修正テスト (要件 1.1, 1.2, 1.3)
+        async function testSharingBugFixes() {
+            const category = 'sharing-bug-fix';
+            
+            // Test 1.1: 招待送信時のnullエラー修正確認
+            try {
+                if (window.sharingManager && typeof window.sharingManager.sendInvitation === 'function') {
+                    logTestResult(category, '招待送信メソッド存在確認', 'passed', 'sendInvitationメソッドが実装されています');
+                    
+                    // Test null parameter handling
+                    try {
+                        const result = window.sharingManager.sendInvitation(null, null);
+                        logTestResult(category, 'nullエラー防止', 'warning', 'nullパラメータでもエラーが発生しませんでした');
+                    } catch (error) {
+                        if (error.message.includes('null') || error.message.includes('undefined') || error.message.includes('有効な')) {
+                            logTestResult(category, 'nullエラー防止', 'passed', '適切なバリデーションエラーが発生しました', [error.message]);
+                        } else {
+                            logTestResult(category, 'nullエラー防止', 'failed', `予期しないエラー: ${error.message}`);
+                        }
+                    }
+                } else {
+                    logTestResult(category, '招待送信メソッド存在確認', 'failed', 'SharingManagerまたはsendInvitationメソッドが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, '招待送信テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 1.2: 招待トークン表示色修正確認
+            try {
+                if (window.invitationTokenDisplay && typeof window.invitationTokenDisplay.generateInvitationTokenContent === 'function') {
+                    logTestResult(category, '招待トークン表示機能', 'passed', 'InvitationTokenDisplayが実装されています');
+                    
+                    const mockInvitation = {
+                        id: 'test-invitation',
+                        token: 'test-token-123',
+                        fundSourceId: 'test-fund',
+                        inviteeEmail: 'test@example.com',
+                        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                    };
+                    
+                    const content = window.invitationTokenDisplay.generateInvitationTokenContent(mockInvitation, 'テスト資金元');
+                    
+                    if (content.includes('color: #000000') || content.includes('color: black')) {
+                        logTestResult(category, '招待トークン表示色修正', 'passed', '招待トークン情報が黒文字で表示されるように修正されています');
+                    } else {
+                        logTestResult(category, '招待トークン表示色修正', 'warning', '黒文字スタイルが確認できませんでした');
+                    }
+                } else {
+                    logTestResult(category, '招待トークン表示機能', 'failed', 'InvitationTokenDisplayが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, '招待トークン表示テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 1.3: 招待トークン有効期限修正確認
+            try {
+                if (window.invitationManager && typeof window.invitationManager.createInvitation === 'function') {
+                    logTestResult(category, '招待マネージャー存在確認', 'passed', 'InvitationManagerが実装されています');
+                    
+                    const testInvitation = {
+                        fundSourceId: 'test-fund',
+                        inviteeEmail: 'test@example.com',
+                        permissions: { canView: true }
+                    };
+                    
+                    const invitation = window.invitationManager.createInvitation(testInvitation);
+                    if (invitation && invitation.expiresAt) {
+                        const now = new Date();
+                        const expiresAt = new Date(invitation.expiresAt);
+                        const diffMinutes = (expiresAt - now) / (1000 * 60);
+                        
+                        if (diffMinutes >= 9 && diffMinutes <= 11) {
+                            logTestResult(category, '有効期限計算修正', 'passed', `有効期限が正しく設定されています (${diffMinutes.toFixed(1)}分)`, [`作成時刻: ${invitation.createdAt}`, `有効期限: ${invitation.expiresAt}`]);
+                        } else {
+                            logTestResult(category, '有効期限計算修正', 'warning', `有効期限が期待値と異なります (${diffMinutes.toFixed(1)}分)`);
+                        }
+                    } else {
+                        logTestResult(category, '有効期限計算修正', 'failed', '招待の作成に失敗しました');
+                    }
+                } else {
+                    logTestResult(category, '招待マネージャー存在確認', 'failed', 'InvitationManagerが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, '有効期限テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }    
+    
+        // Test Suite 2: 招待再送信機能テスト (要件 2.1, 2.2, 2.3)
+        async function testInvitationResending() {
+            const category = 'invitation-resend';
+            
+            // Test 2.1: 招待再送信メソッド存在確認
+            try {
+                if (window.sharingManager && typeof window.sharingManager.resendInvitation === 'function') {
+                    logTestResult(category, '再送信メソッド存在確認', 'passed', 'resendInvitationメソッドが実装されています');
+                } else {
+                    logTestResult(category, '再送信メソッド存在確認', 'failed', 'resendInvitationメソッドが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, '再送信メソッドテスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 2.2: UI重複表示防止機能確認
+            try {
+                if (window.invitationTokenDisplay && window.invitationTokenDisplay.processingOperations) {
+                    logTestResult(category, 'UI重複表示防止', 'passed', '処理状態管理機能が実装されています');
+                } else if (window.invitationTokenDisplay && typeof window.invitationTokenDisplay.resendInvitation === 'function') {
+                    logTestResult(category, 'UI重複表示防止', 'passed', '再送信処理が実装されています');
+                } else {
+                    logTestResult(category, 'UI重複表示防止', 'warning', 'UI重複表示防止機能が確認できませんでした');
+                }
+            } catch (error) {
+                logTestResult(category, 'UI重複表示防止テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 2.3: 前のトークン無効化機能確認
+            try {
+                if (window.invitationManager && typeof window.invitationManager.invalidateInvitation === 'function') {
+                    logTestResult(category, 'トークン無効化機能', 'passed', 'invalidateInvitationメソッドが実装されています');
+                } else {
+                    logTestResult(category, 'トークン無効化機能', 'warning', 'トークン無効化メソッドが確認できませんでした');
+                }
+            } catch (error) {
+                logTestResult(category, 'トークン無効化テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }
+
+        // Test Suite 3: 資金元タイプ選択機能テスト (要件 3.1, 3.2)
+        async function testFundSourceTypeSelection() {
+            const category = 'fund-source-type';
+            
+            // Test 3.1: FundSourceTypeSelector存在確認
+            try {
+                if (window.FundSourceTypeSelector) {
+                    const typeSelector = new window.FundSourceTypeSelector();
+                    logTestResult(category, 'タイプセレクター初期化', 'passed', 'FundSourceTypeSelectorが正常に初期化されました');
+                    
+                    // Test available types
+                    const availableTypes = typeSelector.getAvailableTypes();
+                    const expectedTypes = ['bank', 'cash', 'credit', 'digital'];
+                    const hasAllTypes = expectedTypes.every(type => 
+                        availableTypes.some(t => t.id === type)
+                    );
+                    
+                    if (hasAllTypes) {
+                        logTestResult(category, '利用可能タイプ確認', 'passed', 
+                            `すべての必要なタイプが実装されています (${availableTypes.length}種類)`,
+                            availableTypes.map(t => `${t.icon} ${t.name} (${t.id})`)
+                        );
+                    } else {
+                        logTestResult(category, '利用可能タイプ確認', 'failed', '必要なタイプが不足しています');
+                    }
+                    
+                    // Test selector HTML generation
+                    const selectorHtml = typeSelector.renderTypeSelector();
+                    if (selectorHtml && selectorHtml.includes('<select') && selectorHtml.includes('<option')) {
+                        logTestResult(category, 'セレクターHTML生成', 'passed', 'タイプセレクターのHTMLが正常に生成されます');
+                    } else {
+                        logTestResult(category, 'セレクターHTML生成', 'failed', 'セレクターHTMLの生成に失敗しました');
+                    }
+                } else {
+                    logTestResult(category, 'タイプセレクター初期化', 'failed', 'FundSourceTypeSelectorクラスが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, 'タイプセレクターテスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 3.2: 資金元追加機能確認
+            try {
+                if (window.storage && typeof window.storage.addFundSource === 'function') {
+                    logTestResult(category, '資金元追加機能確認', 'passed', '資金元追加機能が利用可能です');
+                } else {
+                    logTestResult(category, '資金元追加機能確認', 'failed', '資金元追加機能が存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, '資金元追加テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }        
+
+        // Test Suite 4: ローディング表示機能テスト (要件 4.1)
+        async function testLoadingDisplay() {
+            const category = 'loading-display';
+            
+            // Test 4.1: LoadingManager存在確認
+            try {
+                if (window.LoadingManager) {
+                    const loadingManager = new window.LoadingManager();
+                    logTestResult(category, 'ローディングマネージャー初期化', 'passed', 'LoadingManagerが正常に初期化されました');
+                    
+                    // Test loading show functionality
+                    const showResult = loadingManager.showLoading('test-operation', {
+                        message: 'テスト処理中...',
+                        showOverlay: true
+                    });
+                    
+                    if (showResult) {
+                        logTestResult(category, 'ローディング表示機能', 'passed', 'ローディング表示が正常に動作します');
+                        
+                        // Test loading hide functionality
+                        const hideResult = loadingManager.hideLoading('test-operation');
+                        if (hideResult) {
+                            logTestResult(category, 'ローディング非表示機能', 'passed', 'ローディング非表示が正常に動作します');
+                        } else {
+                            logTestResult(category, 'ローディング非表示機能', 'failed', 'ローディング非表示に失敗しました');
+                        }
+                    } else {
+                        logTestResult(category, 'ローディング表示機能', 'failed', 'ローディング表示に失敗しました');
+                    }
+                    
+                    // Test server operation detection
+                    const isServerOp1 = loadingManager.isServerOperation('sendInvitation');
+                    const isServerOp2 = loadingManager.isServerOperation('addTransaction');
+                    
+                    if (isServerOp1 && !isServerOp2) {
+                        logTestResult(category, 'サーバー操作判定', 'passed', 'サーバー操作の判定が正常に動作します', 
+                            [`sendInvitation: ${isServerOp1}`, `addTransaction: ${isServerOp2}`]);
+                    } else {
+                        logTestResult(category, 'サーバー操作判定', 'warning', 'サーバー操作判定の動作を確認してください');
+                    }
+                } else {
+                    logTestResult(category, 'ローディングマネージャー初期化', 'failed', 'LoadingManagerクラスが存在しません');
+                }
+            } catch (error) {
+                logTestResult(category, 'ローディング機能テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }
+
+        // Test Suite 5: グラフ表示改善テスト (要件 5.1, 5.2)
+        async function testChartImprovements() {
+            const category = 'chart-improvement';
+            
+            // Test 5.1: ChartManager存在確認
+            try {
+                if (window.chartManager || window.ChartManager) {
+                    logTestResult(category, 'チャートマネージャー確認', 'passed', 'ChartManagerが利用可能です');
+                } else {
+                    logTestResult(category, 'チャートマネージャー確認', 'warning', 'ChartManagerが確認できませんでした');
+                }
+            } catch (error) {
+                logTestResult(category, 'チャートマネージャーテスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 5.2: HTML構造確認（収入・支出分離表示）
+            try {
+                const response = await fetch('index.html');
+                const html = await response.text();
+                
+                if (html.includes('data-type-selector') || html.includes('data-data-type')) {
+                    logTestResult(category, '収入・支出タブ構造', 'passed', 'データタイプセレクター（収入・支出タブ）が実装されています');
+                } else {
+                    logTestResult(category, '収入・支出タブ構造', 'warning', 'データタイプセレクターが確認できませんでした');
+                }
+                
+                if (html.includes('main-chart') || html.includes('chart-canvas')) {
+                    logTestResult(category, 'チャートキャンバス確認', 'passed', 'メインチャートのキャンバスが存在します');
+                } else {
+                    logTestResult(category, 'チャートキャンバス確認', 'warning', 'チャートキャンバスが確認できませんでした');
+                }
+            } catch (fetchError) {
+                logTestResult(category, 'HTML構造確認', 'warning', `index.htmlの読み込みに失敗: ${fetchError.message}`);
+            }
+
+            // Test Chart.js availability
+            try {
+                if (typeof Chart !== 'undefined') {
+                    logTestResult(category, 'Chart.js利用可能性', 'passed', 'Chart.jsライブラリが利用可能です');
+                } else {
+                    logTestResult(category, 'Chart.js利用可能性', 'warning', 'Chart.jsライブラリが読み込まれていません');
+                }
+            } catch (error) {
+                logTestResult(category, 'Chart.jsテスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }  
+      
+        // Test Suite 6: UI更新同期テスト (要件 6.1, 6.2, 6.3)
+        async function testUISync() {
+            const category = 'ui-sync';
+            
+            // Test 6.1: UIUpdateManager存在確認
+            try {
+                if (window.UIUpdateManager || window.uiUpdateManager) {
+                    logTestResult(category, 'UI更新マネージャー確認', 'passed', 'UIUpdateManagerが利用可能です');
+                } else {
+                    logTestResult(category, 'UI更新マネージャー確認', 'warning', 'UIUpdateManagerが確認できませんでした');
+                }
+            } catch (error) {
+                logTestResult(category, 'UI更新マネージャーテスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 6.2: データ追加後のUI更新機能確認
+            try {
+                if (window.storage) {
+                    const initialFundSources = window.storage.getFundSources();
+                    const initialCount = initialFundSources.length;
+                    
+                    // Test fund source addition and UI update
+                    const testFundSource = {
+                        name: 'テスト資金元_' + Date.now(),
+                        type: 'bank',
+                        balance: 10000
+                    };
+                    
+                    const addedFundSource = window.storage.addFundSource(testFundSource);
+                    if (addedFundSource) {
+                        const updatedFundSources = window.storage.getFundSources();
+                        if (updatedFundSources.length === initialCount + 1) {
+                            logTestResult(category, '資金元追加とデータ更新', 'passed', '資金元の追加とデータ更新が正常に動作します',
+                                [`追加前: ${initialCount}件`, `追加後: ${updatedFundSources.length}件`, `追加された資金元: ${addedFundSource.name}`]);
+                            
+                            // Clean up test data
+                            window.storage.deleteFundSource(addedFundSource.id);
+                        } else {
+                            logTestResult(category, '資金元追加とデータ更新', 'failed', 'データ更新が正常に反映されませんでした');
+                        }
+                    } else {
+                        logTestResult(category, '資金元追加とデータ更新', 'failed', '資金元の追加に失敗しました');
+                    }
+                } else {
+                    logTestResult(category, 'ストレージ機能確認', 'failed', 'StorageManagerが利用できません');
+                }
+            } catch (error) {
+                logTestResult(category, 'データ更新テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+
+            // Test 6.3: UI再描画機能確認
+            try {
+                if (window.uiManager && typeof window.uiManager.refreshUI === 'function') {
+                    logTestResult(category, 'UI再描画機能', 'passed', 'UI再描画機能が実装されています');
+                } else if (window.uiManager && window.uiManager.renderer) {
+                    logTestResult(category, 'UI再描画機能', 'passed', 'UIレンダラーが利用可能です');
+                } else {
+                    logTestResult(category, 'UI再描画機能', 'warning', 'UI再描画機能が確認できませんでした');
+                }
+            } catch (error) {
+                logTestResult(category, 'UI再描画テスト', 'failed', `テストエラー: ${error.message}`);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('包括的統合テストランナーが読み込まれました');
+            
+            // Log system information
+            setTimeout(() => {
+                console.log('システム情報:');
+                console.log('- StorageManager:', window.storage ? '利用可能' : '利用不可');
+                console.log('- LoadingManager:', window.LoadingManager ? '利用可能' : '利用不可');
+                console.log('- FundSourceTypeSelector:', window.FundSourceTypeSelector ? '利用可能' : '利用不可');
+                console.log('- InvitationTokenDisplay:', window.invitationTokenDisplay ? '利用可能' : '利用不可');
+                console.log('- SharingManager:', window.sharingManager ? '利用可能' : '利用不可');
+                console.log('- InvitationManager:', window.invitationManager ? '利用可能' : '利用不可');
+                console.log('- UIManager:', window.uiManager ? '利用可能' : '利用不可');
+                console.log('- Screen Size:', window.innerWidth + 'x' + window.innerHeight);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

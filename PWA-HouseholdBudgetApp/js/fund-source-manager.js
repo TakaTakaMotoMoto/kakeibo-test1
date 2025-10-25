@@ -17,10 +17,26 @@ class FundSourceManager {
     }
 
     addFundSource(fundSourceData) {
-        // Validate fund source data
-        const validationErrors = this.validateFundSource(fundSourceData);
+        const operationId = 'addFundSource';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '資金元を追加中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Validate fund source data
+            const validationErrors = this.validateFundSource(fundSourceData);
         if (validationErrors.length > 0) {
             throw new Error(`Fund source validation failed: ${validationErrors.join(', ')}`);
+        }
+
+        // Validate type selection (requirement 5.1, 5.2, 5.3)
+        if (!fundSourceData.type) {
+            throw new Error('資金元タイプを選択してください');
         }
 
         // Set owner
@@ -36,13 +52,38 @@ class FundSourceManager {
             this.permissionManager.getDefaultPermissions() : 
             { canView: true, canEdit: false, canDelete: false };
 
-        // Direct storage operation
-        return this.storage.addFundSource(fundSourceData);
+            // Add fund source to storage
+            const result = this.storage.addFundSource(fundSourceData);
+            
+            // Trigger UI update (requirement 6.1, 6.2, 6.3)
+            if (result && window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange('fundSource', 'add', result);
+            }
+
+            return result;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
+        }
     }
 
     updateFundSource(id, updates) {
-        // Check permission to manage fund source
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const operationId = 'updateFundSource';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '資金元を更新中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Check permission to manage fund source
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
         if (currentUser) {
             const fundSources = this.getFundSources();
             if (!this.permissionManager.canManageFundSource(currentUser.id, id, fundSources)) {
@@ -79,15 +120,38 @@ class FundSourceManager {
             // Notify data change
             this.storage.notifyDataChange('fundSource', 'update', fundSources[index]);
             
-            return fundSources[index];
+                // Trigger UI update (requirement 6.1, 6.2, 6.3)
+                if (window.uiUpdateManager) {
+                    window.uiUpdateManager.notifyDataChange('fundSource', 'update', fundSources[index]);
+                }
+                
+                return fundSources[index];
+            }
+            
+            return null;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
         }
-        
-        return null;
     }
 
     deleteFundSource(id) {
-        // Check permission to manage fund source
-        const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
+        const operationId = 'deleteFundSource';
+        
+        try {
+            // Show loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.showOperationLoading(operationId, {
+                    message: '資金元を削除中...',
+                    showOverlay: false
+                });
+            }
+            
+            // Check permission to manage fund source
+            const currentUser = window.authManager ? window.authManager.getCurrentUser() : null;
         if (currentUser) {
             const fundSources = this.getFundSources();
             if (!this.permissionManager.canManageFundSource(currentUser.id, id, fundSources)) {
@@ -100,8 +164,22 @@ class FundSourceManager {
             throw new Error('この資金元は取引で使用されているため削除できません');
         }
 
-        // Direct storage operation
-        return this.storage.deleteFundSource(id);
+            // Direct storage operation
+            const result = this.storage.deleteFundSource(id);
+            
+            // Trigger UI update
+            if (result && window.uiUpdateManager) {
+                window.uiUpdateManager.notifyDataChange('fundSource', 'delete', { id });
+            }
+            
+            return result;
+            
+        } finally {
+            // Hide loading indicator
+            if (window.loadingManager) {
+                window.loadingManager.hideLoading(operationId);
+            }
+        }
     }
 
     canDeleteFundSource(id) {
@@ -127,6 +205,16 @@ class FundSourceManager {
         if (fundSourceData.balance === undefined || fundSourceData.balance === null || 
             typeof fundSourceData.balance !== 'number' || isNaN(fundSourceData.balance)) {
             errors.push('有効な残高を入力してください');
+        }
+
+        // Type validation (requirement 5.1, 5.2, 5.3)
+        if (!fundSourceData.type || typeof fundSourceData.type !== 'string' || fundSourceData.type.trim() === '') {
+            errors.push('資金元タイプを選択してください');
+        } else {
+            const validTypes = ['bank', 'cash', 'credit', 'digital'];
+            if (!validTypes.includes(fundSourceData.type)) {
+                errors.push('無効な資金元タイプです');
+            }
         }
 
         // Business logic validation

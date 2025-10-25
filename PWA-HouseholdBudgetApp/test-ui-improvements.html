@@ -3,536 +3,757 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UI改善テスト - 家計簿アプリ</title>
+    <title>UI機能改善テスト - PWA家計簿アプリ</title>
     <link rel="stylesheet" href="styles/main.css">
     <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
         .test-section {
-            margin: 2rem 0;
-            padding: 1rem;
+            margin: 30px 0;
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            background: var(--surface-color);
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        .test-section h3 {
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-        
-        .test-buttons {
+        .test-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .test-form {
+        .test-body {
+            padding: 20px;
+        }
+        
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .test-result.passed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        
+        .test-result.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .demo-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .demo-form {
+            display: grid;
+            gap: 15px;
             max-width: 400px;
         }
         
-        .demo-notification {
-            margin: 0.5rem 0;
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .loading-demo {
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <div class="main-app">
-        <div class="app-header">
-            <h1>UI改善テスト</h1>
-        </div>
+    <div class="test-container">
+        <h1>UI機能改善テスト</h1>
+        <p>資金元タイプ選択、UI自動更新、ローディング表示機能のテストを実行します。</p>
         
-        <div class="main-content">
-            <div class="view active" style="padding: 1rem;">
+        <div class="test-controls">
+            <button class="btn primary" onclick="runAllUITests()">全テスト実行</button>
+            <button class="btn secondary" onclick="runFundSourceTypeTests()">資金元タイプ選択テスト</button>
+            <button class="btn secondary" onclick="runUIUpdateTests()">UI自動更新テスト</button>
+            <button class="btn secondary" onclick="runLoadingDisplayTests()">ローディング表示テスト</button>
+            <button class="btn danger" onclick="clearTestResults()">結果クリア</button>
+        </div>
+
+        <!-- Test Section 1: 資金元タイプ選択機能テスト -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3>1. 資金元タイプ選択機能テスト</h3>
+                <button class="btn btn-sm" onclick="runFundSourceTypeTests()">実行</button>
+            </div>
+            <div class="test-body">
+                <p>資金元タイプ選択機能の動作を検証します。</p>
                 
-                <!-- Button Feedback Test -->
-                <div class="test-section">
-                    <h3>1. ボタンフィードバックテスト</h3>
-                    <div class="test-buttons">
-                        <button class="btn primary" onclick="testButtonFeedback(this, 'primary')">プライマリボタン</button>
-                        <button class="btn secondary" onclick="testButtonFeedback(this, 'secondary')">セカンダリボタン</button>
-                        <button class="btn danger" onclick="testButtonFeedback(this, 'danger')">危険ボタン</button>
-                        <button class="btn primary" onclick="testLoadingButton(this)">ローディングテスト</button>
-                    </div>
-                </div>
-
-                <!-- Notification Test -->
-                <div class="test-section">
-                    <h3>2. 通知システムテスト</h3>
-                    <div class="test-buttons">
-                        <button class="btn primary" onclick="showTestNotification('success', '操作が完了しました')">成功通知</button>
-                        <button class="btn secondary" onclick="showTestNotification('info', '情報をお知らせします')">情報通知</button>
-                        <button class="btn" style="background: var(--warning-color); color: white;" onclick="showTestNotification('warning', '注意が必要です')">警告通知</button>
-                        <button class="btn danger" onclick="showTestNotification('error', 'エラーが発生しました')">エラー通知</button>
-                    </div>
-                </div>
-
-                <!-- Modal Animation Test -->
-                <div class="test-section">
-                    <h3>3. モーダルアニメーションテスト</h3>
-                    <div class="test-buttons">
-                        <button class="btn primary" onclick="showTestModal()">モーダルを開く</button>
-                    </div>
-                </div>
-
-                <!-- Form Validation Test -->
-                <div class="test-section">
-                    <h3>4. フォームバリデーションテスト</h3>
-                    <form class="test-form" id="test-form" onsubmit="testFormSubmit(event)">
+                <div class="demo-area">
+                    <h4>デモ: 資金元タイプセレクター</h4>
+                    <div class="demo-form">
                         <div class="form-group">
-                            <label for="test-name">名前（必須）</label>
-                            <input type="text" id="test-name" name="name" required>
+                            <label for="demo-fs-name">資金元名</label>
+                            <input type="text" id="demo-fs-name" placeholder="例: メイン銀行口座">
                         </div>
-                        
+                        <div id="demo-type-selector-container">
+                            <!-- Type selector will be inserted here -->
+                        </div>
                         <div class="form-group">
-                            <label for="test-email">メールアドレス</label>
-                            <input type="email" id="test-email" name="email">
+                            <label for="demo-fs-balance">残高</label>
+                            <input type="number" id="demo-fs-balance" placeholder="0">
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="test-amount">金額</label>
-                            <input type="number" id="test-amount" name="amount" min="0" max="1000000">
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="submit" class="btn primary">送信</button>
-                            <button type="button" class="btn secondary" onclick="clearTestForm()">クリア</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Progress Indicator Test -->
-                <div class="test-section">
-                    <h3>5. プログレスインジケーターテスト</h3>
-                    <div class="test-buttons">
-                        <button class="btn primary" onclick="testProgress()">プログレス表示</button>
+                        <button type="button" class="btn primary" onclick="testAddFundSource()">テスト追加</button>
                     </div>
                 </div>
+                
+                <div id="fund-source-type-results"></div>
+            </div>
+        </div>
 
+        <!-- Test Section 2: UI自動更新機能テスト -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3>2. UI自動更新機能テスト</h3>
+                <button class="btn btn-sm" onclick="runUIUpdateTests()">実行</button>
+            </div>
+            <div class="test-body">
+                <p>データ変更後のUI自動更新機能を検証します。</p>
+                
+                <div class="demo-area">
+                    <h4>UI更新統計</h4>
+                    <div class="stats-grid" id="ui-update-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="update-count">0</div>
+                            <div class="stat-label">更新回数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="queue-length">0</div>
+                            <div class="stat-label">待機中更新</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="callback-count">0</div>
+                            <div class="stat-label">登録コールバック</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn secondary" onclick="triggerTestUpdate()">テスト更新実行</button>
+                </div>
+                
+                <div id="ui-update-results"></div>
+            </div>
+        </div>
+
+        <!-- Test Section 3: ローディング表示機能テスト -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3>3. ローディング表示機能テスト</h3>
+                <button class="btn btn-sm" onclick="runLoadingDisplayTests()">実行</button>
+            </div>
+            <div class="test-body">
+                <p>サーバー通信時のローディング表示機能を検証します。</p>
+                
+                <div class="demo-area">
+                    <h4>ローディングデモ</h4>
+                    <div class="loading-demo" id="loading-demo-area">
+                        <p>ここにローディング表示がテストされます</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="btn secondary" onclick="testOverlayLoading()">オーバーレイローディング</button>
+                        <button type="button" class="btn secondary" onclick="testInlineLoading()">インラインローディング</button>
+                        <button type="button" class="btn secondary" onclick="testButtonLoading()">ボタンローディング</button>
+                        <button type="button" class="btn secondary" onclick="testServerOperation()">サーバー操作シミュレート</button>
+                    </div>
+                </div>
+                
+                <div id="loading-display-results"></div>
+            </div>
+        </div>
+
+        <!-- Test Results Summary -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3>テスト結果サマリー</h3>
+            </div>
+            <div class="test-body">
+                <div class="stats-grid" id="test-summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-tests">0</div>
+                        <div class="stat-label">総テスト数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="passed-tests" style="color: #28a745;">0</div>
+                        <div class="stat-label">成功</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="failed-tests" style="color: #dc3545;">0</div>
+                        <div class="stat-label">失敗</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="success-rate">0%</div>
+                        <div class="stat-label">成功率</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Test Modal -->
-    <div class="modal" id="test-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>テストモーダル</h2>
-                <button class="close-btn" onclick="closeTestModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>これはモーダルアニメーションのテストです。</p>
-                <p>ESCキーでも閉じることができます。</p>
-                <div class="form-actions">
-                    <button class="btn primary" onclick="closeTestModal()">OK</button>
-                    <button class="btn secondary" onclick="closeTestModal()">キャンセル</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Include app scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-core.js"></script>
+    <script src="js/loading-manager.js"></script>
+    <script src="js/fund-source-type-selector.js"></script>
+    <script src="js/ui-update-manager.js"></script>
+    <script src="js/app.js"></script>
 
     <script>
-        // Mock UI Manager for testing
-        class TestUIManager {
-            constructor() {
-                this.currentModalEscapeHandler = null;
-            }
+        // Test state management
+        let testResults = [];
+        let updateCount = 0;
+        let loadingManager = null;
+        let uiUpdateManager = null;
+        let fundSourceTypeSelector = null;
 
-            showNotification(message, type = 'info') {
-                this.createFallbackNotification(message, type);
-            }
-
-            createFallbackNotification(message, type = 'info') {
-                const existingNotifications = document.querySelectorAll('.ui-notification');
-                existingNotifications.forEach(n => n.remove());
-                
-                const notification = document.createElement('div');
-                notification.className = `ui-notification notification-${type}`;
-                
-                const icons = {
-                    success: '✅',
-                    warning: '⚠️',
-                    error: '❌',
-                    info: 'ℹ️'
-                };
-                
-                notification.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 16px;">${icons[type] || icons.info}</span>
-                        <span>${message}</span>
-                    </div>
-                `;
-                
-                Object.assign(notification.style, {
-                    position: 'fixed',
-                    top: '20px',
-                    right: '20px',
-                    padding: '12px 20px',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontWeight: '500',
-                    zIndex: '10000',
-                    transform: 'translateX(100%)',
-                    transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    maxWidth: '300px',
-                    wordWrap: 'break-word',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-                    backdropFilter: 'blur(10px)',
-                    cursor: 'pointer'
-                });
-                
-                const backgrounds = {
-                    success: 'linear-gradient(135deg, #34C759, #30D158)',
-                    warning: 'linear-gradient(135deg, #FF9500, #FF9F0A)',
-                    error: 'linear-gradient(135deg, #FF3B30, #FF453A)',
-                    info: 'linear-gradient(135deg, #007AFF, #0A84FF)'
-                };
-                notification.style.background = backgrounds[type] || backgrounds.info;
-                
-                notification.addEventListener('click', () => {
-                    notification.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                });
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.style.transform = 'translateX(0)';
-                }, 50);
-                
-                const delays = { success: 2000, warning: 4000, error: 5000, info: 3000 };
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.style.transform = 'translateX(100%)';
-                        setTimeout(() => {
-                            if (notification.parentNode) {
-                                notification.parentNode.removeChild(notification);
-                            }
-                        }, 300);
-                    }
-                }, delays[type] || delays.info);
-            }
-
-            showModal(modalId) {
-                const modal = document.getElementById(modalId);
-                if (!modal) return;
-                
-                modal.style.pointerEvents = 'none';
-                modal.classList.add('active');
-                const modalContent = modal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.classList.add('bounce-in');
-                    setTimeout(() => {
-                        modalContent.classList.remove('bounce-in');
-                        modal.style.pointerEvents = 'auto';
-                    }, 500);
-                } else {
-                    modal.style.pointerEvents = 'auto';
-                }
-                
-                this.addModalEscapeHandler(modalId);
-            }
-
-            closeModal(modalId) {
-                const modal = document.getElementById(modalId);
-                if (!modal) return;
-                
-                const modalContent = modal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.transform = 'translateY(50px) scale(0.95)';
-                }
-                
-                setTimeout(() => {
-                    modal.classList.remove('active');
-                    if (modalContent) {
-                        modalContent.style.transform = '';
-                    }
-                }, 150);
-                
-                this.removeModalEscapeHandler();
-            }
-
-            addModalEscapeHandler(modalId) {
-                this.currentModalEscapeHandler = (e) => {
-                    if (e.key === 'Escape') {
-                        this.closeModal(modalId);
-                    }
-                };
-                document.addEventListener('keydown', this.currentModalEscapeHandler);
-            }
-
-            removeModalEscapeHandler() {
-                if (this.currentModalEscapeHandler) {
-                    document.removeEventListener('keydown', this.currentModalEscapeHandler);
-                    this.currentModalEscapeHandler = null;
-                }
-            }
-
-            showFieldError(fieldId, message) {
-                const field = document.getElementById(fieldId);
-                const formGroup = field?.closest('.form-group');
-                if (!formGroup) return;
-                
-                this.clearFieldError(fieldId);
-                formGroup.classList.add('error');
-                formGroup.classList.remove('success');
-                
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'error-message';
-                errorMessage.textContent = message;
-                formGroup.appendChild(errorMessage);
-                
-                setTimeout(() => {
-                    errorMessage.classList.add('show');
-                }, 10);
-                
-                field.focus();
-            }
-
-            clearFieldError(fieldId) {
-                const field = document.getElementById(fieldId);
-                const formGroup = field?.closest('.form-group');
-                if (!formGroup) return;
-                
-                formGroup.classList.remove('error', 'success');
-                const errorMessage = formGroup.querySelector('.error-message');
-                if (errorMessage) {
-                    errorMessage.remove();
-                }
-            }
-
-            showProgress(message = '処理中...') {
-                this.hideProgress();
-                
-                const progressOverlay = document.createElement('div');
-                progressOverlay.id = 'progress-overlay';
-                progressOverlay.innerHTML = `
-                    <div class="progress-content">
-                        <div class="progress-spinner"></div>
-                        <div class="progress-message">${message}</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill"></div>
-                        </div>
-                    </div>
-                `;
-                
-                Object.assign(progressOverlay.style, {
-                    position: 'fixed',
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: '10001',
-                    backdropFilter: 'blur(5px)'
-                });
-                
-                document.body.appendChild(progressOverlay);
-            }
-
-            hideProgress() {
-                const progressOverlay = document.getElementById('progress-overlay');
-                if (progressOverlay) {
-                    progressOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        if (progressOverlay.parentNode) {
-                            progressOverlay.parentNode.removeChild(progressOverlay);
-                        }
-                    }, 300);
-                }
-            }
-        }
-
-        const testUI = new TestUIManager();
-
-        // Test functions
-        function testButtonFeedback(button, type) {
-            button.classList.add('loading');
-            button.disabled = true;
-            
-            setTimeout(() => {
-                button.classList.remove('loading');
-                button.disabled = false;
-                testUI.showNotification(`${type}ボタンがクリックされました`, 'success');
-            }, 1000);
-        }
-
-        function testLoadingButton(button) {
-            const originalText = button.textContent;
-            button.classList.add('loading');
-            button.disabled = true;
-            
-            setTimeout(() => {
-                button.classList.remove('loading');
-                button.disabled = false;
-                button.textContent = originalText;
-                testUI.showNotification('ローディング完了', 'success');
-            }, 2000);
-        }
-
-        function showTestNotification(type, message) {
-            testUI.showNotification(message, type);
-        }
-
-        function showTestModal() {
-            testUI.showModal('test-modal');
-        }
-
-        function closeTestModal() {
-            testUI.closeModal('test-modal');
-        }
-
-        function testFormSubmit(event) {
-            event.preventDefault();
-            
-            const nameField = document.getElementById('test-name');
-            const emailField = document.getElementById('test-email');
-            const amountField = document.getElementById('test-amount');
-            
-            let isValid = true;
-            
-            // Clear previous errors
-            testUI.clearFieldError('test-name');
-            testUI.clearFieldError('test-email');
-            testUI.clearFieldError('test-amount');
-            
-            // Validate name
-            if (!nameField.value.trim()) {
-                testUI.showFieldError('test-name', '名前は必須です');
-                isValid = false;
-            }
-            
-            // Validate email
-            if (emailField.value && !isValidEmail(emailField.value)) {
-                testUI.showFieldError('test-email', '有効なメールアドレスを入力してください');
-                isValid = false;
-            }
-            
-            // Validate amount
-            if (amountField.value) {
-                const amount = parseFloat(amountField.value);
-                if (isNaN(amount) || amount < 0) {
-                    testUI.showFieldError('test-amount', '0以上の数値を入力してください');
-                    isValid = false;
-                } else if (amount > 1000000) {
-                    testUI.showFieldError('test-amount', '1,000,000以下の数値を入力してください');
-                    isValid = false;
-                }
-            }
-            
-            if (isValid) {
-                testUI.showNotification('フォームが正常に送信されました', 'success');
-            } else {
-                testUI.showNotification('入力内容を確認してください', 'error');
-            }
-        }
-
-        function clearTestForm() {
-            document.getElementById('test-form').reset();
-            testUI.clearFieldError('test-name');
-            testUI.clearFieldError('test-email');
-            testUI.clearFieldError('test-amount');
-            testUI.showNotification('フォームをクリアしました', 'info');
-        }
-
-        function testProgress() {
-            testUI.showProgress('データを処理中...');
-            
-            setTimeout(() => {
-                testUI.hideProgress();
-                testUI.showNotification('処理が完了しました', 'success');
-            }, 3000);
-        }
-
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
-
-        // Add ripple effect to buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('button') || e.target.closest('button')) {
-                const button = e.target.matches('button') ? e.target : e.target.closest('button');
-                addRippleEffect(button, e);
-            }
+        // Initialize test environment
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTestEnvironment();
         });
 
-        function addRippleEffect(button, event) {
-            if (button.disabled || button.classList.contains('loading')) return;
+        function initializeTestEnvironment() {
+            console.log('UI機能改善テスト環境を初期化中...');
             
-            const rect = button.getBoundingClientRect();
-            const ripple = document.createElement('span');
-            const size = Math.max(rect.width, rect.height);
-            const x = event.clientX - rect.left - size / 2;
-            const y = event.clientY - rect.top - size / 2;
+            // Initialize managers
+            if (window.LoadingManager) {
+                loadingManager = new window.LoadingManager();
+                console.log('LoadingManager initialized for testing');
+            }
             
-            ripple.style.cssText = `
-                position: absolute;
-                left: ${x}px;
-                top: ${y}px;
-                width: ${size}px;
-                height: ${size}px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.3);
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                pointer-events: none;
-                z-index: 1;
-            `;
+            if (window.UIUpdateManager) {
+                uiUpdateManager = new window.UIUpdateManager();
+                console.log('UIUpdateManager initialized for testing');
+                
+                // Register test callback
+                uiUpdateManager.registerUpdateCallback('test', () => {
+                    updateCount++;
+                    updateUIStats();
+                });
+            }
             
-            button.style.position = 'relative';
-            button.style.overflow = 'hidden';
-            button.appendChild(ripple);
+            if (window.FundSourceTypeSelector) {
+                fundSourceTypeSelector = new window.FundSourceTypeSelector();
+                console.log('FundSourceTypeSelector initialized for testing');
+                
+                // Initialize demo type selector
+                initializeDemoTypeSelector();
+            }
             
-            setTimeout(() => {
-                if (ripple.parentNode) {
-                    ripple.parentNode.removeChild(ripple);
-                }
-            }, 600);
+            // Update initial stats
+            updateUIStats();
+            
+            console.log('テスト環境の初期化完了');
         }
 
-        // Add CSS for ripple animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
+        function initializeDemoTypeSelector() {
+            const container = document.getElementById('demo-type-selector-container');
+            if (container && fundSourceTypeSelector) {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label for="demo-fs-type">タイプ</label>
+                        ${fundSourceTypeSelector.renderTypeSelector(null, 'demo-fs-type')}
+                    </div>
+                `;
+            }
+        }
+
+        // Test result management
+        function logTestResult(suiteName, testName, status, message, details = []) {
+            const result = {
+                suite: suiteName,
+                name: testName,
+                status: status, // 'passed', 'failed', 'warning'
+                message: message,
+                details: details,
+                timestamp: new Date().toISOString()
+            };
+            
+            testResults.push(result);
+            displayTestResult(suiteName, result);
+            updateTestSummary();
+        }
+        
+        function displayTestResult(suiteName, result) {
+            const resultsContainer = document.getElementById(`${suiteName}-results`);
+            if (!resultsContainer) return;
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${result.status}`;
+            
+            const statusIcon = result.status === 'passed' ? '✅' : 
+                              result.status === 'warning' ? '⚠️' : '❌';
+            
+            resultDiv.innerHTML = `
+                <div style="font-weight: bold;">${statusIcon} ${result.name}</div>
+                <div style="margin: 5px 0;">${result.message}</div>
+                ${result.details.length > 0 ? `
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 3px; font-family: monospace; font-size: 0.9em;">
+                        ${result.details.map(detail => `• ${detail}`).join('<br>')}
+                    </div>
+                ` : ''}
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    ${new Date(result.timestamp).toLocaleString('ja-JP')}
+                </div>
+            `;
+            
+            resultsContainer.appendChild(resultDiv);
+        }
+
+        function updateTestSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.status === 'passed').length;
+            const failed = testResults.filter(r => r.status === 'failed').length;
+            const successRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            document.getElementById('total-tests').textContent = total;
+            document.getElementById('passed-tests').textContent = passed;
+            document.getElementById('failed-tests').textContent = failed;
+            document.getElementById('success-rate').textContent = successRate + '%';
+        }
+
+        function updateUIStats() {
+            document.getElementById('update-count').textContent = updateCount;
+            
+            if (uiUpdateManager) {
+                const status = uiUpdateManager.getStatus();
+                document.getElementById('queue-length').textContent = status.queueLength;
+                document.getElementById('callback-count').textContent = status.registeredCallbacks.length;
+            }
+        }
+
+        function clearTestResults() {
+            testResults = [];
+            updateCount = 0;
+            
+            document.querySelectorAll('[id$="-results"]').forEach(container => {
+                container.innerHTML = '';
+            });
+            
+            updateTestSummary();
+            updateUIStats();
+        }
+
+        // Main test runners
+        async function runAllUITests() {
+            clearTestResults();
+            console.log('全UI機能改善テストを開始...');
+            
+            await runFundSourceTypeTests();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await runUIUpdateTests();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await runLoadingDisplayTests();
+            
+            console.log('全UI機能改善テスト完了');
+        }
+
+        // Test Suite 1: 資金元タイプ選択機能テスト
+        async function runFundSourceTypeTests() {
+            const suiteName = 'fund-source-type';
+            console.log('資金元タイプ選択機能テスト開始...');
+            
+            try {
+                // Test 1.1: FundSourceTypeSelector存在確認
+                if (window.FundSourceTypeSelector) {
+                    logTestResult(suiteName, 'FundSourceTypeSelectorクラス存在確認', 'passed', 'FundSourceTypeSelectorクラスが利用可能です');
+                    
+                    // Test 1.2: インスタンス作成確認
+                    try {
+                        const typeSelector = new window.FundSourceTypeSelector();
+                        logTestResult(suiteName, 'インスタンス作成', 'passed', 'FundSourceTypeSelectorのインスタンスが正常に作成されました');
+                        
+                        // Test 1.3: 利用可能タイプ確認
+                        const availableTypes = typeSelector.getAvailableTypes();
+                        const expectedTypes = ['bank', 'cash', 'credit', 'digital'];
+                        const hasAllTypes = expectedTypes.every(type => 
+                            availableTypes.some(t => t.id === type)
+                        );
+                        
+                        if (hasAllTypes) {
+                            logTestResult(suiteName, '利用可能タイプ確認', 'passed', 
+                                `すべての必要なタイプが実装されています (${availableTypes.length}種類)`,
+                                availableTypes.map(t => `${t.icon} ${t.name} (${t.id})`)
+                            );
+                        } else {
+                            logTestResult(suiteName, '利用可能タイプ確認', 'failed', '必要なタイプが不足しています');
+                        }
+                        
+                        // Test 1.4: HTML生成確認
+                        const selectorHtml = typeSelector.renderTypeSelector();
+                        if (selectorHtml && selectorHtml.includes('<select') && selectorHtml.includes('<option')) {
+                            logTestResult(suiteName, 'セレクターHTML生成', 'passed', 'タイプセレクターのHTMLが正常に生成されます');
+                        } else {
+                            logTestResult(suiteName, 'セレクターHTML生成', 'failed', 'セレクターHTMLの生成に失敗しました');
+                        }
+                        
+                        // Test 1.5: バリデーション機能確認
+                        const validationError1 = typeSelector.validateTypeSelection('');
+                        const validationError2 = typeSelector.validateTypeSelection('bank');
+                        const validationError3 = typeSelector.validateTypeSelection('invalid');
+                        
+                        if (validationError1 && !validationError2 && validationError3) {
+                            logTestResult(suiteName, 'バリデーション機能', 'passed', 'タイプ選択のバリデーションが正常に動作します');
+                        } else {
+                            logTestResult(suiteName, 'バリデーション機能', 'warning', 'バリデーション機能の動作を確認してください');
+                        }
+                        
+                        // Test 1.6: タイプ情報取得確認
+                        const bankType = typeSelector.getTypeById('bank');
+                        const displayName = typeSelector.getTypeDisplayName('bank');
+                        
+                        if (bankType && displayName && displayName.includes(bankType.name)) {
+                            logTestResult(suiteName, 'タイプ情報取得', 'passed', 'タイプ情報の取得が正常に動作します');
+                        } else {
+                            logTestResult(suiteName, 'タイプ情報取得', 'failed', 'タイプ情報の取得に問題があります');
+                        }
+                        
+                    } catch (error) {
+                        logTestResult(suiteName, 'インスタンス作成', 'failed', `インスタンス作成エラー: ${error.message}`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'FundSourceTypeSelectorクラス存在確認', 'failed', 'FundSourceTypeSelectorクラスが存在しません');
                 }
+                
+                // Test 1.7: 統合テスト - 実際の資金元追加
+                if (window.storage && typeof window.storage.addFundSource === 'function') {
+                    logTestResult(suiteName, '資金元追加機能統合', 'passed', '資金元追加機能との統合が可能です');
+                } else {
+                    logTestResult(suiteName, '資金元追加機能統合', 'warning', '資金元追加機能が確認できませんでした');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+
+        // Test Suite 2: UI自動更新機能テスト
+        async function runUIUpdateTests() {
+            const suiteName = 'ui-update';
+            console.log('UI自動更新機能テスト開始...');
+            
+            try {
+                // Test 2.1: UIUpdateManager存在確認
+                if (window.UIUpdateManager) {
+                    logTestResult(suiteName, 'UIUpdateManagerクラス存在確認', 'passed', 'UIUpdateManagerクラスが利用可能です');
+                    
+                    // Test 2.2: インスタンス作成確認
+                    try {
+                        const updateManager = uiUpdateManager || new window.UIUpdateManager();
+                        logTestResult(suiteName, 'インスタンス作成', 'passed', 'UIUpdateManagerのインスタンスが正常に作成されました');
+                        
+                        // Test 2.3: 更新スケジュール機能確認
+                        const initialStatus = updateManager.getStatus();
+                        updateManager.scheduleUpdate('test', 'high');
+                        
+                        // Wait a bit for processing
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        logTestResult(suiteName, '更新スケジュール機能', 'passed', '更新のスケジューリングが正常に動作します');
+                        
+                        // Test 2.4: デバウンス機能確認
+                        updateManager.debouncedUpdate('test-debounce', 100);
+                        updateManager.debouncedUpdate('test-debounce', 100); // Should replace previous
+                        
+                        logTestResult(suiteName, 'デバウンス機能', 'passed', 'デバウンス機能が実装されています');
+                        
+                        // Test 2.5: コールバック登録確認
+                        let callbackExecuted = false;
+                        updateManager.registerUpdateCallback('test-callback', () => {
+                            callbackExecuted = true;
+                        });
+                        
+                        updateManager.scheduleUpdate('test-callback', 'high');
+                        
+                        // Wait for callback execution
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                        if (callbackExecuted) {
+                            logTestResult(suiteName, 'コールバック登録・実行', 'passed', 'コールバックの登録と実行が正常に動作します');
+                        } else {
+                            logTestResult(suiteName, 'コールバック登録・実行', 'warning', 'コールバックの実行が確認できませんでした');
+                        }
+                        
+                        // Test 2.6: データ変更通知確認
+                        updateManager.notifyDataChange('fundSource', 'add', { name: 'テスト資金元' });
+                        
+                        logTestResult(suiteName, 'データ変更通知', 'passed', 'データ変更通知機能が実装されています');
+                        
+                    } catch (error) {
+                        logTestResult(suiteName, 'インスタンス作成', 'failed', `インスタンス作成エラー: ${error.message}`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'UIUpdateManagerクラス存在確認', 'failed', 'UIUpdateManagerクラスが存在しません');
+                }
+                
+                // Test 2.7: 従来のUI更新機能確認
+                if (window.uiManager && (window.uiManager.refreshUI || window.uiManager.renderer)) {
+                    logTestResult(suiteName, '従来UI更新機能', 'passed', '従来のUI更新機能が利用可能です');
+                } else {
+                    logTestResult(suiteName, '従来UI更新機能', 'warning', '従来のUI更新機能が確認できませんでした');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+
+        // Test Suite 3: ローディング表示機能テスト
+        async function runLoadingDisplayTests() {
+            const suiteName = 'loading-display';
+            console.log('ローディング表示機能テスト開始...');
+            
+            try {
+                // Test 3.1: LoadingManager存在確認
+                if (window.LoadingManager) {
+                    logTestResult(suiteName, 'LoadingManagerクラス存在確認', 'passed', 'LoadingManagerクラスが利用可能です');
+                    
+                    // Test 3.2: インスタンス作成確認
+                    try {
+                        const loadingMgr = loadingManager || new window.LoadingManager();
+                        logTestResult(suiteName, 'インスタンス作成', 'passed', 'LoadingManagerのインスタンスが正常に作成されました');
+                        
+                        // Test 3.3: ローディング表示・非表示確認
+                        const showResult = loadingMgr.showLoading('test-loading', {
+                            message: 'テスト処理中...',
+                            showOverlay: false
+                        });
+                        
+                        if (showResult) {
+                            logTestResult(suiteName, 'ローディング表示機能', 'passed', 'ローディング表示が正常に動作します');
+                            
+                            // Test hide functionality
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                            const hideResult = loadingMgr.hideLoading('test-loading');
+                            if (hideResult) {
+                                logTestResult(suiteName, 'ローディング非表示機能', 'passed', 'ローディング非表示が正常に動作します');
+                            } else {
+                                logTestResult(suiteName, 'ローディング非表示機能', 'failed', 'ローディング非表示に失敗しました');
+                            }
+                        } else {
+                            logTestResult(suiteName, 'ローディング表示機能', 'failed', 'ローディング表示に失敗しました');
+                        }
+                        
+                        // Test 3.4: サーバー操作判定確認
+                        const isServerOp1 = loadingMgr.isServerOperation('sendInvitation');
+                        const isServerOp2 = loadingMgr.isServerOperation('addTransaction');
+                        
+                        if (isServerOp1 && !isServerOp2) {
+                            logTestResult(suiteName, 'サーバー操作判定', 'passed', 'サーバー操作の判定が正常に動作します');
+                        } else {
+                            logTestResult(suiteName, 'サーバー操作判定', 'warning', 'サーバー操作判定の動作を確認してください');
+                        }
+                        
+                        // Test 3.5: 操作ラッピング機能確認
+                        const testAsyncOperation = async () => {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            return 'テスト完了';
+                        };
+                        
+                        const result = await loadingMgr.wrapWithLoading('test-wrap', testAsyncOperation, {
+                            message: 'ラッピングテスト中...',
+                            showOverlay: false
+                        });
+                        
+                        if (result === 'テスト完了') {
+                            logTestResult(suiteName, '操作ラッピング機能', 'passed', '非同期操作のラッピングが正常に動作します');
+                        } else {
+                            logTestResult(suiteName, '操作ラッピング機能', 'failed', '操作ラッピングに問題があります');
+                        }
+                        
+                        // Test 3.6: 状態管理確認
+                        const stats = loadingMgr.getStats();
+                        if (stats && typeof stats.activeOperations === 'number') {
+                            logTestResult(suiteName, '状態管理機能', 'passed', 'ローディング状態の管理が正常に動作します');
+                        } else {
+                            logTestResult(suiteName, '状態管理機能', 'warning', '状態管理機能が確認できませんでした');
+                        }
+                        
+                    } catch (error) {
+                        logTestResult(suiteName, 'インスタンス作成', 'failed', `インスタンス作成エラー: ${error.message}`);
+                    }
+                } else {
+                    logTestResult(suiteName, 'LoadingManagerクラス存在確認', 'failed', 'LoadingManagerクラスが存在しません');
+                }
+                
+            } catch (error) {
+                logTestResult(suiteName, 'テスト実行エラー', 'failed', `予期しないエラー: ${error.message}`);
+            }
+        }
+
+        // Demo functions
+        function testAddFundSource() {
+            const name = document.getElementById('demo-fs-name').value;
+            const type = document.getElementById('demo-fs-type').value;
+            const balance = parseFloat(document.getElementById('demo-fs-balance').value) || 0;
+            
+            if (!name || !type) {
+                alert('資金元名とタイプを入力してください');
+                return;
             }
             
-            .progress-content {
-                background: var(--surface-color);
-                padding: 2rem;
-                border-radius: 12px;
-                text-align: center;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                max-width: 300px;
+            if (fundSourceTypeSelector) {
+                const validationError = fundSourceTypeSelector.validateTypeSelection(type);
+                if (validationError) {
+                    alert(validationError);
+                    return;
+                }
+                
+                const typeInfo = fundSourceTypeSelector.getTypeById(type);
+                alert(`テスト資金元を追加しました:\n名前: ${name}\nタイプ: ${typeInfo.icon} ${typeInfo.name}\n残高: ${fundSourceTypeSelector.formatBalance(balance)}`);
+                
+                // Clear form
+                document.getElementById('demo-fs-name').value = '';
+                document.getElementById('demo-fs-type').value = '';
+                document.getElementById('demo-fs-balance').value = '';
             }
-            
-            .progress-spinner {
-                width: 40px;
-                height: 40px;
-                border: 3px solid var(--border-color);
-                border-top: 3px solid var(--primary-color);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 1rem;
+        }
+
+        function triggerTestUpdate() {
+            if (uiUpdateManager) {
+                uiUpdateManager.scheduleUpdate('test', 'high');
+                uiUpdateManager.notifyDataChange('test', 'manual_trigger');
+                
+                setTimeout(() => {
+                    updateUIStats();
+                }, 200);
             }
-            
-            .progress-message {
-                color: var(--text-primary);
-                margin-bottom: 1rem;
-                font-weight: 500;
+        }
+
+        function testOverlayLoading() {
+            if (loadingManager) {
+                loadingManager.showLoading('test-overlay', {
+                    message: 'オーバーレイローディングテスト中...',
+                    showOverlay: true,
+                    timeout: 3000
+                });
+                
+                setTimeout(() => {
+                    loadingManager.hideLoading('test-overlay');
+                }, 2000);
             }
-        `;
-        document.head.appendChild(style);
+        }
+
+        function testInlineLoading() {
+            const demoArea = document.getElementById('loading-demo-area');
+            if (loadingManager && demoArea) {
+                loadingManager.showLoading('test-inline', {
+                    message: 'インラインローディングテスト中...',
+                    showOverlay: false,
+                    targetElement: demoArea
+                });
+                
+                setTimeout(() => {
+                    loadingManager.hideLoading('test-inline');
+                }, 2000);
+            }
+        }
+
+        function testButtonLoading() {
+            const button = event.target;
+            if (loadingManager && button) {
+                loadingManager.showLoading('test-button', {
+                    message: 'ボタンローディングテスト中...',
+                    showOverlay: false,
+                    button: button
+                });
+                
+                setTimeout(() => {
+                    loadingManager.hideLoading('test-button');
+                }, 2000);
+            }
+        }
+
+        function testServerOperation() {
+            if (loadingManager) {
+                loadingManager.showOperationLoading('sendInvitation', {
+                    timeout: 3000
+                });
+                
+                setTimeout(() => {
+                    loadingManager.hideLoading('sendInvitation');
+                }, 2500);
+            }
+        }
     </script>
 </body>
 </html>

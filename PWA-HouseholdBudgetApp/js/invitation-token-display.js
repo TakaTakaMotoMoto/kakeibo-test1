@@ -18,6 +18,32 @@ class InvitationTokenDisplayManager {
         });
     }
 
+    // Helper method to escape HTML
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Helper method to show notifications
+    showNotification(message, type = 'info') {
+        // Try to use existing notification system
+        if (window.UIUtils && window.UIUtils.showNotification) {
+            window.UIUtils.showNotification(message, type);
+        } else if (window.showNotification) {
+            window.showNotification(message, type);
+        } else {
+            // Fallback to console and alert
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            if (type === 'error') {
+                alert(`エラー: ${message}`);
+            } else if (type === 'success') {
+                console.log(`成功: ${message}`);
+            }
+        }
+    }
+
     // Generate invitation and display token
     async generateAndDisplayInvitation(fundSourceId, userEmail, permissions = null) {
         try {
@@ -26,6 +52,20 @@ class InvitationTokenDisplayManager {
             // Check if sharing manager is available
             if (!window.sharingManager) {
                 throw new Error('共有マネージャーが初期化されていません');
+            }
+
+                    // Ensure sharing manager is properly initialized
+            if (!window.sharingManager || typeof window.sharingManager.sendInvitation !== 'function') {
+                throw new Error('共有マネージャーが正しく初期化されていません');
+            }
+
+            // Validate input parameters to prevent null object errors
+            if (!fundSourceId || typeof fundSourceId !== 'string') {
+                throw new Error('有効な資金元IDが必要です');
+            }
+
+            if (!userEmail || typeof userEmail !== 'string') {
+                throw new Error('有効なメールアドレスが必要です');
             }
 
             // Generate invitation using sharing manager
@@ -43,13 +83,13 @@ class InvitationTokenDisplayManager {
             // Display invitation token immediately
             this.displayInvitationToken(invitation);
 
-            UIUtils.showNotification('招待トークンを生成しました', 'success');
+            this.showNotification('招待トークンを生成しました', 'success');
 
             return invitation;
 
         } catch (error) {
             console.error('Error generating invitation:', error);
-            UIUtils.showNotification('招待の生成に失敗しました: ' + error.message, 'error');
+            this.showNotification('招待の生成に失敗しました: ' + error.message, 'error');
             throw error;
         }
     }
@@ -98,15 +138,15 @@ class InvitationTokenDisplayManager {
                     <div class="invitation-details">
                         <div class="detail-item">
                             <label>資金元:</label>
-                            <span>${UIUtils.escapeHtml(fundSourceName)}</span>
+                            <span style="color: #000000 !important;">${this.escapeHtml(fundSourceName)}</span>
                         </div>
                         <div class="detail-item">
                             <label>招待先:</label>
-                            <span>${UIUtils.escapeHtml(invitation.inviteeEmail)}</span>
+                            <span style="color: #000000 !important;">${this.escapeHtml(invitation.inviteeEmail)}</span>
                         </div>
                         <div class="detail-item">
                             <label>有効期限:</label>
-                            <span>${expiresAt}</span>
+                            <span style="color: #000000 !important;">${expiresAt}</span>
                         </div>
                     </div>
                 </div>
@@ -114,7 +154,7 @@ class InvitationTokenDisplayManager {
                 <div class="token-section">
                     <h5>招待トークン</h5>
                     <div class="token-display">
-                        <div class="token-value" id="invitation-token-value">
+                        <div class="token-value" id="invitation-token-value" style="color: #000000 !important;">
                             ${invitation.token}
                         </div>
                         <div class="token-actions">
@@ -216,6 +256,10 @@ class InvitationTokenDisplayManager {
                     color: #666;
                 }
                 
+                .detail-item span {
+                    color: #000000 !important;
+                }
+                
                 .token-section, .url-section {
                     margin: 20px 0;
                     padding: 15px;
@@ -241,6 +285,7 @@ class InvitationTokenDisplayManager {
                     font-size: 12px;
                     word-break: break-all;
                     user-select: all;
+                    color: #000000 !important;
                 }
                 
                 .token-actions, .url-actions {
@@ -468,15 +513,15 @@ class InvitationTokenDisplayManager {
         try {
             if (this.clipboardSupported) {
                 await navigator.clipboard.writeText(text);
-                UIUtils.showNotification(successMessage, 'success');
+                this.showNotification(successMessage, 'success');
             } else {
                 // Fallback for older browsers
                 this.fallbackCopyToClipboard(text);
-                UIUtils.showNotification(successMessage, 'success');
+                this.showNotification(successMessage, 'success');
             }
         } catch (error) {
             console.error('Copy to clipboard failed:', error);
-            UIUtils.showNotification('コピーに失敗しました', 'error');
+            this.showNotification('コピーに失敗しました', 'error');
             
             // Show text in a prompt as fallback
             prompt('以下のテキストをコピーしてください:', text);
@@ -519,7 +564,7 @@ class InvitationTokenDisplayManager {
     generateQRCode(token) {
         try {
             if (!this.qrCodeSupported) {
-                UIUtils.showNotification('QRコード機能は利用できません', 'warning');
+                this.showNotification('QRコード機能は利用できません', 'warning');
                 return;
             }
 
@@ -555,11 +600,11 @@ class InvitationTokenDisplayManager {
                 generateBtn.style.display = 'none';
             }
 
-            UIUtils.showNotification('QRコードを生成しました', 'success');
+            this.showNotification('QRコードを生成しました', 'success');
 
         } catch (error) {
             console.error('QR code generation failed:', error);
-            UIUtils.showNotification('QRコードの生成に失敗しました', 'error');
+            this.showNotification('QRコードの生成に失敗しました', 'error');
         }
     }
 
@@ -568,7 +613,7 @@ class InvitationTokenDisplayManager {
         try {
             const canvas = container.querySelector('canvas');
             if (!canvas) {
-                UIUtils.showNotification('QRコードが見つかりません', 'error');
+                this.showNotification('QRコードが見つかりません', 'error');
                 return;
             }
 
@@ -577,24 +622,42 @@ class InvitationTokenDisplayManager {
             link.href = canvas.toDataURL();
             link.click();
 
-            UIUtils.showNotification('QRコードを保存しました', 'success');
+            this.showNotification('QRコードを保存しました', 'success');
 
         } catch (error) {
             console.error('QR code download failed:', error);
-            UIUtils.showNotification('QRコードの保存に失敗しました', 'error');
+            this.showNotification('QRコードの保存に失敗しました', 'error');
         }
     }
 
     // Resend invitation
     async resendInvitation(invitation) {
+        // Check if operation is already in progress
+        const operationKey = `resend_${invitation.id}`;
+        if (this.processingOperations && this.processingOperations.has(operationKey)) {
+            this.showNotification('招待の再送信は既に実行中です', 'warning');
+            return;
+        }
+
         try {
             if (!confirm('招待を再送信しますか？\n\n新しいトークンが生成され、現在のトークンは無効になります。')) {
                 return;
             }
 
+            // Initialize processing operations map if not exists
+            if (!this.processingOperations) {
+                this.processingOperations = new Map();
+            }
+
+            // Set operation in progress
+            this.processingOperations.set(operationKey, {
+                startTime: new Date(),
+                type: 'resend'
+            });
+
             const result = window.sharingManager.resendInvitation(invitation.id);
             
-            if (result && result.newInvitation) {
+            if (result && result.success && result.newInvitation) {
                 // Close current modal
                 if (window.uiManager && window.uiManager.modalManager) {
                     window.uiManager.modalManager.closeModal('info-modal');
@@ -605,12 +668,19 @@ class InvitationTokenDisplayManager {
                     this.displayInvitationToken(result.newInvitation);
                 }, 300);
 
-                UIUtils.showNotification('招待を再送信しました', 'success');
+                this.showNotification('招待を再送信しました', 'success');
+            } else {
+                throw new Error('招待の再送信に失敗しました');
             }
 
         } catch (error) {
             console.error('Resend invitation failed:', error);
-            UIUtils.showNotification('招待の再送信に失敗しました: ' + error.message, 'error');
+            this.showNotification('招待の再送信に失敗しました: ' + error.message, 'error');
+        } finally {
+            // Always clear operation state
+            if (this.processingOperations) {
+                this.processingOperations.delete(operationKey);
+            }
         }
     }
 
@@ -628,11 +698,11 @@ class InvitationTokenDisplayManager {
                 window.uiManager.modalManager.closeModal('info-modal');
             }
 
-            UIUtils.showNotification('招待をキャンセルしました', 'success');
+            this.showNotification('招待をキャンセルしました', 'success');
 
         } catch (error) {
             console.error('Cancel invitation failed:', error);
-            UIUtils.showNotification('招待のキャンセルに失敗しました: ' + error.message, 'error');
+            this.showNotification('招待のキャンセルに失敗しました: ' + error.message, 'error');
         }
     }
 
@@ -749,6 +819,9 @@ class InvitationTokenDisplayManager {
 
 // Export for global use
 window.InvitationTokenDisplayManager = InvitationTokenDisplayManager;
+
+// Create global instance for immediate use
+window.invitationTokenDisplay = new InvitationTokenDisplayManager();
 
 // Debug function for testing
 window.testInvitationTokenDisplay = function() {

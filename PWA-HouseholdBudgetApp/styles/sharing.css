@@ -1426,3 +1426,56 @@ d UI Responsiveness Styles (Task 12.2) */
         animation: none;
     }
 }
+/* Inv
+itation Token Display Color Fixes */
+.invitation-token-display .detail-item span,
+.invitation-token-display .token-value,
+.invitation-token-display .url-value,
+.invitation-details .detail-item span {
+    color: #000000 !important;
+}
+
+.invitation-token-display .invitation-details {
+    color: #000000 !important;
+}
+
+.invitation-token-display .invitation-details * {
+    color: #000000 !important;
+}
+
+/* Ensure all invitation token text is black */
+#invitation-token-value,
+#invitation-url-value {
+    color: #000000 !important;
+}
+
+/* Override any potential white text from other stylesheets */
+.modal .invitation-token-display,
+.modal .invitation-token-display *,
+.info-modal .invitation-token-display,
+.info-modal .invitation-token-display * {
+    color: #000000 !important;
+}
+
+/* Specific fixes for invitation details */
+.invitation-token-display .detail-item label {
+    color: #666666 !important;
+}
+
+.invitation-token-display .detail-item span {
+    color: #000000 !important;
+    font-weight: 500;
+}
+
+/* Token and URL display areas */
+.token-section .token-value,
+.url-section .url-value {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+}
+
+/* Help text should remain readable but not white */
+.token-help, .url-help, .management-help {
+    color: #666666 !important;
+}

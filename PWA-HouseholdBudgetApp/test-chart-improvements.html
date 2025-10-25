@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフ表示機能改善テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>グラフ表示機能改善テスト</h1>
+    
+    <div class="test-section">
+        <h2>テスト結果</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        function runTests() {
+            const results = [];
+            
+            // Test 1: Check if HTML structure includes income/expense tabs
+            const dataTypeSelector = document.querySelector('.data-type-selector');
+            if (dataTypeSelector) {
+                results.push('<div class="success">✓ データタイプセレクター（収入・支出タブ）のHTML構造が存在します</div>');
+            } else {
+                results.push('<div class="error">✗ データタイプセレクターのHTML構造が見つかりません</div>');
+            }
+
+            // Test 2: Check if expense and income buttons exist
+            const expenseBtn = document.querySelector('.data-type-btn[data-data-type="expense"]');
+            const incomeBtn = document.querySelector('.data-type-btn[data-data-type="income"]');
+            
+            if (expenseBtn && incomeBtn) {
+                results.push('<div class="success">✓ 支出・収入ボタンが正しく配置されています</div>');
+            } else {
+                results.push('<div class="error">✗ 支出・収入ボタンが見つかりません</div>');
+            }
+
+            // Test 3: Check if chart selector still exists
+            const chartSelector = document.querySelector('.chart-selector');
+            if (chartSelector) {
+                results.push('<div class="success">✓ チャートセレクター（カテゴリ別・月次推移）が存在します</div>');
+            } else {
+                results.push('<div class="error">✗ チャートセレクターが見つかりません</div>');
+            }
+
+            // Test 4: Check if main chart canvas exists
+            const chartCanvas = document.getElementById('main-chart');
+            if (chartCanvas) {
+                results.push('<div class="success">✓ メインチャートのキャンバス要素が存在します</div>');
+            } else {
+                results.push('<div class="error">✗ メインチャートのキャンバス要素が見つかりません</div>');
+            }
+
+            // Test 5: Check if chart legend container exists
+            const chartLegend = document.getElementById('chart-legend');
+            if (chartLegend) {
+                results.push('<div class="success">✓ チャート凡例コンテナが存在します</div>');
+            } else {
+                results.push('<div class="error">✗ チャート凡例コンテナが見つかりません</div>');
+            }
+
+            // Display results
+            document.getElementById('test-results').innerHTML = results.join('');
+            
+            // Summary
+            const successCount = results.filter(r => r.includes('success')).length;
+            const totalTests = results.length;
+            
+            const summary = `<div class="info"><strong>テスト完了: ${successCount}/${totalTests} 成功</strong></div>`;
+            document.getElementById('test-results').innerHTML += '<hr>' + summary;
+        }
+
+        // Load the main HTML structure for testing
+        fetch('index.html')
+            .then(response => response.text())
+            .then(html => {
+                // Extract the charts view section
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const chartsView = doc.getElementById('charts-view');
+                
+                if (chartsView) {
+                    // Create a test container and insert the charts view
+                    const testContainer = document.createElement('div');
+                    testContainer.innerHTML = chartsView.outerHTML;
+                    document.body.appendChild(testContainer);
+                    
+                    // Run tests after DOM is ready
+                    setTimeout(runTests, 100);
+                } else {
+                    document.getElementById('test-results').innerHTML = 
+                        '<div class="error">✗ index.htmlからcharts-viewを読み込めませんでした</div>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="error">✗ index.htmlの読み込みに失敗しました: ' + error.message + '</div>';
+            });
+    </script>
+</body>
+</html>
+</content>

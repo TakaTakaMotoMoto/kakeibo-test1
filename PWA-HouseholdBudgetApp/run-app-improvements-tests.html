@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アプリ改善テスト実行</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        
+        .test-button.success {
+            background-color: #28a745;
+        }
+        
+        .test-button.danger {
+            background-color: #dc3545;
+        }
+        
+        .results-container {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .status-display {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>アプリ改善テスト実行</h1>
+    
+    <div class="test-container">
+        <h2>システム状態</h2>
+        <div id="system-status" class="status-display">初期化中...</div>
+    </div>
+    
+    <div class="test-container">
+        <h2>テスト実行</h2>
+        <p>以下のボタンをクリックしてテストを実行してください。</p>
+        
+        <button class="test-button" onclick="openIntegrationTests()">統合テストページを開く</button>
+        <button class="test-button success" onclick="runQuickValidation()">クイック検証実行</button>
+        <button class="test-button" onclick="runFullValidation()">完全検証実行</button>
+        <button class="test-button danger" onclick="clearResults()">結果クリア</button>
+        
+        <div id="test-results" class="results-container" style="display: none;"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>テスト項目</h2>
+        <ul>
+            <li><strong>共有機能バグ修正:</strong> 招待送信エラー、トークン表示色、有効期限修正</li>
+            <li><strong>招待再送信機能:</strong> トークン再生成、UI重複防止、前トークン無効化</li>
+            <li><strong>資金元タイプ選択:</strong> タイプ選択UI、自動更新機能</li>
+            <li><strong>ローディング表示:</strong> サーバー通信時のローディング管理</li>
+            <li><strong>グラフ表示改善:</strong> 収入・支出分離、タブ切り替え</li>
+            <li><strong>UI更新同期:</strong> データ追加後の自動UI更新</li>
+        </ul>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/loading-manager.js"></script>
+    <script src="js/fund-source-type-selector.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="validate-app-improvements.js"></script>
+
+    <script>
+        let resultsContainer;
+        
+        function initializeTestRunner() {
+            resultsContainer = document.getElementById('test-results');
+            updateSystemStatus();
+            
+            log('テスト実行環境が初期化されました', 'info');
+        }
+        
+        function updateSystemStatus() {
+            const status = document.getElementById('system-status');
+            
+            const systemInfo = {
+                storage: !!window.storage,
+                loadingManager: !!window.LoadingManager,
+                fundSourceTypeSelector: !!window.FundSourceTypeSelector,
+                invitationTokenDisplay: !!window.InvitationTokenDisplayManager,
+                sharingManager: !!window.sharingManager,
+                validator: !!window.AppImprovementsValidator
+            };
+            
+            status.innerHTML = `
+                <strong>システムコンポーネント状態:</strong><br>
+                Storage: ${systemInfo.storage ? '✓' : '✗'}<br>
+                LoadingManager: ${systemInfo.loadingManager ? '✓' : '✗'}<br>
+                FundSourceTypeSelector: ${systemInfo.fundSourceTypeSelector ? '✓' : '✗'}<br>
+                InvitationTokenDisplay: ${systemInfo.invitationTokenDisplay ? '✓' : '✗'}<br>
+                SharingManager: ${systemInfo.sharingManager ? '✓' : '✗'}<br>
+                Validator: ${systemInfo.validator ? '✓' : '✗'}
+            `;
+        }
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.marginBottom = '5px';
+            
+            const typeColors = {
+                info: '#007bff',
+                success: '#28a745',
+                warning: '#ffc107',
+                error: '#dc3545'
+            };
+            
+            logEntry.innerHTML = `
+                <span style="color: #666;">[${timestamp}]</span> 
+                <span style="color: ${typeColors[type] || '#000'};">${message}</span>
+            `;
+            
+            resultsContainer.appendChild(logEntry);
+            resultsContainer.scrollTop = resultsContainer.scrollHeight;
+            resultsContainer.style.display = 'block';
+        }
+        
+        function openIntegrationTests() {
+            window.open('test-app-improvements-integration.html', '_blank');
+            log('統合テストページを新しいタブで開きました', 'info');
+        }
+        
+        async function runQuickValidation() {
+            log('クイック検証を開始します...', 'info');
+            
+            try {
+                if (!window.AppImprovementsValidator) {
+                    log('検証ツールが利用できません', 'error');
+                    return;
+                }
+                
+                const validator = new window.AppImprovementsValidator();
+                
+                // Run a subset of validations for quick check
+                await validator.validateSharingBugFixes();
+                await validator.validateLoadingDisplay();
+                
+                const summary = validator.generateSummaryReport();
+                log(`クイック検証完了 - 成功率: ${summary.successRate}%`, 'success');
+                
+            } catch (error) {
+                log(`クイック検証エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runFullValidation() {
+            log('完全検証を開始します...', 'info');
+            
+            try {
+                if (!window.validateAppImprovements) {
+                    log('検証機能が利用できません', 'error');
+                    return;
+                }
+                
+                const results = await window.validateAppImprovements();
+                
+                if (results && results.length > 0) {
+                    const passed = results.filter(r => r.status === 'passed').length;
+                    const total = results.length;
+                    const successRate = Math.round((passed / total) * 100);
+                    
+                    log(`完全検証完了 - ${passed}/${total} 成功 (${successRate}%)`, 'success');
+                    
+                    // Log individual results
+                    results.forEach(result => {
+                        const statusIcon = result.status === 'passed' ? '✅' : 
+                                         result.status === 'warning' ? '⚠️' : '❌';
+                        log(`${statusIcon} ${result.requirementId}: ${result.message}`, result.status);
+                    });
+                } else {
+                    log('検証結果を取得できませんでした', 'warning');
+                }
+                
+            } catch (error) {
+                log(`完全検証エラー: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearResults() {
+            resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'none';
+            log('結果をクリアしました', 'info');
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeTestRunner, 100);
+        });
+        
+        // Update system status periodically
+        setInterval(updateSystemStatus, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共有バグ修正テスト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .test-result.passed {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .test-result.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .test-result.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        .summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>共有バグ修正テスト</h1>
+        <p>共有機能の3つの主要なバグ修正を検証します：</p>
+        <ul>
+            <li>1. 招待送信時のnullエラー修正</li>
+            <li>2. 招待トークン表示色の修正（黒文字表示）</li>
+            <li>3. 招待トークン有効期限の修正（10分に変更）</li>
+        </ul>
+        
+        <div>
+            <button class="btn primary" onclick="runAllBugFixTests()">全バグ修正テスト実行</button>
+        </div>
+        
+        <div id="test-results"></div>
+        <div id="summary"></div>
+    </div>
+
+    <!-- Include app scripts in correct order -->
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui-core.js"></script>
+    <script src="js/sharing-error-handler.js"></script>
+    <script src="js/permission-manager.js"></script>
+    <script src="js/invitation-manager.js"></script>
+    <script src="js/sharing-manager.js"></script>
+    <script src="js/invitation-token-display.js"></script>
+    <script src="js/loading-manager.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Create a simple UIUtils replacement for testing
+        window.UIUtils = {
+            showNotification: function(message, type) {
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            },
+            escapeHtml: function(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+
+        let testResults = [];
+
+        function logResult(testName, status, message, details = null) {
+            const result = {
+                name: testName,
+                status: status,
+                message: message,
+                details: details,
+                timestamp: new Date().toISOString()
+            };
+            
+            testResults.push(result);
+            displayResult(result);
+        }
+
+        function displayResult(result) {
+            const container = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${result.status}`;
+            
+            const statusIcon = result.status === 'passed' ? '✅' : 
+                              result.status === 'warning' ? '⚠️' : '❌';
+            
+            div.innerHTML = `
+                <div><strong>${statusIcon} ${result.name}</strong></div>
+                <div>${result.message}</div>
+                ${result.details ? `<div style="margin-top: 10px; font-family: monospace; font-size: 12px; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 3px;">${result.details}</div>` : ''}
+                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                    ${new Date(result.timestamp).toLocaleString('ja-JP')}
+                </div>
+            `;
+            
+            container.appendChild(div);
+        }
+
+        function showSummary() {
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.status === 'passed').length;
+            const failed = testResults.filter(r => r.status === 'failed').length;
+            const warnings = testResults.filter(r => r.status === 'warning').length;
+            const successRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = `
+                <div class="summary">
+                    <h3>テスト結果サマリー</h3>
+                    <p>総テスト数: ${total}</p>
+                    <p>成功: <span style="color: #28a745;">${passed}</span></p>
+                    <p>失敗: <span style="color: #dc3545;">${failed}</span></p>
+                    <p>警告: <span style="color: #ffc107;">${warnings}</span></p>
+                    <p>成功率: <strong>${successRate}%</strong></p>
+                </div>
+            `;
+        }
+
+        function initializeSystem() {
+            try {
+                // Initialize all required managers
+                if (!window.storage) window.storage = new StorageManager();
+                if (!window.authManager) window.authManager = new AuthManager();
+                if (!window.permissionManager) window.permissionManager = new PermissionManager();
+                if (!window.invitationManager) window.invitationManager = new InvitationManager(window.storage);
+                if (!window.sharingManager) {
+                    window.sharingManager = new SharingManager(window.storage, window.authManager);
+                    window.sharingManager.initialize(window.invitationManager, window.permissionManager);
+                }
+                if (!window.invitationTokenDisplay) window.invitationTokenDisplay = new InvitationTokenDisplayManager();
+                
+                // Create a test user for testing
+                const testUser = {
+                    id: 'test-user-' + Date.now(),
+                    username: 'テストユーザー',
+                    email: 'test@example.com'
+                };
+                
+                // Mock the getCurrentUser method
+                window.authManager.getCurrentUser = () => testUser;
+                
+                return true;
+            } catch (error) {
+                console.error('System initialization error:', error);
+                return false;
+            }
+        }
+
+        async function runAllBugFixTests() {
+            testResults = [];
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+            
+            console.log('共有バグ修正テスト開始...');
+            
+            // Initialize system
+            const initSuccess = initializeSystem();
+            if (!initSuccess) {
+                logResult('システム初期化', 'failed', 'システムの初期化に失敗しました');
+                showSummary();
+                return;
+            }
+            
+            logResult('システム初期化', 'passed', 'システムが正常に初期化されました');
+            
+            // Bug Fix Test 1: Null error prevention in sendInvitation
+            await testNullErrorPrevention();
+            
+            // Bug Fix Test 2: Black text color in invitation token display
+            await testInvitationTokenDisplayColor();
+            
+            // Bug Fix Test 3: Invitation token expiration time (10 minutes)
+            await testInvitationTokenExpiration();
+            
+            showSummary();
+            console.log('共有バグ修正テスト完了');
+        }
+
+        async function testNullErrorPrevention() {
+            console.log('Testing null error prevention...');
+            
+            try {
+                // Test 1.1: Check if sendInvitation method exists
+                if (window.sharingManager && typeof window.sharingManager.sendInvitation === 'function') {
+                    logResult('sendInvitationメソッド存在確認', 'passed', 'sendInvitationメソッドが実装されています');
+                    
+                    // Test 1.2: Test null parameter handling
+                    try {
+                        const result = window.sharingManager.sendInvitation(null, null);
+                        logResult('nullパラメータエラー防止', 'warning', 'nullパラメータでもエラーが発生しませんでした', 
+                            'Result: ' + JSON.stringify(result));
+                    } catch (error) {
+                        if (error.message.includes('有効な') || error.message.includes('null') || error.message.includes('undefined')) {
+                            logResult('nullパラメータエラー防止', 'passed', '適切なバリデーションエラーが発生しました', 
+                                'Error message: ' + error.message);
+                        } else {
+                            logResult('nullパラメータエラー防止', 'failed', '予期しない��ラーが発生しました', 
+                                'Error: ' + error.message);
+                        }
+                    }
+                    
+                    // Test 1.3: Test empty string parameters
+                    try {
+                        const result = window.sharingManager.sendInvitation('', '');
+                        logResult('空文字パラメータエラー防止', 'warning', '空文字パラメータでもエラーが発生しませんでした');
+                    } catch (error) {
+                        if (error.message.includes('有効な') || error.message.includes('必要')) {
+                            logResult('空文字パラメータエラー防止', 'passed', '適切なバリデーションエラーが発生しました', 
+                                'Error message: ' + error.message);
+                        } else {
+                            logResult('空文字パラメータエラー防止', 'failed', '予期しないエラーが発生しました', 
+                                'Error: ' + error.message);
+                        }
+                    }
+                } else {
+                    logResult('sendInvitationメソッド存在確認', 'failed', 'SharingManagerまたはsendInvitationメソッドが存在しません');
+                }
+            } catch (error) {
+                logResult('nullエラー防止テスト', 'failed', 'テスト実行中にエラーが発生しました', 
+                    'Error: ' + error.message);
+            }
+        }
+
+        async function testInvitationTokenDisplayColor() {
+            console.log('Testing invitation token display color...');
+            
+            try {
+                // Test 2.1: Check if InvitationTokenDisplayManager exists
+                if (window.InvitationTokenDisplayManager) {
+                    logResult('InvitationTokenDisplayManagerクラス', 'passed', 'InvitationTokenDisplayManagerクラスが利用可能です');
+                    
+                    // Test 2.2: Check if instance and method exist
+                    if (window.invitationTokenDisplay && typeof window.invitationTokenDisplay.generateInvitationTokenContent === 'function') {
+                        logResult('InvitationTokenDisplayManagerインスタンス', 'passed', 'InvitationTokenDisplayManagerインスタンスが利用可能です');
+                        
+                        // Test 2.3: Check black text styling
+                        const mockInvitation = {
+                            id: 'test-invitation-' + Date.now(),
+                            token: 'test-token-123',
+                            fundSourceId: 'test-fund',
+                            inviteeEmail: 'test@example.com',
+                            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+                        };
+                        
+                        try {
+                            const content = window.invitationTokenDisplay.generateInvitationTokenContent(mockInvitation, 'テスト資金元');
+                            
+                            // Check for black text color styling
+                            const hasBlackColor = content.includes('color: #000000') || content.includes('color: black');
+                            const blackColorCount = (content.match(/color:\s*#000000|color:\s*black/gi) || []).length;
+                            
+                            if (hasBlackColor && blackColorCount >= 3) {
+                                logResult('招待トークン表示色修正', 'passed', 
+                                    `招待トークン情報が黒文字で表示されるように修正されています (${blackColorCount}箇所で黒文字指定)`);
+                            } else if (hasBlackColor) {
+                                logResult('招待トークン表示色修正', 'warning', 
+                                    `一部の要素で黒文字スタイルが確認されました (${blackColorCount}箇所)`);
+                            } else {
+                                logResult('招待トークン表示色修正', 'failed', '黒文字スタイルが確認できませんでした', 
+                                    'Content preview: ' + content.substring(0, 500) + '...');
+                            }
+                        } catch (error) {
+                            logResult('招待トークン表示色修正', 'failed', 'コンテンツ生成でエラーが発生しました', 
+                                'Error: ' + error.message);
+                        }
+                    } else {
+                        logResult('InvitationTokenDisplayManagerインスタンス', 'failed', 'InvitationTokenDisplayManagerインスタンスまたはメソッドが存在しません');
+                    }
+                } else {
+                    logResult('InvitationTokenDisplayManagerクラス', 'failed', 'InvitationTokenDisplayManagerクラスが存在しません');
+                }
+            } catch (error) {
+                logResult('招待トークン表示色テスト', 'failed', 'テスト実行中にエラーが発生しました', 
+                    'Error: ' + error.message);
+            }
+        }
+
+        async function testInvitationTokenExpiration() {
+            console.log('Testing invitation token expiration time...');
+            
+            try {
+                // Test 3.1: Check if InvitationManager exists
+                if (window.invitationManager && typeof window.invitationManager.createInvitation === 'function') {
+                    logResult('InvitationManager存在確認', 'passed', 'InvitationManagerが利用可能です');
+                    
+                    // Test 3.2: Test invitation creation and expiration time
+                    const testInvitation = {
+                        fundSourceId: 'test-fund-' + Date.now(),
+                        inviterUserId: 'test-user-' + Date.now(),
+                        inviteeEmail: 'test@example.com',
+                        permissions: { canView: true, canEdit: false, canDelete: false }
+                    };
+                    
+                    try {
+                        const invitation = window.invitationManager.createInvitation(testInvitation);
+                        
+                        if (invitation && invitation.expiresAt) {
+                            const now = new Date();
+                            const expiresAt = new Date(invitation.expiresAt);
+                            const diffMinutes = (expiresAt - now) / (1000 * 60);
+                            
+                            // Check if expiration is approximately 10 minutes (±1 minute tolerance)
+                            if (diffMinutes >= 9 && diffMinutes <= 11) {
+                                logResult('有効期限計算修正', 'passed', 
+                                    `有効期限が正しく10分に設定されています (${diffMinutes.toFixed(1)}分)`,
+                                    `Created: ${now.toLocaleString()}, Expires: ${expiresAt.toLocaleString()}`);
+                            } else {
+                                logResult('有効期限計算修正', 'failed', 
+                                    `有効期限が期待値と異なります (${diffMinutes.toFixed(1)}分)`,
+                                    `Expected: 10分, Actual: ${diffMinutes.toFixed(1)}分`);
+                            }
+                            
+                            // Test 3.3: Verify it's not 24 hours (old bug)
+                            const diffHours = diffMinutes / 60;
+                            if (diffHours > 12) {
+                                logResult('24時間バグ修正確認', 'failed', 
+                                    `有効期限が24時間のままです (${diffHours.toFixed(1)}時間)`);
+                            } else {
+                                logResult('24時間バグ修正確認', 'passed', 
+                                    '24時間の有効期限バグが修正されています');
+                            }
+                        } else {
+                            logResult('有効期限計算修正', 'failed', '招待の作成に失敗しました', 
+                                'Result: ' + JSON.stringify(invitation));
+                        }
+                    } catch (error) {
+                        logResult('有効期限計算修正', 'failed', '招待作成エラーが発生しました', 
+                            'Error: ' + error.message);
+                    }
+                } else {
+                    logResult('InvitationManager存在確認', 'failed', 'InvitationManagerが存在しません');
+                }
+            } catch (error) {
+                logResult('招待トークン有効期限テスト', 'failed', 'テスト実行中にエラーが発生しました', 
+                    'Error: ' + error.message);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('共有バグ修正テストページが読み込まれました');
+        });
+    </script>
+</body>
+</html>
